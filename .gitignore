@@ -1,0 +1,9 @@
+.env
+.env.backup
+.env.production
+dbdata/
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
