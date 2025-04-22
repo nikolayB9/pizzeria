@@ -11,4 +11,9 @@ class UserController extends Controller
     {
         return User::select('id', 'name', 'email')->get();
     }
+
+    public function store()
+    {
+
+    }
 }
