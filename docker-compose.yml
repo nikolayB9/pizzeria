@@ -13,6 +13,7 @@ services:
       DB_DATABASE: ${DB_DATABASE}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      PHP_IDE_CONFIG: ${PHP_IDE_CONFIG}
     depends_on:
       - db
 
