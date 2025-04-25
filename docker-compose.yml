@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      args:
+        HOST_UID: ${HOST_UID}
+        HOST_GID: ${HOST_GID}
     volumes:
       - ./src/laravel:/var/www/html
     working_dir: /var/www/html
@@ -14,6 +17,8 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       PHP_IDE_CONFIG: ${PHP_IDE_CONFIG}
+      HOST_UID: ${HOST_UID}
+      HOST_GID: ${HOST_GID}
     depends_on:
       - db
 

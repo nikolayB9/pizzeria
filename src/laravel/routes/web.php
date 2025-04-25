@@ -1,11 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+require __DIR__ . '/admin.php';
+require __DIR__ . '/public.php';
 
-Route::get('/', function () {
-    return view('welcome');
-});
 
-Route::get('/users', [\App\Http\Controllers\UserController::class, 'index'])->name('users.index');
-
-/*Route::resource('/users', \App\Http\Controllers\UserController::class);*/
