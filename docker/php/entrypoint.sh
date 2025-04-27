@@ -1,21 +1,20 @@
 #!/bin/bash
 
-set -e  # Прерываем выполнение, если какая-то команда завершится с ошибкой
+set -e  # ❗ Прерываем выполнение при ошибке любой команды
 
-echo "🔧 Установка прав на папки storage и bootstrap..."
+# 👤 Создание пользователя, если он ещё не существует
+id "appuser" &>/dev/null || (echo "➕ Создание пользователя appuser..." && groupadd -g "${HOST_GID}" appuser && useradd -u "${HOST_UID}" -g appuser -m appuser)
 
-# Проверяем, существует ли папки, если существуют:
-# меняем владельца папок на www-data (пользователь, от которого работает PHP в контейнере)
-# устанавливаем права доступа: владельцу и группе - чтение, запись, выполнение; другим - чтение и выполнение
-if [ -d "/var/www/html/storage" ]; then
-  chown -R www-data:www-data /var/www/html/storage
-  chmod -R 775 /var/www/html/storage
-fi
+echo "📁 Назначение владельца appuser на /var/www/html..."
+[ -d "/var/www/html" ] && (chown -R appuser:appuser /var/www/html)
 
-if [ -d "/var/www/html/bootstrap/cache" ]; then
-  chown -R www-data:www-data /var/www/html/bootstrap/cache
-  chmod -R 775 /var/www/html/bootstrap/cache
-fi
+echo "📂 Настройка прав на storage и bootstrap/cache..."
+[ -d "/var/www/html/storage" ] && (chown -R www-data:www-data /var/www/html/storage && chmod -R 775 /var/www/html/storage)
+[ -d "/var/www/html/bootstrap/cache" ] && (chown -R www-data:www-data /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/bootstrap/cache)
+
+# 🐞 Включение/отключение Xdebug
+[ "$ENABLE_XDEBUG" = "yes" ] && (echo "✅ Включение Xdebug..." && sed -i 's/xdebug.mode=off/xdebug.mode=debug/' /usr/local/etc/php/conf.d/xdebug.ini) \
+    || (echo "🚫 Отключение Xdebug..." && sed -i 's/xdebug.mode=debug/xdebug.mode=off/' /usr/local/etc/php/conf.d/xdebug.ini)
 
 echo "🚀 Запуск PHP-FPM..."
 exec php-fpm
