@@ -3,6 +3,9 @@ FROM php:8.3-fpm
 # Обновление пакетов и установка зависимостей
 RUN apt-get update && apt-get install -y \
     zip unzip curl libzip-dev libpng-dev libonig-dev libxml2-dev libpq-dev git nano \
+    # Устанавливаем Node.js (вместе с npm)
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
     && docker-php-ext-install pdo pdo_mysql zip mbstring exif pcntl bcmath \
     && rm -rf /var/lib/apt/lists/*  # Удаляем кэш apt-get, чтобы уменьшить размер образа
 

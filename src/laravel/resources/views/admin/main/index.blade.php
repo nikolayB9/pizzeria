@@ -1,7 +1,7 @@
 <x-app-layout>
-    <x-admin.content-header pageTitle="Главная">
+    <x-content-header pageTitle="Главная">
         <li class="breadcrumb-item active">Главная</li>
-    </x-admin.content-header>
+    </x-content-header>
 
     <!-- Main content -->
     <section class="content">

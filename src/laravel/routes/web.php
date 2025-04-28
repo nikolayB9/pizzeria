@@ -1,6 +1,10 @@
 <?php
 
+
+use Illuminate\Support\Facades\Route;
+
 require __DIR__ . '/admin.php';
-require __DIR__ . '/public.php';
 
-
+Route::get('/{any}', function () {
+    return view('site.app');
+})->where('any', '^(?!api).*$');
