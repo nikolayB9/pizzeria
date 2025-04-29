@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             CategoryTypeSeeder::class,
             CategorySeeder::class,
+            ParameterGroupSeeder::class,
+            ParameterSeeder::class,
         ]);
     }
 }
