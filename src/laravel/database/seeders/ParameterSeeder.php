@@ -29,6 +29,9 @@ class ParameterSeeder extends Seeder
         }
     }
 
+    /**
+     * Параметры группы "Характеристики" (например, "Вес").
+     */
     private function getParametersOfFeaturesGroup(): array
     {
         return [
@@ -39,6 +42,9 @@ class ParameterSeeder extends Seeder
         ];
     }
 
+    /**
+     * Параметры группы "Пищевая ценность" (например, "белки").
+     */
     private function getParametersOfNutritionGroup(): array
     {
         return [
@@ -57,6 +63,10 @@ class ParameterSeeder extends Seeder
         ];
     }
 
+    /**
+     * Параметры группы "Состав" (группа состоит из одного параметра - "Состав").
+     * Описание состава продукта: мука, сыр и т.п.
+     */
     private function getParametersOfIngredientsGroup(): array
     {
         return [
@@ -66,6 +76,10 @@ class ParameterSeeder extends Seeder
         ];
     }
 
+    /**
+     * Параметры группы "Аллергены" (группа состоит из одного параметра - "Аллергены").
+     * Описание потенциальных аллергенов продукта: глютен, молоко и т.п.
+     */
     private function getParametersOfAllergensGroup(): array
     {
         return [
