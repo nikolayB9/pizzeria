@@ -1,7 +1,7 @@
-### Изменение ролей пользователя
+### Изменение ролей пользователя, типов категорий
 
-- Делаем изменения в UserRoleEnum (нельзя удалять / изменять существующие value и slug !)
-- Запускаем UserRoleSeeder:
+- Делаем изменения в Enum (нельзя удалять / изменять существующие value и slug !)
+- Запускаем нужный Seeder:
     ```bash
-    php artisan db:seed --class=UserRoleSeeder
+    php artisan db:seed --class=...Seeder
     ```
