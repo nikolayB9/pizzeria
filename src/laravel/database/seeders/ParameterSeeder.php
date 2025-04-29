@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\Parameter\ParameterGroupEnum;
+use App\Models\Parameter;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class ParameterSeeder extends Seeder
 {
@@ -19,8 +19,7 @@ class ParameterSeeder extends Seeder
     private function updateOrInsertParameters(array $parameters, int $parameterGroupId): void
     {
         foreach ($parameters as $parameter) {
-            DB::table('parameters')
-                ->updateOrInsert(
+            Parameter::updateOrCreate(
                     [
                         'name' => $parameter['name'],
                         'unit' => $parameter['unit'] ?? null,
