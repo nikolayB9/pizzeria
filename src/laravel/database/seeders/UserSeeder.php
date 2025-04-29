@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
 {
-    private int $userCount = 30;
+    private int $userCount = 3;
 
     public function run(): void
     {
