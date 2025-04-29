@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Parameter extends Model
 {
-    use HasFactory;
-
     protected $guarded = ['id'];
     public $timestamps = false;
 
