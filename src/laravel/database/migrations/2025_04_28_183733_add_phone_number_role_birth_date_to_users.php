@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('phone_number')->after('name')->unique();
-            $table->foreignId('role')->after('password')->index()->constrained('user_roles', 'id');
+            $table->foreignId('role')->after('password')->constrained('user_roles', 'id');
             $table->date('birth_date')->after('role')->nullable();
         });
     }
