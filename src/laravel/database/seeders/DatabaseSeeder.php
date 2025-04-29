@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ParameterGroupSeeder::class,
             ParameterSeeder::class,
+            CategoryParameterSeeder::class,
         ]);
     }
 }
