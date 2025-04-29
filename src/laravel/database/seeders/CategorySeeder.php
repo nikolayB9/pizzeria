@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\Category\CategoryTypeEnum;
+use App\Models\Category;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class CategorySeeder extends Seeder
 {
@@ -49,14 +49,13 @@ class CategorySeeder extends Seeder
     private function updateOrInsertCategories(array $categories, int $categoryTypeId): void
     {
         foreach ($categories as $category) {
-            DB::table('categories')
-                ->updateOrInsert(
-                    ['slug' => $category['slug']],
-                    [
-                        'name' => $category['name'],
-                        'type' => $categoryTypeId,
-                    ],
-                );
+            Category::updateOrCreate(
+                ['slug' => $category['slug']],
+                [
+                    'name' => $category['name'],
+                    'type' => $categoryTypeId,
+                ],
+            );
         }
     }
 }
