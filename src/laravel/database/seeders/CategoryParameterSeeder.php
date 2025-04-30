@@ -40,7 +40,7 @@ class CategoryParameterSeeder extends Seeder
     private function syncCategoryParameters(string $categorySlug, array $parameters): void
     {
         // Находим категорию по slug
-        $category = Category::where('slug', $categorySlug)->first();
+        $category = Category::select('id')->where('slug', $categorySlug)->first();
 
         if (!$category) {
             throw new \RuntimeException("Category with slug '$categorySlug' not found.");
@@ -82,6 +82,6 @@ class CategoryParameterSeeder extends Seeder
         }
 
         // Получаем коллекцию id
-        return $query->get()->pluck('id');
+        return $query->pluck('id');
     }
 }
