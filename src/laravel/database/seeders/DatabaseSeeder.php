@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             CitySeeder::class,
             StreetSeeder::class,
             AddressSeeder::class,
+            OrderStatusSeeder::class,
         ]);
     }
 }
