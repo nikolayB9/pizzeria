@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\Category\CategoryTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Product extends Model
 {
@@ -13,8 +16,21 @@ class Product extends Model
         'is_published' => 'boolean',
     ];
 
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class);
+    }
+
+    public function parameters(): Collection
+    {
+        return $this->categories
+            ->flatMap(fn($category) => $category->parameters)
+            ->unique('id')          // оставляем только уникальные параметры
+            ->values();             // values() сбрасывает ключи коллекции
     }
 }

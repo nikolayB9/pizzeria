@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use App\Enums\Parameter\ParameterGroupEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Parameter extends Model
 {
-    protected $guarded = ['id'];
     public $timestamps = false;
+    protected $guarded = ['id'];
+
+    protected $casts = [
+        'group' => ParameterGroupEnum::class,
+    ];
 
     public function categories(): BelongsToMany
     {

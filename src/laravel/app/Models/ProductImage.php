@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\ProductImage\ProductImageTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductImage extends Model
 {
-    protected $guarded = ['id'];
     public $timestamps = false;
+    protected $guarded = ['id'];
+
+    protected $casts = [
+        'type' => ProductImageTypeEnum::class,
+    ];
 }
