@@ -14,8 +14,8 @@ class AddressSeeder extends Seeder
         $street = $city->streets()->firstOrFail();
 
         $addressData = [
-            'city' => $city->id,
-            'street' => $street->id,
+            'city_id' => $city->id,
+            'street_id' => $street->id,
             'house' => '135',
             'entrance' => '3',
             'floor' => '5',

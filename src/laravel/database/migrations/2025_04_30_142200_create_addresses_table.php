@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('addresses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('city')->constrained('cities', 'id');
-            $table->foreignId('street')->constrained('streets', 'id');
+            $table->foreignId('city_id')->constrained('cities', 'id');
+            $table->foreignId('street_id')->constrained('streets', 'id');
             $table->string('house');
             $table->string('entrance')->nullable();
             $table->string('floor')->nullable();
