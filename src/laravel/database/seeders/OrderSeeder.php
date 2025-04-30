@@ -19,7 +19,7 @@ class OrderSeeder extends Seeder
             'user_id' => $user->id,
             'address_id' => $address->id,
             'delivery_price' => 155,
-            'total_price' => 1354,
+            'total_price' => 1353,
             'status' => OrderStatusEnum::CREATED->value,
             'comment' => null,
         ];
