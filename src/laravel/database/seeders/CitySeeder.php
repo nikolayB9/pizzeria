@@ -9,8 +9,10 @@ class CitySeeder extends Seeder
 {
     public function run(): void
     {
-        City::updateOrCreate([
-            'name' => 'Киров',
-        ]);
+        if (!City::where('name', 'Киров')->exists()) {
+            City::create([
+                'name' => 'Киров',
+            ]);
+        }
     }
 }
