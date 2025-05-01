@@ -1,10 +1,7 @@
 <?php
 
-
 use Illuminate\Support\Facades\Route;
 
-require __DIR__ . '/admin.php';
-
-Route::get('/test', function () {
-    return 123;
+Route::prefix('v1')->group(function () {
+    Route::get('/products', [\App\Http\Controllers\Api\V1\ProductController::class, 'index']);
 });
