@@ -17,9 +17,7 @@ class Order extends Model
     {
         return $this->belongsToMany(ProductVariant::class, 'order_product')
             ->withPivot(['qty', 'price'])
-            ->with(['product' => function ($query) {
-                $query->select('id', 'name');
-            }])
+            ->with(['product' => fn($q) => $q->select('id', 'name')])
             ->select('id', 'name', 'product_id');
     }
 }
