@@ -18,6 +18,7 @@ services:
     environment:
       VITE_PORT: ${VITE_PORT}
       VITE_PORT_HOST: ${VITE_PORT_HOST}
+      NGINX_PORT_HOST: ${NGINX_PORT_HOST}
       DB_CONNECTION: ${DB_CONNECTION}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
