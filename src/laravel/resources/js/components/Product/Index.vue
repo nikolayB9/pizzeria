@@ -14,7 +14,7 @@ export default {
 
     methods: {
         getProducts() {
-            axios.get('api/v1/products')
+            axios.get('/api/v1/products')
                 .then(res => {
                     this.products = res.data.data
                     console.log(this.products)
@@ -31,7 +31,7 @@ export default {
     <div v-if="products">
         <ul class="menu">
             <li v-for="product in products" :key="product.id">
-                <router-link :to="{ name: 'product.show', params: {product_slug: product.slug} }">
+                <router-link :to="{ name: 'product.show', params: {productSlug: product.slug} }">
                     <img :src="product.preview_image_url" alt="preview">
                     <div class="product-info">
                         <h3>{{ product.name }}</h3>

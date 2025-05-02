@@ -8,6 +8,7 @@ export default {
         <div>
             <router-link :to="{ name: 'product.index' }">Главная</router-link>
         </div>
+        <div>Корзина: ₽</div>
         <router-view></router-view>
     </div>
 </template>

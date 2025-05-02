@@ -40,4 +40,10 @@ class Product extends Model
         return $this->hasOne(ProductImage::class)
             ->where('type', ProductImageTypeEnum::Preview);
     }
+
+    public function detailImage(): HasOne
+    {
+        return $this->hasOne(ProductImage::class)
+            ->where('type', ProductImageTypeEnum::Detail);
+    }
 }

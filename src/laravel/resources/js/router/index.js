@@ -7,7 +7,7 @@ const routes = [
         name: 'product.index'
     },
     {
-        path: '/product/:product_slug',
+        path: '/product/:productSlug',
         component: () => import('../components/Product/Show.vue'),
         name: 'product.show'
     },

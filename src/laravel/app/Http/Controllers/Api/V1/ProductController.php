@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Product\IndexProductResource;
+use App\Http\Resources\Product\ProductResource;
 use App\Models\Product;
 
 class ProductController extends Controller
@@ -16,6 +17,15 @@ class ProductController extends Controller
                 ->withMin('variants', 'price')
                 ->withCount('variants')
                 ->get()
+        );
+    }
+
+    public function show(string $productSlug)
+    {
+        return ProductResource::make(
+            Product::where('slug', $productSlug)
+                ->with(['detailImage', 'variants'])
+                ->firstOrFail()
         );
     }
 }

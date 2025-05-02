@@ -1,96 +1,131 @@
 <script>
+import axios from "axios";
+
 export default {
     name: "Show",
 
     mounted() {
-        this.getProducts()
+        this.getProduct()
     },
 
     data() {
       return {
-          products: [],
+          product: null,
       }
     },
 
     methods: {
-        getProducts() {
-            axios.get('api/v1/products')
+        getProduct() {
+            axios.get(`/api/v1/products/${this.$route.params.productSlug}`)
                 .then(res => {
-                    this.products = res.data.data
-                    console.log(res)
+                    this.product = res.data.data
+                    console.log(this.product)
                 })
+        },
+        addProduct(variantId) {
+            axios.post('/api/v1/cart', {
+                variantId: variantId
+            })
         }
     }
 }
 </script>
 
 <template>
-    <div v-if="products">
-        <ul class="menu">
-            <li v-for="product in products" :key="product.id">
-                <router-link :to="{ name: product.show }">
-                    <img :src="product.preview_image_url" alt="preview">
-                    <div class="product-info">
-                        <h3>{{ product.name }}</h3>
-                        <p class="description">{{ product.description }}</p>
-                        <p class="price">
-                            <span v-if="product.has_multiple_variants">от</span> {{ product.min_price }} ₽
-                        </p>
-                    </div>
-                </router-link>
-            </li>
-        </ul>
+    <div v-if="product" class="product-detail">
+        <h2 class="product-name">{{ product.name }}</h2>
+        <img :src="product.detail_image_url" alt="Product image" class="product-image">
+        <p class="product-description">{{ product.description }}</p>
+
+        <!-- Множественные варианты -->
+        <div v-if="product.variants.length > 1" class="variant-list">
+            <ul>
+                <li v-for="variant in product.variants" :key="variant.id" class="variant-item">
+                    <span class="variant-name">{{ variant.name }}</span>
+                    <span v-if="variant.old_price" class="old-price">{{ variant.old_price }} ₽</span>
+                    <button @click.prevent="addProduct(variant.id)">
+                        + {{ variant.price }} ₽
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Один вариант -->
+        <div v-else class="single-variant">
+            <template v-for="variant in product.variants" :key="variant.id">
+                <span class="variant-name">{{ variant.name }}</span>
+                <span v-if="variant.old_price" class="old-price">{{ variant.old_price }} ₽</span>
+                <button @click.prevent="addProduct(variant.id)">
+                    + {{ variant.price }} ₽
+                </button>
+            </template>
+        </div>
     </div>
 </template>
 
 <style scoped>
-.menu {
+.product-detail {
+    max-width: 500px;
+    padding: 1rem;
+    font-family: sans-serif;
+}
+
+.product-name {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.product-image {
+    width: 200px;
+    height: auto;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.product-description {
+    margin-bottom: 1rem;
+    color: #555;
+}
+
+.variant-list ul {
     list-style: none;
     padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
 }
 
-.menu li {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    padding: 12px;
-    width: 200px;
+.variant-item {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    transition: box-shadow 0.2s ease;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
-.menu li:hover {
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+.single-variant {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.menu img {
-    width: 100%;
-    height: auto;
-    border-radius: 4px;
-    margin-bottom: 8px;
-}
-
-.product-info h3 {
-    margin: 4px 0;
-    font-size: 16px;
-}
-
-.description {
-    font-size: 14px;
-    color: #666;
-    margin: 4px 0;
-}
-
-.price {
+.variant-name {
     font-weight: bold;
-    margin-top: 6px;
+}
+
+.old-price {
+    text-decoration: line-through;
+    color: #888;
+}
+
+button {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
 }
 </style>
+
 
