@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Enums\User\UserRoleEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -18,17 +20,14 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): Response
+    public function store(RegisterRequest $request): Response
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
         $user = User::create([
             'name' => $request->name,
+            'phone_number' => $request->phone_number,
             'email' => $request->email,
+            'birth_date' => $request->birth_date,
+            'role' => UserRoleEnum::User->value,
             'password' => Hash::make($request->string('password')),
         ]);
 

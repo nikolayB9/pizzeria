@@ -23,9 +23,11 @@ Route::middleware([
     Route::post('/cart', [CartController::class, 'store']);
 
     // Защищенные маршруты
+    Route::middleware('auth')->group(function () {
+        Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+    });
 
     // Авторизация
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('guest');
     Route::post('/register', [RegisteredUserController::class, 'store'])->middleware('guest');
-    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->middleware('auth');
 });

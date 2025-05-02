@@ -1,35 +1,43 @@
 <script>
 export default {
-    name: "Login",
+    name: "Register",
 
     data() {
         return {
+            name: null,
+            phone_number: null,
             email: null,
             password: null,
+            password_confirmation: null,
+            birth_date: null,
             errors: [],
         }
     },
 
     computed: {
         isDisabled() {
-            return this.email && this.password
+            return this.name && this.phone_number && this.email && this.password && this.password_confirmation
         }
     },
 
     methods: {
-        login() {
+        register() {
             axios.get('/sanctum/csrf-cookie')
                 .then(response => {
-                    axios.post('api/v1/login', {
+                    axios.post('api/v1/register', {
+                        name: this.name,
+                        phone_number: this.phone_number,
                         email: this.email,
+                        birth_date: this.birth_date,
                         password: this.password,
+                        password_confirmation: this.password_confirmation,
                     })
                         .then(res => {
                             localStorage.setItem('x_xsrf_token', res.config.headers['X-XSRF-TOKEN'])
                             this.$router.push({name: 'product.index'})
                         })
                         .catch(err => {
-                            console.error('Ошибка входа', err);
+                            console.error('Ошибка регистрации', err);
                         })
                 })
         },
@@ -39,22 +47,41 @@ export default {
 
 <template>
     <div class="login-container">
-        <h1>Войти</h1>
+        <h1>Регистрация</h1>
+
+        <input type="text"
+               v-model="name"
+               required
+               placeholder="Введите имя">
+
+        <input type="text"
+               v-model="phone_number"
+               required
+               placeholder="Номер телефона: +79091234567">
 
         <input type="email"
                v-model="email"
                required
                placeholder="Введите email">
 
+        <input type="text"
+               v-model="birth_date"
+               placeholder="Дата рождения: 1990-01-01">
+
         <input type="password"
                v-model="password"
                required
                placeholder="Введите пароль">
 
-        <input @click.prevent="login"
+        <input type="password"
+               v-model="password_confirmation"
+               required
+               placeholder="Подтвердите пароль">
+
+        <input @click.prevent="register"
                :disabled="!isDisabled"
                type="submit"
-               value="Войти">
+               value="Зарегистрироваться">
     </div>
 </template>
 
@@ -78,6 +105,7 @@ h1 {
 }
 
 input[type="email"],
+input[type="text"],
 input[type="password"],
 input[type="submit"] {
     padding: 12px;
@@ -88,6 +116,7 @@ input[type="submit"] {
 }
 
 input[type="email"]:focus,
+input[type="text"]:focus,
 input[type="password"]:focus {
     outline: none;
     border-color: #66afe9;
