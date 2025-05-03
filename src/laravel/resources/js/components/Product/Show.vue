@@ -1,17 +1,22 @@
 <script>
-import axios from "axios";
+import {useCart} from '@/composables/useCart'
 
 export default {
     name: "Show",
+
+    setup() {
+        const {addToCart} = useCart()
+        return {addToCart}
+    },
 
     mounted() {
         this.getProduct()
     },
 
     data() {
-      return {
-          product: null,
-      }
+        return {
+            product: null,
+        }
     },
 
     methods: {
@@ -19,14 +24,8 @@ export default {
             axios.get(`/api/v1/products/${this.$route.params.productSlug}`)
                 .then(res => {
                     this.product = res.data.data
-                    console.log(this.product)
                 })
         },
-        addProduct(variantId) {
-            axios.post('/api/v1/cart', {
-                variantId: variantId
-            })
-        }
     }
 }
 </script>
@@ -37,13 +36,13 @@ export default {
         <img :src="product.detail_image_url" alt="Product image" class="product-image">
         <p class="product-description">{{ product.description }}</p>
 
-        <!-- Множественные варианты -->
+        <!-- Несколько вариантов -->
         <div v-if="product.variants.length > 1" class="variant-list">
             <ul>
                 <li v-for="variant in product.variants" :key="variant.id" class="variant-item">
                     <span class="variant-name">{{ variant.name }}</span>
                     <span v-if="variant.old_price" class="old-price">{{ variant.old_price }} ₽</span>
-                    <button @click.prevent="addProduct(variant.id)">
+                    <button @click.prevent="addToCart(variant.id)">
                         + {{ variant.price }} ₽
                     </button>
                 </li>
@@ -55,7 +54,7 @@ export default {
             <template v-for="variant in product.variants" :key="variant.id">
                 <span class="variant-name">{{ variant.name }}</span>
                 <span v-if="variant.old_price" class="old-price">{{ variant.old_price }} ₽</span>
-                <button @click.prevent="addProduct(variant.id)">
+                <button @click.prevent="addToCart(variant.id)">
                     + {{ variant.price }} ₽
                 </button>
             </template>

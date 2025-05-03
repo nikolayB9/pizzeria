@@ -1,3 +1,4 @@
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
@@ -20,6 +21,11 @@ export default defineConfig(({ mode }) => {
                 host: 'localhost',
                 protocol: 'ws',
                 clientPort: parseInt(env.VITE_PORT_HOST),
+            },
+        },
+        resolve: {
+            alias: {
+                '@': fileURLToPath(new URL('./resources/js', import.meta.url))
             },
         },
     };

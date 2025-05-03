@@ -21,6 +21,7 @@ Route::middleware([
     Route::get('/products/{productSlug}', [ProductController::class, 'show']);
 
     Route::post('/cart', [CartController::class, 'store']);
+    Route::get('/cart', [CartController::class, 'index']);
 
     // Защищенные маршруты
     Route::middleware('auth')->group(function () {

@@ -29,7 +29,7 @@ class RegisterRequest extends FormRequest
                 'required',
                 'string',
                 'regex:/^((\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7}$/',
-                'unique:'.User::class
+                'unique:'.User::class,
             ],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'birth_date' => ['nullable', 'string', 'date_format:Y-m-d'],

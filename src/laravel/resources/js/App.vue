@@ -1,6 +1,13 @@
 <script>
+import { useCart } from '@/composables/useCart'
+
 export default {
     name: 'App',
+
+    setup() {
+        const { cartTotalPrice, fetchCart } = useCart()
+        return { cartTotalPrice }
+    },
 
     data() {
         return {
@@ -22,7 +29,6 @@ export default {
         getToken() {
             this.token = localStorage.getItem('x_xsrf_token')
         },
-
         logout() {
             axios.post('/api/v1/logout')
                 .then(res => {
@@ -44,7 +50,7 @@ export default {
     <div>
         <router-link :to="{ name: 'product.index' }">Главная</router-link>
     </div>
-    <div>Корзина: ₽</div>
+    <div v-if="cartTotalPrice">Корзина: {{ cartTotalPrice }} ₽</div>
 
     <div>
         <router-view></router-view>
