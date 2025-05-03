@@ -10,7 +10,6 @@ async function fetchCart() {
 
 async function addToCart(variantId) {
     const response = await axios.post('/api/v1/cart', { variantId })
-    console.log(response)
     cartTotalPrice.value = response.data.totalPrice
 }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
@@ -20,12 +21,14 @@ Route::middleware([
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{productSlug}', [ProductController::class, 'show']);
 
-    Route::post('/cart', [CartController::class, 'store']);
     Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
 
     // Защищенные маршруты
     Route::middleware('auth')->group(function () {
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+
+        Route::get('/user', [UserController::class, 'show']);
     });
 
     // Авторизация

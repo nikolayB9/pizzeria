@@ -17,7 +17,6 @@ export default {
             axios.get('/api/v1/products')
                 .then(res => {
                     this.products = res.data.data
-                    console.log(this.products)
                 })
                 .catch(err => {
                     console.error('Ошибка загрузки продуктов', err);

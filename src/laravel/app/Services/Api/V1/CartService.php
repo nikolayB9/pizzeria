@@ -16,7 +16,7 @@ class CartService
         $cartData = [
             $auth['field'] => $auth['value'],
             'product_variant_id' => $variantId,
-            'price' => $price,
+            'price' => $price, //фиксируем цену
         ];
 
         if (Cart::where($cartData)->exists()) {

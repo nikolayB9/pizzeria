@@ -1,27 +1,32 @@
 <script>
-import { useCart } from '@/composables/useCart'
+import {useCart} from '@/composables/useCart'
 
 export default {
     name: 'App',
 
     setup() {
-        const { cartTotalPrice, fetchCart } = useCart()
-        return { cartTotalPrice }
+        const {cartTotalPrice, fetchCart} = useCart()
+        fetchCart()
+        return {cartTotalPrice, fetchCart}
     },
 
     data() {
         return {
             token: null,
+            user: null,
         }
     },
 
     mounted() {
         this.getToken()
+        this.getUser()
     },
 
     watch: {
         $route(to, from) {
             this.getToken()
+            this.getUser()
+            this.fetchCart()
         }
     },
 
@@ -37,6 +42,14 @@ export default {
                     this.$router.push({name: 'user.login'})
                 })
         },
+        getUser() {
+            if (this.token) {
+                axios.get('/api/v1/user')
+                    .then(res => {
+                        this.user = res.data.data
+                    })
+            }
+        }
     }
 }
 </script>
@@ -45,7 +58,10 @@ export default {
         <router-link :to="{ name: 'user.login' }">Войти</router-link>
         <router-link :to="{ name: 'user.register' }">Регистрация</router-link>
     </div>
-    <div v-if="token"><a href="#" @click.prevent="logout">Выйти</a></div>
+    <div v-if="token">
+        <div v-if="user">{{ user.name }}</div>
+        <a href="#" @click.prevent="logout">Выйти</a>
+    </div>
 
     <div>
         <router-link :to="{ name: 'product.index' }">Главная</router-link>
