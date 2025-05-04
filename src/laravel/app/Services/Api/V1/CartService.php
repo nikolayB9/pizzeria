@@ -46,6 +46,15 @@ class CartService
         }
     }
 
+    public function mergeCartFromSessionToUser(string $oldSessionId, int $userId): void
+    {
+        Cart::where('session_id', $oldSessionId)
+            ->update([
+                'user_id' => $userId,
+                'session_id' => null,
+            ]);
+    }
+
     public function getAuthField(): array
     {
         return auth()->check()

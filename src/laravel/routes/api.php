@@ -34,6 +34,8 @@ Route::middleware([
     });
 
     // Авторизация
-    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('guest');
-    Route::post('/register', [RegisteredUserController::class, 'store'])->middleware('guest');
+    Route::middleware(['guest', 'remember.old.session.id'])->group(function () {
+        Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+        Route::post('/register', [RegisteredUserController::class, 'store']);
+    });
 });

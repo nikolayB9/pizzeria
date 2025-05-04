@@ -6,6 +6,7 @@ use App\Enums\User\UserRoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Models\User;
+use App\Services\Api\V1\CartService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
