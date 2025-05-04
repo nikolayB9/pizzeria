@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('product_variant_id')->constrained('product_variants');
             $table->decimal('price');
             $table->unsignedInteger('qty');
+            $table->foreignId('category_id')->constrained('categories');
             $table->timestamp('created_at')->useCurrent();
         });
     }

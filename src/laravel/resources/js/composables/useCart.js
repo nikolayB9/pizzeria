@@ -11,16 +11,26 @@ async function fetchCart() {
 }
 
 async function addToCart(variantId) {
-    const response = await axios.post('/api/v1/cart', { variantId })
-    cartTotalPrice.value = response.data.totalPrice
+    try {
+        const response = await axios.post('/api/v1/cart', { variantId })
+        cartTotalPrice.value = response.data.totalPrice
 
-    const product = cartProducts.value.find(p => p.variant_id === variantId)
+        const product = cartProducts.value.find(p => p.variant_id === variantId)
 
-    if (product) {
-        product.qty += 1
-    } else {
-        // Если товара ещё нет в списке, можно перезапросить корзину
-        await fetchCart()
+        if (product) {
+            product.qty += 1
+        } else {
+            await fetchCart()
+        }
+    } catch (error) {
+        if (error.response && error.response.status === 422) {
+            const message = error.response.data.message || 'Ошибка при добавлении в корзину.'
+            // Покажи сообщение пользователю — всплывашка, алерт, toast, и т.д.
+            alert(message) // или использовать кастомный UI компонент
+        } else {
+            console.error('Неизвестная ошибка:', error)
+            alert('Произошла неизвестная ошибка при добавлении товара.')
+        }
     }
 }
 

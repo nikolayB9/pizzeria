@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Category\CategoryTypeEnum;
 use App\Enums\ProductImage\ProductImageTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;

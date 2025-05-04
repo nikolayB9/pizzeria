@@ -2,25 +2,37 @@
 
 namespace App\Services\Api\V1;
 
+use App\Exceptions\Cart\CategoryLimitExceededException;
 use App\Models\Cart;
+use App\Models\Category;
 use App\Models\ProductVariant;
 
 class CartService
 {
+    /**
+     * @throws CategoryLimitExceededException
+     */
     public function addProduct(int $variantId): bool
     {
-        $price = ProductVariant::where('id', $variantId)->value('price');
+        $productVariant = ProductVariant::find($variantId);
+
+        $category = $productVariant->productCategory;
 
         $auth = $this->getAuthField();
+
+        $this->throwIfCategoryLimitExceeded($category, $auth);
 
         $cartData = [
             $auth['field'] => $auth['value'],
             'product_variant_id' => $variantId,
-            'price' => $price, //фиксируем цену
+            'price' => $productVariant->price,  // фиксируем цену!
+            'category_id' => $category->id,
         ];
 
-        if (Cart::where($cartData)->exists()) {
-            Cart::where($cartData)->increment('qty');
+        $cartItem = Cart::where($cartData)->first();
+
+        if ($cartItem) {
+            $cartItem->increment('qty');
             return false;
         } else {
             Cart::create($cartData + ['qty' => 1]);
@@ -46,6 +58,11 @@ class CartService
         }
     }
 
+    /**
+     * Привязывает корзину, созданную до авторизации, к авторизованному пользователю.
+     *
+     * Актуально, если пользователь добавил товары в корзину до входа в аккаунт.
+     */
     public function mergeCartFromSessionToUser(string $oldSessionId, int $userId): void
     {
         Cart::where('session_id', $oldSessionId)
@@ -68,5 +85,40 @@ class CartService
         return Cart::where($auth['field'], $auth['value'])
             ->selectRaw('SUM(price * qty) as total')
             ->value('total') ?? 0;
+    }
+
+    /**
+     * Бросает исключение, если превышен лимит товаров по категории.
+     *
+     * @throws CategoryLimitExceededException
+     */
+    protected function throwIfCategoryLimitExceeded(Category $category, array $auth): void
+    {
+        $cartItemsInCategory = Cart::where($auth['field'], $auth['value'])
+            ->where('category_id', $category->id)
+            ->select('id', 'qty')
+            ->get();
+
+        if (!$cartItemsInCategory->isEmpty()) {
+            $totalQty = $cartItemsInCategory->sum('qty');
+
+            $limit = $this->getLimitByCategorySlug($category->slug);
+
+            if ($totalQty >= $limit) {
+                throw new CategoryLimitExceededException("Нельзя добавить больше {$limit} товаров категории '{$category->slug}' в корзину.");
+            }
+        }
+    }
+
+    private function getLimitByCategorySlug(string $categorySlug): int
+    {
+        $limits = config('cart.limits_by_category_slug', []);
+        $limit = $limits[$categorySlug] ?? null;
+
+        if (is_null($limit)) {
+            throw new \RuntimeException("Лимит для категории '{$categorySlug}' не задан.");
+        }
+
+        return $limit;
     }
 }

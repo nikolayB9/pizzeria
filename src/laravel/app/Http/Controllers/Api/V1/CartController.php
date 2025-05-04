@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\Cart\CategoryLimitExceededException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Cart\CartVariantRequest;
 use App\Http\Resources\Cart\CartProductResource;
@@ -37,10 +38,14 @@ class CartController extends Controller
 
     public function store(CartVariantRequest $request): JsonResponse
     {
-        $wasAdded = $this->cartService->addProduct($request->validated()['variantId']);
+        try {
+            $added = $this->cartService->addProduct($request->validated()['variantId']);
+        } catch (CategoryLimitExceededException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         return response()->json([
-            'status' => $wasAdded
+            'status' => $added
                 ? 'Продукт добавлен в корзину'
                 : 'Увеличено количество товара в корзине',
             'totalPrice' => $this->cartService->getTotalPrice(),
@@ -49,10 +54,10 @@ class CartController extends Controller
 
     public function destroy(CartVariantRequest $request): JsonResponse
     {
-        $wasDeleted = $this->cartService->deleteProduct($request->validated()['variantId']);
+        $deleted = $this->cartService->deleteProduct($request->validated()['variantId']);
 
         return response()->json([
-            'status' => $wasDeleted
+            'status' => $deleted
                 ? 'Продукт удален из корзины'
                 : 'Уменьшено количество товара в корзине',
             'totalPrice' => $this->cartService->getTotalPrice(),
