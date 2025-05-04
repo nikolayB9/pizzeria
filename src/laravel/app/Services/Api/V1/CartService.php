@@ -7,7 +7,7 @@ use App\Models\ProductVariant;
 
 class CartService
 {
-    public function addProduct(int $variantId)
+    public function addProduct(int $variantId): bool
     {
         $price = ProductVariant::where('id', $variantId)->value('price');
 
@@ -21,8 +21,28 @@ class CartService
 
         if (Cart::where($cartData)->exists()) {
             Cart::where($cartData)->increment('qty');
+            return false;
         } else {
             Cart::create($cartData + ['qty' => 1]);
+            return true;
+        }
+    }
+
+    public function deleteProduct(int $variantId): bool
+    {
+        $auth = $this->getAuthField();
+
+        $cartItem = Cart::where($auth['field'], $auth['value'])
+            ->where('product_variant_id', $variantId)
+            ->select('id', 'qty')
+            ->firstOrFail();
+
+        if ($cartItem->qty > 1) {
+            $cartItem->decrement('qty');
+            return false;
+        } else {
+            $cartItem->delete();
+            return true;
         }
     }
 

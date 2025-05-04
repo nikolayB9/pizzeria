@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\Cart\AddToCartRequest;
-use App\Http\Resources\Cart\CartResource;
+use App\Http\Requests\Api\V1\Cart\CartVariantRequest;
+use App\Http\Resources\Cart\CartProductResource;
 use App\Models\Cart;
 use App\Services\Api\V1\CartService;
+use Illuminate\Http\JsonResponse;
 
 class CartController extends Controller
 {
@@ -14,27 +15,46 @@ class CartController extends Controller
     {
     }
 
-    public function index()
+    public function index(): JsonResponse
     {
         $auth = $this->cartService->getAuthField();
 
-        $products = CartResource::collection(
+        $cartProducts = CartProductResource::collection(
             Cart::where($auth['field'], $auth['value'])
+                ->with([
+                    'productVariant:id,name,product_id',
+                    'productVariant.product:id,name',
+                    'productVariant.product.previewImage:id,image_path,product_id',
+                ])
                 ->get()
         );
 
         return response()->json([
-            'products' => $products,
+            'cartProducts' => $cartProducts,
             'totalPrice' => $this->cartService->getTotalPrice(),
         ]);
     }
 
-    public function store(AddToCartRequest $request)
+    public function store(CartVariantRequest $request): JsonResponse
     {
-        $this->cartService->addProduct($request->validated()['variantId']);
+        $wasAdded = $this->cartService->addProduct($request->validated()['variantId']);
 
         return response()->json([
-            'status' => 'Продукт добавлен в корзину',
+            'status' => $wasAdded
+                ? 'Продукт добавлен в корзину'
+                : 'Увеличено количество товара в корзине',
+            'totalPrice' => $this->cartService->getTotalPrice(),
+        ]);
+    }
+
+    public function destroy(CartVariantRequest $request): JsonResponse
+    {
+        $wasDeleted = $this->cartService->deleteProduct($request->validated()['variantId']);
+
+        return response()->json([
+            'status' => $wasDeleted
+                ? 'Продукт удален из корзины'
+                : 'Уменьшено количество товара в корзине',
             'totalPrice' => $this->cartService->getTotalPrice(),
         ]);
     }

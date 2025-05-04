@@ -6,7 +6,6 @@ export default {
 
     setup() {
         const {cartTotalPrice, fetchCart} = useCart()
-        fetchCart()
         return {cartTotalPrice, fetchCart}
     },
 
@@ -20,13 +19,13 @@ export default {
     mounted() {
         this.getToken()
         this.getUser()
+        this.fetchCart()
     },
 
     watch: {
         $route(to, from) {
             this.getToken()
             this.getUser()
-            this.fetchCart()
         }
     },
 
@@ -54,24 +53,75 @@ export default {
 }
 </script>
 <template>
-    <div v-if="!token">
-        <router-link :to="{ name: 'user.login' }">Войти</router-link>
-        <router-link :to="{ name: 'user.register' }">Регистрация</router-link>
-    </div>
-    <div v-if="token">
-        <div v-if="user">{{ user.name }}</div>
-        <a href="#" @click.prevent="logout">Выйти</a>
-    </div>
+    <header class="navbar">
+        <div class="navbar-left">
+            <router-link class="nav-link" :to="{ name: 'product.index' }">Главная</router-link>
+            <router-link v-if="!token" class="nav-link" :to="{ name: 'user.login' }">Войти</router-link>
+            <router-link v-if="!token" class="nav-link" :to="{ name: 'user.register' }">Регистрация</router-link>
+        </div>
 
-    <div>
-        <router-link :to="{ name: 'product.index' }">Главная</router-link>
-    </div>
-    <div v-if="cartTotalPrice">Корзина: {{ cartTotalPrice }} ₽</div>
+        <div class="navbar-right" v-if="token">
+            <span class="username" v-if="user">{{ user.name }}</span>
+            <a href="#" class="nav-link" @click.prevent="logout">Выйти</a>
+        </div>
 
-    <div>
+        <div class="navbar-cart" v-if="cartTotalPrice">
+            <router-link class="nav-link cart-link" :to="{ name: 'cart.index'}">
+                🛒 {{ cartTotalPrice }} ₽
+            </router-link>
+        </div>
+    </header>
+
+    <main class="content">
         <router-view></router-view>
-    </div>
+    </main>
 </template>
-<style scoped>
 
+
+<style scoped>
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.navbar-left,
+.navbar-right,
+.navbar-cart {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #007bff;
+}
+
+.cart-link {
+    font-weight: bold;
+    color: #28a745;
+}
+
+.username {
+    font-weight: 600;
+    color: #555;
+}
+
+.content {
+    padding: 2rem;
+}
 </style>
+
+
