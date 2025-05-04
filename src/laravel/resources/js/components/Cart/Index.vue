@@ -5,8 +5,8 @@ export default {
     name: "Index",
 
     setup() {
-        const {cartTotalPrice, cartProducts, fetchCart, addToCart, deleteFromCart} = useCart()
-        return {cartTotalPrice, cartProducts, fetchCart, addToCart, deleteFromCart}
+        const {cartTotalPrice, cartProducts, fetchCart, addToCart, deleteFromCart, clearCart} = useCart()
+        return {cartTotalPrice, cartProducts, fetchCart, addToCart, deleteFromCart, clearCart}
     },
 
     mounted() {
@@ -19,6 +19,11 @@ export default {
 
 <template>
     <h1>Корзина</h1>
+    <div class="cart-clear">
+        <button v-if="cartTotalPrice" @click.prevent="clearCart()" class="clear-btn">
+            Очистить корзину
+        </button>
+    </div>
     <div v-if="cartProducts">
         <ul class="cart-list">
             <li v-for="product in cartProducts" class="cart-item">
@@ -36,13 +41,30 @@ export default {
             </li>
         </ul>
         <div class="cart-total">Общая стоимость: {{ cartTotalPrice }} ₽</div>
-        <div class="checkout">
+        <div v-if="cartTotalPrice" class="checkout">
             <a href="#">Оформить заказ</a>
         </div>
     </div>
 </template>
 
 <style scoped>
+.cart-clear {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+}
+
+.clear-btn {
+    background-color: #f87171;
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
 .cart-list {
     list-style: none;
     padding: 0;

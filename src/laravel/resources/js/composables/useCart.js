@@ -39,6 +39,12 @@ async function deleteFromCart(variantId) {
     }
 }
 
+async function clearCart() {
+    const response = await axios.delete('/api/v1/cart/clear')
+    cartTotalPrice.value = 0
+    cartProducts.value = []
+}
+
 export function useCart() {
     return {
         cartProducts,
@@ -46,5 +52,6 @@ export function useCart() {
         fetchCart,
         addToCart,
         deleteFromCart,
+        clearCart,
     }
 }

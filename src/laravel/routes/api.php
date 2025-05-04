@@ -24,6 +24,7 @@ Route::middleware([
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);
     Route::delete('/cart', [CartController::class, 'destroy']);
+    Route::delete('/cart/clear', [CartController::class, 'clear']);
 
     // Защищенные маршруты
     Route::middleware('auth')->group(function () {

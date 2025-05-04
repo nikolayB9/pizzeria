@@ -58,4 +58,16 @@ class CartController extends Controller
             'totalPrice' => $this->cartService->getTotalPrice(),
         ]);
     }
+
+    public function clear(): JsonResponse
+    {
+        $auth = $this->cartService->getAuthField();
+
+        Cart::where($auth['field'], $auth['value'])
+            ->delete();
+
+        return response()->json([
+           'status' => 'Корзина очищена',
+        ]);
+    }
 }
