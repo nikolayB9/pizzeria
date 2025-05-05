@@ -110,6 +110,13 @@ class CartService
         }
     }
 
+    /**
+     * Возвращает лимит количества товаров для указанной категории.
+     *
+     * Источник лимитов — конфигурация config/cart.php.
+     *
+     * @throws \RuntimeException Если лимит для категории не задан.
+     */
     private function getLimitByCategorySlug(string $categorySlug): int
     {
         $limits = config('cart.limits_by_category_slug', []);
