@@ -2,8 +2,11 @@
 
 namespace App\Repositories\Product;
 
+use App\Exceptions\Product\ProductNotFoundException;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class EloquentProductRepository implements ProductRepositoryInterface
 {
@@ -21,5 +24,24 @@ class EloquentProductRepository implements ProductRepositoryInterface
             ->withMin('variants', 'price')
             ->withCount('variants')
             ->get();
+    }
+
+    /**
+     * Получает опубликованный продукт по его slug или выбрасывает исключение, если не найден.
+     *
+     * @param string $slug Slug продукта.
+     * @return Product Модель продукта с загруженными вариантами.
+     * @throws ProductNotFoundException Если продукт не найден.
+     */
+    public function getBySlug(string $slug): Product
+    {
+        try {
+            return Product::where('slug', $slug)
+                ->published()
+                ->with(['detailImage', 'variants'])
+                ->firstOrFail();
+        } catch (ModelNotFoundException) {
+            throw new ProductNotFoundException("Продукт [$slug] не найден.");
+        }
     }
 }

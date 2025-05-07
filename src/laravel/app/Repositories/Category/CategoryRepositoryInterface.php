@@ -12,8 +12,7 @@ interface CategoryRepositoryInterface
      *
      * @param string $slug
      * @return Category
-     *
-     * @throws CategoryNotFoundException Если категория не найдена.
+     * @throws CategoryNotFoundException
      */
     public function getBySlug(string $slug): Category;
 }

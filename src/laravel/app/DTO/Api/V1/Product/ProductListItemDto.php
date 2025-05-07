@@ -30,7 +30,6 @@ class ProductListItemDto
      *
      * @param Product $product Экземпляр модели продукта с предзагруженными отношениями и агрегатами.
      * @return self
-     *
      * @throws RequiredRelationMissingException Если previewImage не был загружен.
      * @throws RelationIsNullException Если previewImage равен null.
      * @throws AggregateAttributeMissingException Если агрегаты variants_count или variants_min_price отсутствуют.
@@ -47,7 +46,7 @@ class ProductListItemDto
             slug: $product->slug,
             preview_image_url: url($product->previewImage->image_path ?: config('product.default_image_path')),
             has_multiple_variants: $product->variants_count > 1,
-            min_price: $product->variants_min_price,
+            min_price: (float)$product->variants_min_price,
         );
     }
 
@@ -56,7 +55,6 @@ class ProductListItemDto
      *
      * @param Collection $products Коллекция моделей Product.
      * @return array Массив DTO.
-     *
      * @throws RequiredRelationMissingException
      * @throws RelationIsNullException
      * @throws AggregateAttributeMissingException

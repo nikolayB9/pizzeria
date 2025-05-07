@@ -13,7 +13,6 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
      *
      * @param string $slug Уникальный slug категории.
      * @return Category Модель категории со всеми полями.
-     *
      * @throws CategoryNotFoundException Если категория не найдена.
      */
     public function getBySlug(string $slug): Category

@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\Category\CategoryNotFoundException;
+use App\Exceptions\Product\ProductNotFoundException;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Product\ProductResource;
-use App\Models\Product;
 use App\Services\Api\V1\ProductService;
 use Illuminate\Http\JsonResponse;
 
@@ -26,20 +25,26 @@ class ProductController extends Controller
         try {
             $products = $this->productService->getProductsByCategorySlug($categorySlug);
         } catch (CategoryNotFoundException) {
-            return response()->json([
-                'message' => 'Категория не найдена',
-            ], 404);
+            return response()->json(['message' => 'Категория не найдена'], 404);
         }
 
         return response()->json($products);
     }
 
-    public function show(string $productSlug)
+    /**
+     * Возвращает продукт по slug или 404, если не найден.
+     *
+     * @param string $productSlug Slug продукта.
+     * @return JsonResponse Продукт или 404, если не найден.
+     */
+    public function show(string $productSlug): JsonResponse
     {
-        return ProductResource::make(
-            Product::where('slug', $productSlug)
-                ->with(['detailImage', 'variants'])
-                ->firstOrFail()
-        );
+        try {
+            $product = $this->productService->getProductBySlug($productSlug);
+        } catch (ProductNotFoundException) {
+            return response()->json(['message' => 'Продукт не найден'], 404);
+        }
+
+        return response()->json($product);
     }
 }
