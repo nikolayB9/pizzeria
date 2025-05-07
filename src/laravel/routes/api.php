@@ -18,7 +18,7 @@ Route::middleware([
 ])->prefix('v1')->group(function () {
 
     // Публичные маршруты
-    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/category/{categorySlug}', [ProductController::class, 'getByCategory']);
     Route::get('/products/{productSlug}', [ProductController::class, 'show']);
 
     Route::get('/cart', [CartController::class, 'index']);
