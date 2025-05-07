@@ -24,7 +24,7 @@ class ProductService
      */
     public function getProductsByCategorySlug(string $categorySlug): array
     {
-        $category = app(CategoryRepositoryInterface::class)->getBySlug($categorySlug);
+        $category = app(CategoryRepositoryInterface::class)->getModelWithOnlyIdBySlug($categorySlug);
         $products = $this->productRepository->getPublishedForCategory($category);
 
         if ($products->isEmpty()) {

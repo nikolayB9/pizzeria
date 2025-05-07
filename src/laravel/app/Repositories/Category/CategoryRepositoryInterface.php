@@ -8,11 +8,11 @@ use App\Models\Category;
 interface CategoryRepositoryInterface
 {
     /**
-     * Возвращает категорию по её slug.
+     * Возвращает категорию с полем id по её slug.
      *
      * @param string $slug
      * @return Category
      * @throws CategoryNotFoundException
      */
-    public function getBySlug(string $slug): Category;
+    public function getModelWithOnlyIdBySlug(string $slug): Category;
 }

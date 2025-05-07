@@ -9,16 +9,16 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 class EloquentCategoryRepository implements CategoryRepositoryInterface
 {
     /**
-     * Получает категорию по slug или выбрасывает исключение, если не найдена.
+     * Получает модель категории по slug с выборкой только поля id.
      *
      * @param string $slug Уникальный slug категории.
-     * @return Category Модель категории со всеми полями.
+     * @return Category Экземпляр модели Category, в которой загружено только поле id.
      * @throws CategoryNotFoundException Если категория не найдена.
      */
-    public function getBySlug(string $slug): Category
+    public function getModelWithOnlyIdBySlug(string $slug): Category
     {
         try {
-            return Category::where('slug', $slug)->firstOrFail();
+            return Category::select('id')->where('slug', $slug)->firstOrFail();
         } catch (ModelNotFoundException) {
             throw new CategoryNotFoundException("Категория [$slug] не найдена.");
         }
