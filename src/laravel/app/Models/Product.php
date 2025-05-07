@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use App\Enums\Category\CategoryTypeEnum;
 use App\Enums\ProductImage\ProductImageTypeEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class Product extends Model
@@ -49,5 +49,10 @@ class Product extends Model
     {
         return $this->hasOne(ProductImage::class)
             ->where('type', ProductImageTypeEnum::Detail);
+    }
+
+    public function scopePublished($query): Builder
+    {
+        return $query->where('is_published', true);
     }
 }
