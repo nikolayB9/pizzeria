@@ -3,6 +3,8 @@
 namespace App\DTO\Traits;
 
 use App\Exceptions\Dto\AggregateAttributeMissingException;
+use App\Exceptions\Dto\PivotAttributeMissingException;
+use App\Exceptions\Dto\PivotMissingException;
 use App\Exceptions\Dto\RelationIsNotCollectionException;
 use App\Exceptions\Dto\RelationIsNullException;
 use App\Exceptions\Dto\RequiredRelationMissingException;
@@ -53,26 +55,6 @@ trait RequiresPreload
     }
 
     /**
-     * Гарантирует, что агрегатные атрибуты (например, поля из withCount/withSum) были предзагружены в модель.
-     *
-     * @param Model $model Модель Eloquent, у которой проверяется наличие агрегатных атрибутов.
-     * @param string|array $aggregates Название или список названий агрегатных полей (например, variants_count, variants_min_price).
-     * @return void
-     * @throws AggregateAttributeMissingException Если указанный агрегат отсутствует в загруженных атрибутах модели.
-     */
-    private static function checkRequirePreloads(Model $model, string|array $aggregates): void
-    {
-        $aggregates = (array)$aggregates;
-        $attributes = $model->getAttributes();
-
-        foreach ($aggregates as $attribute) {
-            if (!array_key_exists($attribute, $attributes)) {
-                throw new AggregateAttributeMissingException("Aggregate attribute [$attribute] must be preloaded on model [" . get_class($model) . "] before constructing [" . static::class . "].");
-            }
-        }
-    }
-
-    /**
      * Гарантирует, что отношение модели было предварительно загружено и является экземплярами Collection.
      *
      * @param Model $model Модель Eloquent, у которой проверяются отношения.
@@ -91,6 +73,51 @@ trait RequiresPreload
         foreach ($relations as $relation) {
             if (!$model->$relation instanceof Collection) {
                 throw new RelationIsNotCollectionException("Relation [$relation] on model [" . get_class($model) . "] must be an instance of Collection before constructing [" . static::class . "].");
+            }
+        }
+    }
+
+    /**
+     * Гарантирует, что агрегатные атрибуты (например, поля из withCount/withSum) были предзагружены в модель.
+     *
+     * @param Model $model Модель Eloquent, у которой проверяется наличие агрегатных атрибутов.
+     * @param string|array $aggregates Название или список названий агрегатных полей (например, variants_count, variants_min_price).
+     * @return void
+     * @throws AggregateAttributeMissingException Если указанный агрегат отсутствует в загруженных атрибутах модели.
+     */
+    private static function checkRequireAggregateAttributes(Model $model, string|array $aggregates): void
+    {
+        $aggregates = (array)$aggregates;
+        $attributes = $model->getAttributes();
+
+        foreach ($aggregates as $attribute) {
+            if (!array_key_exists($attribute, $attributes)) {
+                throw new AggregateAttributeMissingException("Aggregate attribute [$attribute] must be preloaded on model [" . get_class($model) . "] before constructing [" . static::class . "].");
+            }
+        }
+    }
+
+    /**
+     * Гарантирует, что указанные атрибуты pivot-таблицы присутствуют в модели.
+     *
+     * @param Model $model Модель Eloquent, у которой проверяется наличие pivot-атрибутов.
+     * @param string|array $pivots Название или список названий pivot-полей.
+     * @return void
+     * @throws PivotMissingException Если отсутствует объект pivot.
+     * @throws PivotAttributeMissingException Если хотя бы один указанный атрибут отсутствует в pivot.
+     */
+    private static function checkRequirePivotAttributes(Model $model, string|array $pivots): void
+    {
+        if (!$model->relationLoaded('pivot') || !$model->pivot) {
+            throw new PivotMissingException("Pivot relation is missing on model [" . get_class($model) . "] while constructing [" . static::class . "].");
+        }
+
+        $pivots = (array)$pivots;
+        $pivotAttributes = $model->pivot->getAttributes();
+
+        foreach ($pivots as $attribute) {
+            if (!array_key_exists($attribute, $pivotAttributes)) {
+                throw new PivotAttributeMissingException("Pivot attribute [$attribute] is missing on model [" . get_class($model) . "] while constructing [" . static::class . "].");
             }
         }
     }

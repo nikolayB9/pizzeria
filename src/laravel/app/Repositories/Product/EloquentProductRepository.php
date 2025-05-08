@@ -38,7 +38,7 @@ class EloquentProductRepository implements ProductRepositoryInterface
         try {
             return Product::where('slug', $slug)
                 ->published()
-                ->with(['detailImage', 'variants'])
+                ->with(['detailImage', 'variants.parameters'])
                 ->firstOrFail();
         } catch (ModelNotFoundException) {
             throw new ProductNotFoundException("Продукт [$slug] не найден.");

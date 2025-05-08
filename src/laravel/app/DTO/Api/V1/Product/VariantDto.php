@@ -2,16 +2,21 @@
 
 namespace App\DTO\Api\V1\Product;
 
+use App\DTO\Traits\RequiresPreload;
+use App\Exceptions\Dto\RequiredRelationMissingException;
 use App\Models\ProductVariant;
 use Illuminate\Support\Collection;
 
 class VariantDto
 {
+    use RequiresPreload;
+
     public function __construct(
         public int               $id,
         public string            $name,
         public float|string      $price,
         public null|float|string $old_price,
+        public array             $parameters,
     )
     {
     }
@@ -19,16 +24,20 @@ class VariantDto
     /**
      * Создаёт DTO из модели ProductVariant.
      *
-     * @param ProductVariant $variant Экземпляр модели варианта продукта.
+     * @param ProductVariant $variant Экземпляр модели с предзагруженным отношением parameters.
      * @return self
+     * @throws RequiredRelationMissingException Если отношение parameters не было предварительно загружено.
      */
     public static function fromModel(ProductVariant $variant): self
     {
+        self::checkRequireRelations($variant, 'parameters');
+
         return new self(
             id: $variant->id,
             name: $variant->name,
             price: (float)$variant->price,
             old_price: is_null($variant->old_price) ? null : (float)$variant->old_price,
+            parameters: ParameterDto::collection($variant->parameters),
         );
     }
 
@@ -36,7 +45,7 @@ class VariantDto
      * Преобразует коллекцию моделей в массив DTO.
      *
      * @param Collection $variants Коллекция моделей ProductVariant.
-     * @return array Массив DTO.
+     * @return VariantDto[] Массив DTO.
      */
     public static function collection(Collection $variants): array
     {

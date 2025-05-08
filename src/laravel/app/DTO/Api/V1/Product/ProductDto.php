@@ -25,7 +25,7 @@ class ProductDto
     /**
      * Создаёт DTO из модели Product.
      *
-     * @param Product $product Экземпляр модели продукта с предзагруженными отношениями.
+     * @param Product $product Экземпляр модели продукта с предзагруженными отношениями detailImage, variants.
      * @return self
      * @throws RequiredRelationMissingException Если detailImage или variants не были загружены.
      * @throws RelationIsNullException Если detailImage или variants равны null.

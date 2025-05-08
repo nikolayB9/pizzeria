@@ -28,7 +28,7 @@ class ProductListItemDto
     /**
      * Создаёт DTO из модели Product.
      *
-     * @param Product $product Экземпляр модели продукта с предзагруженными отношениями и агрегатами.
+     * @param Product $product Экземпляр модели продукта с предзагруженным отношением previewImage и агрегатами variants_count, variants_min_price.
      * @return self
      * @throws RequiredRelationMissingException Если previewImage не был загружен.
      * @throws RelationIsNullException Если previewImage равен null.
@@ -37,7 +37,7 @@ class ProductListItemDto
     public static function fromModel(Product $product): self
     {
         self::checkRequireNotNullRelations($product, 'previewImage');
-        self::checkRequirePreloads($product, ['variants_count', 'variants_min_price']);
+        self::checkRequireAggregateAttributes($product, ['variants_count', 'variants_min_price']);
 
         return new self(
             id: $product->id,
@@ -54,7 +54,7 @@ class ProductListItemDto
      * Преобразует коллекцию моделей в массив DTO.
      *
      * @param Collection $products Коллекция моделей Product.
-     * @return array Массив DTO.
+     * @return ProductListItemDto[] Массив DTO.
      * @throws RequiredRelationMissingException
      * @throws RelationIsNullException
      * @throws AggregateAttributeMissingException
