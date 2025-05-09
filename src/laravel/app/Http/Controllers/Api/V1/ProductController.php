@@ -28,7 +28,9 @@ class ProductController extends Controller
             return response()->json(['message' => 'Категория не найдена'], 404);
         }
 
-        return response()->json($products);
+        return response()->json([
+            'data' => $products,
+        ]);
     }
 
     /**
@@ -45,6 +47,8 @@ class ProductController extends Controller
             return response()->json(['message' => 'Продукт не найден'], 404);
         }
 
-        return response()->json($product);
+        return response()->json([
+            'data' => $product,
+        ]);
     }
 }
