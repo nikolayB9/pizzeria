@@ -48,4 +48,14 @@ class ProductFactory extends Factory
                 'detailImage'
             );
     }
+
+    public function withVariantsAndParameters(int $variantCount = 3, int $parameterCount = 4): ProductFactory|Factory
+    {
+        return $this->has(
+            ProductVariant::factory()
+                ->count($variantCount)
+                ->withParameters($parameterCount),
+            'variants'
+        );
+    }
 }
