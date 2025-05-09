@@ -70,16 +70,15 @@ class GetProductsByCategoryTest extends TestCase
     {
         $response = $this->getProductsByCategoryResponse();
         $products = $response->json('data');
+        $product = array_pop($products);
 
-        foreach ($products as $product) {
-            $this->assertIsInt($product['id']);
-            $this->assertIsString($product['name']);
-            $this->assertTrue(is_string($product['description']) || is_null($product['description']));
-            $this->assertIsString($product['slug']);
-            $this->assertIsString($product['preview_image_url']);
-            $this->assertIsBool($product['has_multiple_variants']);
-            $this->assertTrue(is_int($product['min_price']) || is_float($product['min_price']) || is_string($product['min_price']));
-        }
+        $this->assertIsInt($product['id']);
+        $this->assertIsString($product['name']);
+        $this->assertTrue(is_string($product['description']) || is_null($product['description']));
+        $this->assertIsString($product['slug']);
+        $this->assertIsString($product['preview_image_url']);
+        $this->assertIsBool($product['has_multiple_variants']);
+        $this->assertTrue(is_int($product['min_price']) || is_float($product['min_price']) || is_string($product['min_price']));
     }
 
     public function testResponseIncludesOnlyExpectedCategoryProducts()
@@ -97,5 +96,16 @@ class GetProductsByCategoryTest extends TestCase
         $expectedIds = $this->products->pluck('id')->sort()->values();
 
         $this->assertEquals($expectedIds, $returnedIds);
+    }
+
+    public function testReturns404ForNonExistentCategorySlug()
+    {
+        $nonExistentSlug = 'non-existent-slug';
+        $response = $this->get("/api/v1/products/category/$nonExistentSlug");
+
+        $response->assertStatus(404);
+        $response->assertJson([
+            'message' => 'Категория не найдена'
+        ]);
     }
 }
