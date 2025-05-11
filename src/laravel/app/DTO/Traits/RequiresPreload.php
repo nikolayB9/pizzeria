@@ -55,6 +55,51 @@ trait RequiresPreload
     }
 
     /**
+     * Гарантирует, что указанные (в том числе вложенные) отношения модели загружены и не равны null.
+     *
+     * Метод проверяет каждую часть отношения, переданного в точечной нотации (например, 'productVariant.product.previewImage'),
+     * и выбрасывает исключение, если хотя бы одно из них не было предварительно загружено или является null.
+     * Повторяющиеся части путей отношений проверяются только один раз, чтобы избежать дублирующих проверок при вложенных связях.
+     *
+     * @param Model $model Модель Eloquent, у которой проверяются отношения.
+     * @param string|array $relations Отношение или список отношений (в том числе вложенных через точку), которые должны быть загружены.
+     * @return void
+     * @throws RequiredRelationMissingException Если хотя бы одно из указанных отношений не загружено.
+     * @throws RelationIsNullException Если загруженное отношение равно null.
+     */
+    private static function checkRequireAllRelationPaths(Model $model, string|array $relations): void
+
+    {
+        $relations = (array)$relations;
+        $checkedPaths = [];
+
+        foreach ($relations as $relationPath) {
+            $paths = explode('.', $relationPath);
+            $currentModel = $model;
+            $currentPath = '';
+
+            foreach ($paths as $path) {
+                $currentPath = ltrim("$currentPath.$path", '.');
+
+                if (!in_array($currentPath, $checkedPaths, true)) {
+                    self::checkRequireNotNullRelations($currentModel, $path);
+                    $checkedPaths[] = $currentPath;
+                }
+
+                $currentModel = $currentModel->$path;
+
+                if ($currentModel instanceof \Illuminate\Support\Collection && $currentModel->isNotEmpty()) {
+                    $currentModel = $currentModel->first();
+                }
+
+                if (!$currentModel instanceof Model) {
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
      * Гарантирует, что отношение модели было предварительно загружено и является экземплярами Collection.
      *
      * @param Model $model Модель Eloquent, у которой проверяются отношения.

@@ -2,22 +2,45 @@
 
 namespace App\Services\Api\V1;
 
+use App\DTO\Api\V1\Cart\CartProductListItemDto;
 use App\Exceptions\Cart\CategoryLimitExceededException;
 use App\Models\Cart;
 use App\Models\Category;
 use App\Models\ProductVariant;
+use App\Repositories\Cart\CartRepositoryInterface;
 
 class CartService
 {
+    public function __construct(private readonly CartRepositoryInterface $cartRepository)
+    {
+    }
+
+    /**
+     * Возвращает продукты из корзины текущего пользователя или сессии.
+     *
+     * @return CartProductListItemDto[] Массив DTO продуктов в корзине или пустой массив, если корзина пуста.
+     */
+    public function getUserCartProducts(): array
+    {
+        $auth = $this->getAuthField();
+
+        $cartItems = $this->cartRepository->getItemsByIdentifier($auth['field'], $auth['value']);
+
+        if ($cartItems->isEmpty()) {
+            return [];
+        }
+
+        return CartProductListItemDto::collection($cartItems);
+    }
+
+
     /**
      * @throws CategoryLimitExceededException
      */
-    public function addProduct(int $variantId): bool
+    public function addProduct(int $variantId): void
     {
         $productVariant = ProductVariant::find($variantId);
-
         $category = $productVariant->productCategory;
-
         $auth = $this->getAuthField();
 
         $this->throwIfCategoryLimitExceeded($category, $auth);
@@ -33,10 +56,8 @@ class CartService
 
         if ($cartItem) {
             $cartItem->increment('qty');
-            return false;
         } else {
             Cart::create($cartData + ['qty' => 1]);
-            return true;
         }
     }
 
@@ -72,13 +93,19 @@ class CartService
             ]);
     }
 
+    /**
+     * Возвращает массив с типом идентификатора пользователя и его значением.
+     *
+     * @return array{field: 'user_id'|'session_id', value: string} Массив с типом идентификации пользователя.
+     */
     public function getAuthField(): array
     {
         return auth()->check()
             ? ['field' => 'user_id', 'value' => auth()->id()]
-            : ['field' => 'session_id', 'value' => session()->id()];
+            : ['field' => 'session_id', 'value' => session()->getId()];
     }
 
+    //TODO обработка коллекции
     public function getTotalPrice()
     {
         $auth = $this->getAuthField();
@@ -89,6 +116,8 @@ class CartService
 
     /**
      * Бросает исключение, если превышен лимит товаров по категории.
+     *
+     * @param Category $category Сущность категории.
      *
      * @throws CategoryLimitExceededException
      */
@@ -112,7 +141,6 @@ class CartService
 
     /**
      * Возвращает лимит количества товаров для указанной категории.
-     *
      * Источник лимитов — конфигурация config/cart.php.
      *
      * @throws \RuntimeException Если лимит для категории не задан.
@@ -121,6 +149,8 @@ class CartService
     {
         $limits = config('cart.limits_by_category_slug', []);
         $limit = $limits[$categorySlug] ?? null;
+
+        //TODO свое исключение, century
 
         if (is_null($limit)) {
             throw new \RuntimeException("Лимит для категории '{$categorySlug}' не задан.");

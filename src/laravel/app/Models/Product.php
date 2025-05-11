@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\Category\CategoryTypeEnum;
 use App\Enums\ProductImage\ProductImageTypeEnum;
+use App\Exceptions\Product\MissingProductCategoryException;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class Product extends Model
@@ -29,6 +31,30 @@ class Product extends Model
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class);
+    }
+
+    public function productCategoryRelation(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class)
+            ->where('type', CategoryTypeEnum::ProductType)
+            ->limit(1);
+    }
+
+    /**
+     * Возвращает обязательную категорию продукта с типом "product", используется как accessor: $product->productCategory.
+     *
+     * @return Category Модель категории с типом "product".
+     * @throws MissingProductCategoryException Если категория не найдена.
+     */
+    public function getProductCategoryAttribute(): Category
+    {
+        $category = $this->productCategoryRelation->first();
+
+        if (!$category) {
+            throw new MissingProductCategoryException("Продукт [{$this->slug}] не имеет обязательную категорию с типом 'product'.");
+        }
+
+        return $category;
     }
 
     public function parameters(): Collection
