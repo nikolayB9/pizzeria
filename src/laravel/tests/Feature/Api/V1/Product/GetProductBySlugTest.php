@@ -7,6 +7,7 @@ use Database\Seeders\ParameterGroupSeeder;
 use Database\Seeders\ProductImageTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
+use Tests\Helpers\ProductHelper;
 use Tests\TestCase;
 
 class GetProductBySlugTest extends TestCase
@@ -19,15 +20,7 @@ class GetProductBySlugTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([
-            ProductImageTypeSeeder::class,
-            ParameterGroupSeeder::class,
-        ]);
-
-        $this->product = Product::factory()
-            ->withVariantsAndParameters()
-            ->withImages()
-            ->create();
+        $this->product = ProductHelper::createProduct(1, true);
     }
 
     protected function getProductBySlugResponse(): TestResponse
@@ -104,10 +97,7 @@ class GetProductBySlugTest extends TestCase
 
     public function testReturnsCorrectProductBySlug()
     {
-        Product::factory(3)
-            ->withVariants()
-            ->withImages()
-            ->create();
+        ProductHelper::createProduct(3);
 
         $response = $this->getProductBySlugResponse();
         $responseProduct = $response->json('data');

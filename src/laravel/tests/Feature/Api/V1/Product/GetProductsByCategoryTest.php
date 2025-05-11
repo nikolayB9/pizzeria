@@ -4,11 +4,11 @@ namespace Api\V1\Product;
 
 use App\Models\Category;
 use App\Models\Product;
-use Database\Seeders\CategoryTypeSeeder;
-use Database\Seeders\ProductImageTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Testing\TestResponse;
+use Tests\Helpers\CategoryHelper;
+use Tests\Helpers\ProductHelper;
 use Tests\TestCase;
 
 class GetProductsByCategoryTest extends TestCase
@@ -22,18 +22,8 @@ class GetProductsByCategoryTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([
-            CategoryTypeSeeder::class,
-            ProductImageTypeSeeder::class,
-        ]);
-
-        $this->category = Category::factory()->create();
-
-        $this->products = Product::factory(3)
-            ->hasAttached($this->category)
-            ->withVariants()
-            ->withImages()
-            ->create();
+        $this->category = CategoryHelper::createCategoryOfType();
+        $this->products = ProductHelper::createProductsOfCategory($this->category);
     }
 
     protected function getProductsByCategoryResponse(): TestResponse

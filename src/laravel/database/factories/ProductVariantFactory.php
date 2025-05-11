@@ -17,7 +17,7 @@ class ProductVariantFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => rand(1, 100) . ' ' . fake()->randomLetter,
+            'name' => strtolower(fake()->unique()->regexify('[0-9]{1,2}[A-Z]{1,2}')),
             'price' => rand(90, 900),
             'old_price' => null,
         ];
