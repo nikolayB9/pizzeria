@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\Cart\CartUpdateException;
 use App\Exceptions\Cart\CategoryLimitExceededException;
+use App\Exceptions\Product\ProductNotPublishedException;
+use App\Exceptions\Product\ProductVariantNotFoundException;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\Cart\CartVariantRequest;
+use App\Http\Requests\Api\V1\Cart\AddToCartRequest;
 use App\Models\Cart;
 use App\Services\Api\V1\CartService;
 use Illuminate\Http\JsonResponse;
@@ -27,26 +30,46 @@ class CartController extends Controller
         return response()->json([
             'data' => $cartProducts,
             'meta' => [
-                'totalPrice' => $this->cartService->getTotalPrice(),
+                'totalPrice' => $this->cartService->getTotalPrice($cartProducts, false),
             ]
         ]);
     }
 
-    public function store(CartVariantRequest $request): JsonResponse
+    /**
+     * Добавляет продукт в корзину, если не превышен лимит по категории.
+     *
+     * @param AddToCartRequest $request Валидация переданного variantId.
+     * @return JsonResponse JSON-ответ со статусом и общей стоимостью корзины.
+     */
+    public function store(AddToCartRequest $request): JsonResponse
     {
         try {
             $this->cartService->addProduct($request->validated()['variantId']);
-        } catch (CategoryLimitExceededException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+        } catch (ProductVariantNotFoundException) {
+            return response()->json([
+                'error' => 'Вариант товара не найден.',
+            ], 404);
+        } catch (ProductNotPublishedException) {
+            return response()->json([
+                'error' => 'Товар не опубликован и не может быть добавлен в корзину.',
+            ], 403);
+        } catch (CategoryLimitExceededException) {
+            return response()->json([
+                'error' => 'Достигнут лимит товаров данной категории.',
+            ], 422);
+        } catch (CartUpdateException) {
+            return response()->json([
+                'error' => 'Не удалось обновить корзину, попробуйте еще раз.',
+            ], 422);
         }
 
         return response()->json([
-            'status' => 'Продукт добавлен в корзину',
+            'success' => true,
             'totalPrice' => $this->cartService->getTotalPrice(),
         ]);
     }
 
-    public function destroy(CartVariantRequest $request): JsonResponse
+    public function destroy(AddToCartRequest $request): JsonResponse
     {
         $deleted = $this->cartService->deleteProduct($request->validated()['variantId']);
 

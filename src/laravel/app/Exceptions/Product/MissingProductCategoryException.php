@@ -2,7 +2,7 @@
 
 namespace App\Exceptions\Product;
 
-class MissingProductCategoryException extends \DomainException
+class MissingProductCategoryException extends \RuntimeException
 {
     //
 }

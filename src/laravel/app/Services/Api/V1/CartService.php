@@ -2,12 +2,19 @@
 
 namespace App\Services\Api\V1;
 
+use App\DTO\Api\V1\Cart\AddToCartProductDto;
 use App\DTO\Api\V1\Cart\CartProductListItemDto;
+use App\Exceptions\Cart\CartUpdateException;
+use App\Exceptions\Cart\CategoryForLimitCheckNotFoundException;
 use App\Exceptions\Cart\CategoryLimitExceededException;
+use App\Exceptions\Cart\CategoryLimitNotSetInConfigException;
+use App\Exceptions\Category\CategoryNotFoundException;
+use App\Exceptions\Product\ProductNotPublishedException;
+use App\Exceptions\Product\ProductVariantNotFoundException;
 use App\Models\Cart;
-use App\Models\Category;
-use App\Models\ProductVariant;
 use App\Repositories\Cart\CartRepositoryInterface;
+use App\Repositories\Category\CategoryRepositoryInterface;
+use App\Repositories\Product\ProductRepositoryInterface;
 
 class CartService
 {
@@ -33,32 +40,33 @@ class CartService
         return CartProductListItemDto::collection($cartItems);
     }
 
-
     /**
-     * @throws CategoryLimitExceededException
+     * Добавляет вариант продукта в корзину или увеличивает его количество, если он уже есть.
+     *
+     * @param int $variantId ID варианта продукта, добавляемого в корзину.
+     * @return void
+     * @throws ProductVariantNotFoundException Если вариант продукта с указанным ID не найден.
+     * @throws ProductNotPublishedException Если связанный продукт не опубликован.
+     * @throws CategoryLimitExceededException Если лимит категории превышен.
+     * @throws CartUpdateException Если произошла ошибка при добавлении в корзину.
      */
     public function addProduct(int $variantId): void
     {
-        $productVariant = ProductVariant::find($variantId);
-        $category = $productVariant->productCategory;
+        $cartProduct = AddToCartProductDto::fromModel(
+            app(ProductRepositoryInterface::class)->getProductVariantWithCategoryById($variantId)
+        );
+
         $auth = $this->getAuthField();
+        $identifierField = $auth['field'];
+        $identifierValue = $auth['value'];
 
-        $this->throwIfCategoryLimitExceeded($category, $auth);
+        $this->throwIfCategoryLimitExceeded($cartProduct->category_id, $identifierField, $identifierValue);
 
-        $cartData = [
-            $auth['field'] => $auth['value'],
-            'product_variant_id' => $variantId,
-            'price' => $productVariant->price,  // фиксируем цену!
-            'category_id' => $category->id,
-        ];
-
-        $cartItem = Cart::where($cartData)->first();
-
-        if ($cartItem) {
-            $cartItem->increment('qty');
-        } else {
-            Cart::create($cartData + ['qty' => 1]);
-        }
+        $this->cartRepository->addProductToCartByIdentifier(
+            $cartProduct,
+            $identifierField,
+            $identifierValue,
+        );
     }
 
     public function deleteProduct(int $variantId): bool
@@ -105,57 +113,76 @@ class CartService
             : ['field' => 'session_id', 'value' => session()->getId()];
     }
 
-    //TODO обработка коллекции
-    public function getTotalPrice()
-    {
-        $auth = $this->getAuthField();
-        return Cart::where($auth['field'], $auth['value'])
-            ->selectRaw('SUM(price * qty) as total')
-            ->value('total') ?? 0;
-    }
 
     /**
-     * Бросает исключение, если превышен лимит товаров по категории.
+     * Возвращает общую стоимость товаров из корзины текущего пользователя или сессии.
      *
-     * @param Category $category Сущность категории.
+     * Если массив продуктов передан — используется он.
+     * Если пуст и $calculateIfEmpty = true — стоимость рассчитывается из базы.
+     * Иначе возвращается 0.
      *
-     * @throws CategoryLimitExceededException
+     * @param CartProductListItemDto[] $cartProducts Массив DTO продуктов в корзине.
+     * @param bool $calculateIfEmpty Делать ли запрос к базе, если массив пуст.
+     * @return float Общая стоимость товаров в корзине.
      */
-    protected function throwIfCategoryLimitExceeded(Category $category, array $auth): void
+    public function getTotalPrice(array $cartProducts = [], bool $calculateIfEmpty = true): float
     {
-        $cartItemsInCategory = Cart::where($auth['field'], $auth['value'])
-            ->where('category_id', $category->id)
-            ->select('id', 'qty')
-            ->get();
-
-        if (!$cartItemsInCategory->isEmpty()) {
-            $totalQty = $cartItemsInCategory->sum('qty');
-
-            $limit = $this->getLimitByCategorySlug($category->slug);
-
-            if ($totalQty >= $limit) {
-                throw new CategoryLimitExceededException("Нельзя добавить больше {$limit} товаров категории '{$category->slug}' в корзину.");
-            }
+        if (empty($cartProducts && !$calculateIfEmpty)) {
+            return 0.0;
         }
+
+        if (!empty($cartProducts)) {
+            $totalPrice = 0.0;
+            foreach ($cartProducts as $product) {
+                $totalPrice += $product->price * $product->qty;
+            }
+
+            return (float)$totalPrice;
+        }
+
+        $auth = $this->getAuthField();
+
+        return $this->cartRepository->getTotalPriceByIdentifier($auth['field'], $auth['value']);
     }
 
-    /**
-     * Возвращает лимит количества товаров для указанной категории.
-     * Источник лимитов — конфигурация config/cart.php.
-     *
-     * @throws \RuntimeException Если лимит для категории не задан.
-     */
-    private function getLimitByCategorySlug(string $categorySlug): int
-    {
-        $limits = config('cart.limits_by_category_slug', []);
-        $limit = $limits[$categorySlug] ?? null;
 
-        //TODO свое исключение, century
+    /**
+     * Проверяет лимит товаров по категории и выбрасывает исключение, если он превышен.
+     *
+     * @param int $categoryId ID категории, для которой проверяется лимит.
+     * @param string $identifierField Поле-идентификатор пользователя (например, 'user_id' или 'session_id').
+     * @param string $identifierValue Значение идентификатора.
+     * @return void
+     * @throws CategoryForLimitCheckNotFoundException Если категория с заданным ID не найдена.
+     * @throws CategoryLimitNotSetInConfigException Если лимит для категории не задан в конфигурации.
+     * @throws CategoryLimitExceededException Если лимит товаров для категории превышен.
+     */
+    protected function throwIfCategoryLimitExceeded(int $categoryId, string $identifierField, string $identifierValue): void
+    {
+        $totalQty = $this->cartRepository->getTotalQuantityByCategoryAndIdentifier(
+            $categoryId,
+            $identifierField,
+            $identifierValue
+        );
+
+        if ($totalQty === 0) {
+            return;
+        }
+
+        try {
+            $categorySlug = app(CategoryRepositoryInterface::class)->getSlugById($categoryId);
+        } catch (CategoryNotFoundException) {
+            throw new CategoryForLimitCheckNotFoundException("Категория с ID [$categoryId], проверяемая на лимит товаров в корзине, не найдена.");
+        }
+
+        $limit = config("cart.limits_by_category_slug.$categorySlug");
 
         if (is_null($limit)) {
-            throw new \RuntimeException("Лимит для категории '{$categorySlug}' не задан.");
+            throw new CategoryLimitNotSetInConfigException("Лимит для категории [$categorySlug] не задан.");
         }
 
-        return $limit;
+        if ($totalQty >= $limit) {
+            throw new CategoryLimitExceededException("Нельзя добавить больше [$limit] товаров категории [$categorySlug] в корзину.");
+        }
     }
 }

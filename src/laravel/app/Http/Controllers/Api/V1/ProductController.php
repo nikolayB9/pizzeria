@@ -25,7 +25,7 @@ class ProductController extends Controller
         try {
             $products = $this->productService->getProductsByCategorySlug($categorySlug);
         } catch (CategoryNotFoundException) {
-            return response()->json(['message' => 'Категория не найдена'], 404);
+            return response()->json(['error' => 'Категория не найдена'], 404);
         }
 
         return response()->json([
@@ -44,7 +44,7 @@ class ProductController extends Controller
         try {
             $product = $this->productService->getProductBySlug($productSlug);
         } catch (ProductNotFoundException) {
-            return response()->json(['message' => 'Продукт не найден'], 404);
+            return response()->json(['error' => 'Продукт не найден'], 404);
         }
 
         return response()->json([

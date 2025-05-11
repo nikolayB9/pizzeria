@@ -3,8 +3,11 @@
 namespace App\Repositories\Product;
 
 use App\Exceptions\Product\ProductNotFoundException;
+use App\Exceptions\Product\ProductNotPublishedException;
+use App\Exceptions\Product\ProductVariantNotFoundException;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -43,5 +46,34 @@ class EloquentProductRepository implements ProductRepositoryInterface
         } catch (ModelNotFoundException) {
             throw new ProductNotFoundException("Продукт [$slug] не найден.");
         }
+    }
+
+    /**
+     * Возвращает вариант опубликованного продукта с категорией типа "product".
+     *
+     * @param int $id ID варианта продукта.
+     * @return ProductVariant Модель варианта продукта с загруженными связями.
+     * @throws ProductVariantNotFoundException Если вариант продукта с указанным ID не найден.
+     * @throws ProductNotPublishedException Если связанный продукт не опубликован.
+     */
+    public function getProductVariantWithCategoryById(int $id): ProductVariant
+    {
+        try {
+            $variant = ProductVariant::where('id', $id)
+                ->select('id', 'product_id', 'price')
+                ->with([
+                    'product:id, is_published, slug',
+                    'product.productCategoryRelation:id, type',
+                ])
+                ->firstOrFail();
+        } catch (ModelNotFoundException) {
+            throw new ProductVariantNotFoundException("Вариант продукта с id [$id] не найден.");
+        }
+
+        if (!$variant->product->is_published) {
+            throw new ProductNotPublishedException("Продукт [{$variant->product->slug}], содержащий вариант с id [$id] не опубликован.");
+        }
+
+        return $variant;
     }
 }

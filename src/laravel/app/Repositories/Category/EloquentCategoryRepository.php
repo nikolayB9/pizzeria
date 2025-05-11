@@ -23,4 +23,20 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
             throw new CategoryNotFoundException("Категория [$slug] не найдена.");
         }
     }
+
+    /**
+     * Возвращает slug категории по её ID.
+     *
+     * @param int $id ID категории.
+     * @return string Slug категории.
+     * @throws CategoryNotFoundException Если категория с заданным ID не найдена.
+     */
+    public function getSlugById(int $id): string
+    {
+        try {
+            return Category::where('id', $id)->firstOrFail()->slug;
+        } catch (ModelNotFoundException) {
+            throw new CategoryNotFoundException("Категория с ID [$id] не найдена.");
+        }
+    }
 }

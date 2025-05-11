@@ -27,7 +27,6 @@ class GetCartProductsTest extends TestCase
         $this->variants = $products->map(function ($product) {
             return $product->variants->random();
         });
-
     }
 
     protected function getCartProductsResponseUsingSessionId(): TestResponse

@@ -2,7 +2,7 @@
 
 namespace App\Exceptions\Cart;
 
-class CategoryLimitExceededException extends \DomainException
+class CategoryLimitExceededException extends \Exception
 {
     //
 }

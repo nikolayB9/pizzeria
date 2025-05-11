@@ -14,13 +14,13 @@ class CartProductListItemDto
     use RequiresPreload;
 
     public function __construct(
-        public string       $name,
-        public int          $variant_id,
-        public string       $variant_name,
-        public float|string $price,
-        public int          $qty,
-        public string       $preview_image_url,
-        public int          $category_id,
+        public string $name,
+        public int    $variant_id,
+        public string $variant_name,
+        public float  $price,
+        public int    $qty,
+        public string $preview_image_url,
+        public int    $category_id,
     )
     {
     }
@@ -51,7 +51,7 @@ class CartProductListItemDto
             name: $product->name,
             variant_id: $cart->product_variant_id,
             variant_name: $cart->productVariant->name,
-            price: $cart->price,
+            price: (float)$cart->price,
             qty: $cart->qty,
             preview_image_url: url($product->previewImage->image_path ?: config('product.default_image_path')),
             category_id: $product->productCategory->id,
