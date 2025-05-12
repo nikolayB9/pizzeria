@@ -10,7 +10,6 @@ use App\Exceptions\Cart\CategoryLimitExceededException;
 use App\Exceptions\Cart\CategoryLimitNotSetInConfigException;
 use App\Exceptions\Category\CategoryNotFoundException;
 use App\Exceptions\Product\ProductNotPublishedException;
-use App\Exceptions\Product\ProductVariantNotFoundException;
 use App\Models\Cart;
 use App\Repositories\Cart\CartRepositoryInterface;
 use App\Repositories\Category\CategoryRepositoryInterface;
@@ -45,7 +44,6 @@ class CartService
      *
      * @param int $variantId ID варианта продукта, добавляемого в корзину.
      * @return void
-     * @throws ProductVariantNotFoundException Если вариант продукта с указанным ID не найден.
      * @throws ProductNotPublishedException Если связанный продукт не опубликован.
      * @throws CategoryLimitExceededException Если лимит категории превышен.
      * @throws CartUpdateException Если произошла ошибка при добавлении в корзину.
@@ -113,7 +111,6 @@ class CartService
             : ['field' => 'session_id', 'value' => session()->getId()];
     }
 
-
     /**
      * Возвращает общую стоимость товаров из корзины текущего пользователя или сессии.
      *
@@ -127,24 +124,25 @@ class CartService
      */
     public function getTotalPrice(array $cartProducts = [], bool $calculateIfEmpty = true): float
     {
-        if (empty($cartProducts && !$calculateIfEmpty)) {
+        if (empty($cartProducts) && !$calculateIfEmpty) {
             return 0.0;
         }
 
         if (!empty($cartProducts)) {
             $totalPrice = 0.0;
+
             foreach ($cartProducts as $product) {
                 $totalPrice += $product->price * $product->qty;
             }
 
-            return (float)$totalPrice;
+            return round((float)$totalPrice, 2);
         }
 
         $auth = $this->getAuthField();
+        $totalPrice = $this->cartRepository->getTotalPriceByIdentifier($auth['field'], $auth['value']);
 
-        return $this->cartRepository->getTotalPriceByIdentifier($auth['field'], $auth['value']);
+        return round($totalPrice, 2);
     }
-
 
     /**
      * Проверяет лимит товаров по категории и выбрасывает исключение, если он превышен.

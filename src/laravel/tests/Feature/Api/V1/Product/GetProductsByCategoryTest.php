@@ -3,7 +3,6 @@
 namespace Api\V1\Product;
 
 use App\Models\Category;
-use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Testing\TestResponse;
@@ -23,7 +22,7 @@ class GetProductsByCategoryTest extends TestCase
         parent::setUp();
 
         $this->category = CategoryHelper::createCategoryOfType();
-        $this->products = ProductHelper::createProductsOfCategory($this->category);
+        $this->products = ProductHelper::createProductsWithVariantsForCategories($this->category);
     }
 
     protected function getProductsByCategoryResponse(): TestResponse
@@ -73,13 +72,8 @@ class GetProductsByCategoryTest extends TestCase
 
     public function testResponseIncludesOnlyExpectedCategoryProducts()
     {
-        $otherCategory = Category::factory()->create();
-
-        Product::factory(3)
-            ->hasAttached($otherCategory)
-            ->withVariants()
-            ->withImages()
-            ->create();
+        $otherCategory = CategoryHelper::createCategoryOfType();
+        ProductHelper::createProductsWithVariantsForCategories($otherCategory);
 
         $response = $this->getProductsByCategoryResponse();
         $returnedIds = collect($response->json('data'))->pluck('id')->sort()->values();
@@ -95,7 +89,7 @@ class GetProductsByCategoryTest extends TestCase
 
         $response->assertStatus(404);
         $response->assertJson([
-            'message' => 'Категория не найдена'
+            'error' => 'Категория не найдена'
         ]);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Repositories\Product;
 
 use App\Exceptions\Product\ProductNotFoundException;
 use App\Exceptions\Product\ProductNotPublishedException;
-use App\Exceptions\Product\ProductVariantNotFoundException;
+use App\Exceptions\Product\ProductVariantMustExistException;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -34,7 +34,7 @@ interface ProductRepositoryInterface
      *
      * @param int $id
      * @return ProductVariant
-     * @throws ProductVariantNotFoundException
+     * @throws ProductVariantMustExistException
      * @throws ProductNotPublishedException
      */
     public function getProductVariantWithCategoryById(int $id): ProductVariant;

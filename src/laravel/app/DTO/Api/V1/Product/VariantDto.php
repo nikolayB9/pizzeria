@@ -12,11 +12,11 @@ class VariantDto
     use RequiresPreload;
 
     public function __construct(
-        public int               $id,
-        public string            $name,
-        public float|string      $price,
-        public null|float|string $old_price,
-        public array             $parameters,
+        public int        $id,
+        public string     $name,
+        public float      $price,
+        public null|float $old_price,
+        public array      $parameters,
     )
     {
     }

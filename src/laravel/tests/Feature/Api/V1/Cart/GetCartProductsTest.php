@@ -22,7 +22,7 @@ class GetCartProductsTest extends TestCase
         parent::setUp();
 
         $categories = CategoryHelper::createCategoryOfType(3);
-        $products = ProductHelper::createProductsOfRandomCategory($categories, 3);
+        $products = ProductHelper::createProductsWithVariantsForCategories($categories);
 
         $this->variants = $products->map(function ($product) {
             return $product->variants->random();
@@ -156,7 +156,7 @@ class GetCartProductsTest extends TestCase
     public function testResponseIncludesExpectedProductsAndTotalPriceUsingSessionId()
     {
         $categories = CategoryHelper::createCategoryOfType(3);
-        ProductHelper::createProductsOfRandomCategory($categories, 3);
+        ProductHelper::createProductsWithVariantsForCategories($categories);
 
         $response = $this->getCartProductsResponseUsingSessionId();
         $cartProducts = $response->json('data');
@@ -176,7 +176,7 @@ class GetCartProductsTest extends TestCase
     public function testResponseIncludesExpectedProductsAndTotalPriceUsingUserId()
     {
         $categories = CategoryHelper::createCategoryOfType(3);
-        ProductHelper::createProductsOfRandomCategory($categories, 3);
+        ProductHelper::createProductsWithVariantsForCategories($categories);
 
         $response = $this->getCartProductsResponseUsingUserId();
         $cartProducts = $response->json('data');

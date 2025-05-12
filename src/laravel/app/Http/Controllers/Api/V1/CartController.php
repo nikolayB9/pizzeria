@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Exceptions\Cart\CartUpdateException;
 use App\Exceptions\Cart\CategoryLimitExceededException;
 use App\Exceptions\Product\ProductNotPublishedException;
-use App\Exceptions\Product\ProductVariantNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Cart\AddToCartRequest;
 use App\Models\Cart;
@@ -45,10 +44,6 @@ class CartController extends Controller
     {
         try {
             $this->cartService->addProduct($request->validated()['variantId']);
-        } catch (ProductVariantNotFoundException) {
-            return response()->json([
-                'error' => 'Вариант товара не найден.',
-            ], 404);
         } catch (ProductNotPublishedException) {
             return response()->json([
                 'error' => 'Товар не опубликован и не может быть добавлен в корзину.',

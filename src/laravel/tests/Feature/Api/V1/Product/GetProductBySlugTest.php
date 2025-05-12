@@ -3,8 +3,6 @@
 namespace Api\V1\Product;
 
 use App\Models\Product;
-use Database\Seeders\ParameterGroupSeeder;
-use Database\Seeders\ProductImageTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Tests\Helpers\ProductHelper;
@@ -113,7 +111,7 @@ class GetProductBySlugTest extends TestCase
 
         $response->assertStatus(404);
         $response->assertJson([
-            'message' => 'Продукт не найден'
+            'error' => 'Продукт не найден'
         ]);
     }
 }

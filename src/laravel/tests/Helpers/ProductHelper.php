@@ -11,45 +11,34 @@ use Illuminate\Support\Collection;
 class ProductHelper
 {
     /**
-     * Создает коллекцию продуктов для указанной категории.
+     * Создает коллекцию продуктов для категории или для нескольких категорий.
      *
-     * @param Category $category Категория, к которой будут привязаны продукты.
-     * @param int $countProducts Количество создаваемых продуктов.
+     * @param Category|Collection $categories Категория или категории, к которым будут привязаны продукты.
+     * @param int $countProducts Количество создаваемых продуктов для каждой категории.
+     * @param int $countVariants Количество создаваемых вариантов для каждого продукта.
+     * @param bool $productsIsPublished Определяет, будут ли создаваемые продукты помечены как опубликованные.
      * @return Collection Коллекция созданных продуктов.
      */
-    public static function createProductsOfCategory(Category $category, int $countProducts = 3): Collection
+    public static function createProductsWithVariantsForCategories(Category|Collection $categories,
+                                                                   int                 $countProducts = 3,
+                                                                   int                 $countVariants = 3,
+                                                                   bool                $productsIsPublished = true): Collection
     {
         (new ProductImageTypeSeeder())->run();
 
-        return Product::factory($countProducts)
-            ->hasAttached($category)
-            ->withVariants()
-            ->withImages()
-            ->create();
-    }
-
-    /**
-     * Создает коллекцию продуктов для рандомной категории из переданной коллекции.
-     *
-     * @param Collection $categories Коллекция категорий.
-     * @param int $countProducts Количество создаваемых продуктов.
-     * @return Collection Коллекция созданных продуктов.
-     */
-    public static function createProductsOfRandomCategory(Collection $categories, int $countProducts = 3): Collection
-    {
-        (new ProductImageTypeSeeder())->run();
-
+        $collection = collect()->wrap($categories);
         $products = collect();
 
-        while ($countProducts > 0) {
-            $products->add(
-                Product::factory()
-                    ->hasAttached($categories->random())
-                    ->withVariants()
+        foreach ($collection as $category) {
+            $products = $products->merge(
+                Product::factory($countProducts)
+                    ->hasAttached($category)
+                    ->withVariants($countVariants)
                     ->withImages()
-                    ->create()
+                    ->create([
+                        'is_published' => $productsIsPublished,
+                    ])
             );
-            $countProducts--;
         }
 
         return $products;

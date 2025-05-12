@@ -14,13 +14,13 @@ class ProductListItemDto
     use RequiresPreload;
 
     public function __construct(
-        public int          $id,
-        public string       $name,
-        public ?string      $description,
-        public string       $slug,
-        public string       $preview_image_url,
-        public bool         $has_multiple_variants,
-        public float|string $min_price,
+        public int     $id,
+        public string  $name,
+        public ?string $description,
+        public string  $slug,
+        public string  $preview_image_url,
+        public bool    $has_multiple_variants,
+        public float   $min_price,
     )
     {
     }
