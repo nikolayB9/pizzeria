@@ -3,42 +3,54 @@
 namespace Api\V1\Product;
 
 use App\Models\Category;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Testing\TestResponse;
+use Tests\Feature\Api\AbstractApiTestCase;
 use Tests\Helpers\CategoryHelper;
 use Tests\Helpers\ProductHelper;
-use Tests\TestCase;
 
-class GetProductsByCategoryTest extends TestCase
+class GetProductsByCategoryTest extends AbstractApiTestCase
 {
-    use RefreshDatabase;
-
     protected Category $category;
     protected Collection $products;
 
-    protected function setUp(): void
+    protected function setUpTestContext(): void
     {
-        parent::setUp();
-
         $this->category = CategoryHelper::createCategoryOfType();
         $this->products = ProductHelper::createProductsWithVariantsForCategories($this->category);
     }
 
-    protected function getProductsByCategoryResponse(): TestResponse
+    protected function getRoute(array|string|null $routeParameter = null): string
     {
-        return $this->get("/api/v1/products/category/{$this->category->slug}");
+        return "/api/v1/products/category/$routeParameter";
+    }
+
+    protected function getMethod(): string
+    {
+        return 'get';
+    }
+
+    protected function getResponse(?string $categorySlug = null): TestResponse
+    {
+        if ($categorySlug === null) {
+            $categorySlug = $this->category->slug;
+        }
+
+        $route = $this->getRoute($categorySlug);
+        $method = $this->getMethod();
+
+        return $this->$method($route);
     }
 
     public function testReturnsSuccessfulResponse(): void
     {
-        $response = $this->getProductsByCategoryResponse();
-        $response->assertStatus(200);
+        $response = $this->getResponse();
+        $this->checkSuccess($response);
     }
 
     public function testReturnsExpectedJsonStructure(): void
     {
-        $response = $this->getProductsByCategoryResponse();
+        $response = $this->getResponse();
 
         $response->assertExactJsonStructure([
             'data' => [
@@ -57,7 +69,7 @@ class GetProductsByCategoryTest extends TestCase
 
     public function testReturnedFieldsHaveExpectedTypes(): void
     {
-        $response = $this->getProductsByCategoryResponse();
+        $response = $this->getResponse();
         $products = $response->json('data');
         $product = array_pop($products);
 
@@ -75,21 +87,28 @@ class GetProductsByCategoryTest extends TestCase
         $otherCategory = CategoryHelper::createCategoryOfType();
         ProductHelper::createProductsWithVariantsForCategories($otherCategory);
 
-        $response = $this->getProductsByCategoryResponse();
+        $response = $this->getResponse();
         $returnedIds = collect($response->json('data'))->pluck('id')->sort()->values();
         $expectedIds = $this->products->pluck('id')->sort()->values();
 
         $this->assertEquals($expectedIds, $returnedIds);
     }
 
+    public function testReturnsEmptyArrayIfCategoryHasNoProducts()
+    {
+        $categoryWithoutProducts = CategoryHelper::createCategoryOfType();
+
+        $response = $this->getResponse($categoryWithoutProducts->slug);
+
+        $this->checkSuccess($response);
+        $this->assertEquals([], $response->json('data'));
+    }
+
     public function testReturns404ForNonExistentCategorySlug()
     {
         $nonExistentSlug = 'non-existent-slug';
-        $response = $this->get("/api/v1/products/category/$nonExistentSlug");
+        $response = $this->getResponse($nonExistentSlug);
 
-        $response->assertStatus(404);
-        $response->assertJson([
-            'error' => 'Категория не найдена'
-        ]);
+        $this->checkError($response, 404, 'Категория не найдена');
     }
 }

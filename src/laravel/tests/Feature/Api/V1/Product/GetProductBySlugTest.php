@@ -3,38 +3,50 @@
 namespace Api\V1\Product;
 
 use App\Models\Product;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
+use Tests\Feature\Api\AbstractApiTestCase;
 use Tests\Helpers\ProductHelper;
-use Tests\TestCase;
 
-class GetProductBySlugTest extends TestCase
+class GetProductBySlugTest extends AbstractApiTestCase
 {
-    use RefreshDatabase;
-
     protected Product $product;
 
-    protected function setUp(): void
+    protected function setUpTestContext(): void
     {
-        parent::setUp();
-
         $this->product = ProductHelper::createProduct(1, true);
     }
 
-    protected function getProductBySlugResponse(): TestResponse
+    protected function getRoute(array|string|null $routeParameter = null): string
     {
-        return $this->get("/api/v1/products/{$this->product->slug}");
+        return "/api/v1/products/$routeParameter";
+    }
+
+    protected function getMethod(): string
+    {
+        return 'get';
+    }
+
+    protected function getResponse(?string $productSlug = null): TestResponse
+    {
+        if ($productSlug === null) {
+            $productSlug = $this->product->slug;
+        }
+
+        $route = $this->getRoute($productSlug);
+        $method = $this->getMethod();
+
+        return $this->$method($route);
     }
 
     public function testReturnsSuccessfulResponse(): void
     {
-        $response = $this->getProductBySlugResponse();
-        $response->assertStatus(200);
+        $response = $this->getResponse();
+        $this->checkSuccess($response);
     }
 
     public function testReturnsExpectedJsonStructure(): void
     {
-        $response = $this->getProductBySlugResponse();
+        $response = $this->getResponse();
 
         $response->assertExactJsonStructure([
             'data' => [
@@ -66,7 +78,7 @@ class GetProductBySlugTest extends TestCase
 
     public function testReturnedFieldsHaveExpectedTypes(): void
     {
-        $response = $this->getProductBySlugResponse();
+        $response = $this->getResponse();
         $product = $response->json('data');
 
         $this->assertIsInt($product['id']);
@@ -93,25 +105,22 @@ class GetProductBySlugTest extends TestCase
         $this->assertIsInt($parameter['group']);
     }
 
-    public function testReturnsCorrectProductBySlug()
+    public function testReturnsCorrectProductBySlug(): void
     {
         ProductHelper::createProduct(3);
 
-        $response = $this->getProductBySlugResponse();
+        $response = $this->getResponse();
         $responseProduct = $response->json('data');
 
         $this->assertEquals($this->product->id, $responseProduct['id']);
         $this->assertEquals($this->product->name, $responseProduct['name']);
     }
 
-    public function testReturns404ForNonExistentSlug()
+    public function testReturns404ForNonExistentSlug(): void
     {
         $nonExistentSlug = 'non-existent-slug';
-        $response = $this->get("/api/v1/products/$nonExistentSlug");
+        $response = $this->getResponse($nonExistentSlug);
 
-        $response->assertStatus(404);
-        $response->assertJson([
-            'error' => 'Продукт не найден'
-        ]);
+        $this->checkError($response, 404, 'Продукт не найден.');
     }
 }
