@@ -4,6 +4,7 @@ namespace App\Repositories\Cart;
 
 use App\DTO\Api\V1\Cart\AddToCartProductDto;
 use App\Exceptions\Cart\CartUpdateException;
+use App\Exceptions\Cart\ProductVariantNotFoundInCartException;
 use App\Models\Cart;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
@@ -84,7 +85,7 @@ class EloquentCartRepository implements CartRepositoryInterface
             } else {
                 Cart::create($cartData + ['qty' => 1]);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Ошибка при добавлении товара в корзину', [
                 'exception' => $e,
                 'identifier_field' => $identifierField,
@@ -97,4 +98,55 @@ class EloquentCartRepository implements CartRepositoryInterface
             throw new CartUpdateException("Ошибка при добавлении товара в корзину: {$e->getMessage()}");
         }
     }
+
+    /**
+     * Удаляет товар из корзины или уменьшает его количество, если количество больше 1.
+     *
+     * @param int $productVariantId ID варианта продукта.
+     * @param string $identifierField Поле-идентификатор пользователя.
+     * @param string $identifierValue Значение идентификатора.
+     * @return void
+     * @throws CartUpdateException Если произошла ошибка при обращении к базе данных.
+     * @throws ProductVariantNotFoundInCartException Если продукт не найден в корзине пользователя.
+     */
+    public function deleteProductFromCartByIdentifier(int $productVariantId, string $identifierField, string $identifierValue): void
+    {
+        $cartItem = Cart::where($identifierField, $identifierValue)
+            ->where('product_variant_id', $productVariantId)
+            ->first();
+
+        if (!$cartItem) {
+            throw new ProductVariantNotFoundInCartException(
+                "Продукт с вариантом ID [$productVariantId] не найден в корзине. [$identifierField: $identifierValue]"
+            );
+        }
+
+        if ($cartItem->qty <= 0) {
+            Log::warning('Попытка удалить товар с нулевым количеством в корзине', [
+                'identifier_field' => $identifierField,
+                'identifier_value' => $identifierValue,
+                'product_variant_id' => $productVariantId,
+            ]);
+            $cartItem->delete();
+            return;
+        }
+
+        try {
+            if ($cartItem->qty > 1) {
+                $cartItem->decrement('qty');
+            } else {
+                $cartItem->delete();
+            }
+        } catch (\Throwable $e) {
+            Log::error('Ошибка при удалении товара из корзины', [
+                'exception' => $e,
+                'identifier_field' => $identifierField,
+                'identifier_value' => $identifierValue,
+                'product_variant_id' => $productVariantId,
+            ]);
+
+            throw new CartUpdateException("Непредвиденная ошибка при удалении товара из корзины: {$e->getMessage()}");
+        }
+    }
+
 }

@@ -8,6 +8,7 @@ use App\Exceptions\Cart\CartUpdateException;
 use App\Exceptions\Cart\CategoryForLimitCheckNotFoundException;
 use App\Exceptions\Cart\CategoryLimitExceededException;
 use App\Exceptions\Cart\CategoryLimitNotSetInConfigException;
+use App\Exceptions\Cart\ProductVariantNotFoundInCartException;
 use App\Exceptions\Category\CategoryNotFoundException;
 use App\Exceptions\Product\ProductNotPublishedException;
 use App\Models\Cart;
@@ -67,22 +68,19 @@ class CartService
         );
     }
 
-    public function deleteProduct(int $variantId): bool
+    /**
+     * Удаляет вариант продукта из корзины или уменьшает его количество.
+     *
+     * @param int $variantId ID варианта продукта.
+     * @return void
+     * @throws CartUpdateException Если произошла ошибка при удалении или уменьшении количества.
+     * @throws ProductVariantNotFoundInCartException Если вариант продукта с таким ID не найден в корзине пользователя.
+     */
+    public function deleteProduct(int $variantId): void
     {
         $auth = $this->getAuthField();
 
-        $cartItem = Cart::where($auth['field'], $auth['value'])
-            ->where('product_variant_id', $variantId)
-            ->select('id', 'qty')
-            ->firstOrFail();
-
-        if ($cartItem->qty > 1) {
-            $cartItem->decrement('qty');
-            return false;
-        } else {
-            $cartItem->delete();
-            return true;
-        }
+        $this->cartRepository->deleteProductFromCartByIdentifier($variantId, $auth['field'], $auth['value']);
     }
 
     /**

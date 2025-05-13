@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\Cart\CartUpdateException;
 use App\Exceptions\Cart\CategoryLimitExceededException;
+use App\Exceptions\Cart\ProductVariantNotFoundInCartException;
 use App\Exceptions\Product\ProductNotPublishedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Cart\AddToCartRequest;
+use App\Http\Requests\Api\V1\Cart\DeleteFromCartRequest;
 use App\Models\Cart;
 use App\Services\Api\V1\CartService;
 use Illuminate\Http\JsonResponse;
@@ -64,14 +66,28 @@ class CartController extends Controller
         ]);
     }
 
-    public function destroy(AddToCartRequest $request): JsonResponse
+    /**
+     * Удаляет товар из корзины или уменьшает его количество.
+     *
+     * @param DeleteFromCartRequest $request Валидация переданного variantId.
+     * @return JsonResponse JSON-ответ со статусом и общей стоимостью корзины.
+     */
+    public function destroy(DeleteFromCartRequest $request): JsonResponse
     {
-        $deleted = $this->cartService->deleteProduct($request->validated()['variantId']);
+        try {
+            $this->cartService->deleteProduct($request->validated()['variantId']);
+        } catch (ProductVariantNotFoundInCartException) {
+            return response()->json([
+                'error' => 'Товар не найден в корзине.'
+            ], 422);
+        } catch (CartUpdateException) {
+            return response()->json([
+                'error' => 'Не удалось удалить товар из корзины, попробуйте еще раз.'
+            ], 422);
+        }
 
         return response()->json([
-            'status' => $deleted
-                ? 'Продукт удален из корзины'
-                : 'Уменьшено количество товара в корзине',
+            'success' => true,
             'totalPrice' => $this->cartService->getTotalPrice(),
         ]);
     }
