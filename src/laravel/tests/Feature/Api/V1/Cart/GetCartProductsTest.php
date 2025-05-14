@@ -26,7 +26,7 @@ class GetCartProductsTest extends AbstractApiTestCase
         });
     }
 
-    protected function getRoute(array|string|null $routeParameter = null): string
+    protected function getRoute(mixed $routeParameter = null): string
     {
         return '/api/v1/cart';
     }

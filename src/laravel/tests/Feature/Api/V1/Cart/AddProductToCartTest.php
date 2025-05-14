@@ -42,7 +42,7 @@ class AddProductToCartTest extends AbstractApiTestCase
         $this->variants = $this->products->flatMap(fn($product) => $product->variants);
     }
 
-    protected function getRoute(array|string|null $routeParameter = null): string
+    protected function getRoute(mixed $routeParameter = null): string
     {
         return '/api/v1/cart';
     }
@@ -75,7 +75,7 @@ class AddProductToCartTest extends AbstractApiTestCase
         }
     }
 
-    protected function checkSuccess(TestResponse $response, array $expected = []): void
+    protected function checkSuccess(TestResponse $response, mixed $expected = null): void
     {
         $response->assertStatus(200);
         $response->assertExactJsonStructure([
@@ -88,12 +88,11 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $this->assertTrue(is_float($totalPrice) || is_int($totalPrice));
 
-        if (!isset($expected[0])) {
+        if (is_null($expected)) {
             throw new \RuntimeException('Не передана ожидаемая общая стоимость корзины.');
         }
 
-        $expectedTotal = $expected[0];
-        $this->assertEquals($expectedTotal, $totalPrice);
+        $this->assertEquals($expected, $totalPrice);
     }
 
     protected function getRequestToSessionStart(): string
@@ -119,7 +118,7 @@ class AddProductToCartTest extends AbstractApiTestCase
         $variant = $this->variants->random();
         $response = $this->getResponse('session', $variant->id);
 
-        $this->checkSuccess($response, [$variant->price]);
+        $this->checkSuccess($response, $variant->price);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
@@ -128,7 +127,7 @@ class AddProductToCartTest extends AbstractApiTestCase
         $variant = $this->variants->random();
         $response = $this->getResponse('user', $variant->id);
 
-        $this->checkSuccess($response, [$variant->price]);
+        $this->checkSuccess($response, $variant->price);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
@@ -149,7 +148,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, [$totalPrice]);
+        $this->checkSuccess($response, $totalPrice);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
@@ -170,7 +169,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, [$totalPrice]);
+        $this->checkSuccess($response, $totalPrice);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
@@ -190,7 +189,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, [$totalPrice]);
+        $this->checkSuccess($response, $totalPrice);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 2]);
     }
 
@@ -210,7 +209,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, [$totalPrice]);
+        $this->checkSuccess($response, $totalPrice);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 2]);
     }
 

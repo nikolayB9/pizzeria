@@ -20,7 +20,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
         $this->products = ProductHelper::createProductsWithVariantsForCategories($this->category);
     }
 
-    protected function getRoute(array|string|null $routeParameter = null): string
+    protected function getRoute(mixed $routeParameter = null): string
     {
         return "/api/v1/products/category/$routeParameter";
     }

@@ -16,7 +16,7 @@ class GetProductBySlugTest extends AbstractApiTestCase
         $this->product = ProductHelper::createProduct(1, true);
     }
 
-    protected function getRoute(array|string|null $routeParameter = null): string
+    protected function getRoute(mixed $routeParameter = null): string
     {
         return "/api/v1/products/$routeParameter";
     }

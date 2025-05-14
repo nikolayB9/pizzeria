@@ -34,10 +34,10 @@ abstract class AbstractApiTestCase extends TestCase
     /**
      * Возвращает тестируемый маршрут.
      *
-     * @param mixed ...$args Параметр(ы) для вставки в запрос, если они нужны для динамического маршрута.
+     * @param mixed $routeParameter Параметр(ы) для вставки в запрос, если они нужны для динамического маршрута.
      * @return string Маршрут для запроса.
      */
-    abstract protected function getRoute(array|string|null $routeParameter = null): string;
+    abstract protected function getRoute(mixed $routeParameter = null): string;
 
     /**
      * Возвращает HTTP-метод (get, post, patch, put, delete) для запроса.
@@ -50,10 +50,10 @@ abstract class AbstractApiTestCase extends TestCase
      * Метод для проверки успешного ответа на запрос. При необходимости можно переопределить.
      *
      * @param TestResponse $response Ответ от тестируемого запроса.
-     * @param array $expected Массив с ожидаемыми значениями для проверки.
+     * @param array $expected Ожидаемые значения для проверки (если есть).
      * @return void
      */
-    protected function checkSuccess(TestResponse $response, array $expected = []): void
+    protected function checkSuccess(TestResponse $response, mixed $expected = null): void
     {
         $response->assertStatus(200);
     }
@@ -64,9 +64,13 @@ abstract class AbstractApiTestCase extends TestCase
      * @param TestResponse $response Ответ от тестируемого запроса.
      * @param int $status Ожидаемый HTTP-статус код.
      * @param string|null $message Ожидаемое сообщение ошибки (если есть).
+     * @param mixed $expected Дополнительные ожидаемые значения для проверки (если есть).
      * @return void
      */
-    protected function checkError(TestResponse $response, int $status, string $message = null): void
+    protected function checkError(TestResponse $response,
+                                  int $status,
+                                  string $message = null,
+                                  mixed $expected = null): void
     {
         $response->assertStatus($status);
 
