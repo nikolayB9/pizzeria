@@ -2,25 +2,22 @@
 
 namespace Api\V1\Cart;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Testing\TestResponse;
+use Tests\Feature\Api\AbstractApiTestCase;
 use Tests\Helpers\CartHelper;
 use Tests\Helpers\CategoryHelper;
 use Tests\Helpers\ProductHelper;
-use Tests\Helpers\UserHelper;
-use Tests\TestCase;
+use Tests\Traits\HasAuthContext;
 
-class GetCartProductsTest extends TestCase
+class GetCartProductsTest extends AbstractApiTestCase
 {
-    use RefreshDatabase;
+    use HasAuthContext;
 
     protected Collection $variants;
 
-    protected function setUp(): void
+    protected function setUpTestContext(): void
     {
-        parent::setUp();
-
         $categories = CategoryHelper::createCategoryOfType(3);
         $products = ProductHelper::createProductsWithVariantsForCategories($categories);
 
@@ -29,41 +26,61 @@ class GetCartProductsTest extends TestCase
         });
     }
 
-    protected function getCartProductsResponseUsingSessionId(): TestResponse
+    protected function getRoute(array|string|null $routeParameter = null): string
     {
-        $this->get('/api/v1/cart');
-        $sessionId = session()->getId();
-
-        CartHelper::createFromVariantByIdentifier($this->variants, 'session_id', $sessionId);
-
-        return $this->withCookie('laravel_session', $sessionId)->get('/api/v1/cart');
+        return '/api/v1/cart';
     }
 
-    protected function getCartProductsResponseUsingUserId(): TestResponse
+    protected function getMethod(): string
     {
-        $user = UserHelper::createUser();
-        $this->actingAs($user);
+        return 'get';
+    }
 
-        CartHelper::createFromVariantByIdentifier($this->variants, 'user_id', $user->id);
+    protected function getRequestToSessionStart(): string
+    {
+        return '/api/v1/cart';
+    }
 
-        return $this->get('/api/v1/cart');
+    protected function getResponse(string $authType, bool $createCartItems = true): TestResponse
+    {
+        if ($authType === 'session') {
+            $this->setSessionId();
+        } else {
+            $this->setUserId();
+        }
+
+        $auth = $this->getAuthField();
+
+        if ($createCartItems) {
+            CartHelper::createFromVariantByIdentifier($this->variants, $auth, true);
+        }
+
+        $route = $this->getRoute();
+        $method = $this->getMethod();
+
+        if ($authType === 'session') {
+            return $this->withCookie('laravel_session', $this->sessionId)
+                ->$method($route);
+        } else {
+            return $this->$method($route);
+        }
     }
 
     public function testReturnsSuccessfulResponseUsingSessionId(): void
     {
-        $response = $this->getCartProductsResponseUsingSessionId();
-        $response->assertStatus(200);
+        $response = $this->getResponse('session');
+        $this->checkSuccess($response);
     }
 
     public function testReturnsSuccessfulResponseUsingUserId(): void
     {
-        $response = $this->getCartProductsResponseUsingUserId();
-        $response->assertStatus(200);
+        $response = $this->getResponse('user');
+        $this->checkSuccess($response);
     }
 
     public function testReturnsExpectedJsonStructureUsingSessionId(): void
     {
-        $response = $this->getCartProductsResponseUsingSessionId();
+        $response = $this->getResponse('session');
 
         $response->assertExactJsonStructure([
             'data' => [
@@ -85,7 +102,7 @@ class GetCartProductsTest extends TestCase
 
     public function testReturnsExpectedJsonStructureUsingUserId(): void
     {
-        $response = $this->getCartProductsResponseUsingUserId();
+        $response = $this->getResponse('user');
 
         $response->assertExactJsonStructure([
             'data' => [
@@ -107,7 +124,7 @@ class GetCartProductsTest extends TestCase
 
     public function testReturnedFieldsHaveExpectedTypesUsingSessionId(): void
     {
-        $response = $this->getCartProductsResponseUsingSessionId();
+        $response = $this->getResponse('session');
         $cartProducts = $response->json('data');
 
         $this->assertNotEmpty($cartProducts);
@@ -131,7 +148,7 @@ class GetCartProductsTest extends TestCase
 
     public function testReturnedFieldsHaveExpectedTypesUsingUserId(): void
     {
-        $response = $this->getCartProductsResponseUsingUserId();
+        $response = $this->getResponse('user');
         $cartProducts = $response->json('data');
 
         $this->assertNotEmpty($cartProducts);
@@ -153,12 +170,12 @@ class GetCartProductsTest extends TestCase
         $this->assertTrue(is_int($meta['totalPrice']) || is_float($meta['totalPrice']) || is_string($meta['totalPrice']));
     }
 
-    public function testResponseIncludesExpectedProductsAndTotalPriceUsingSessionId()
+    public function testResponseIncludesExpectedProductsAndTotalPriceUsingSessionId(): void
     {
         $categories = CategoryHelper::createCategoryOfType(3);
         ProductHelper::createProductsWithVariantsForCategories($categories);
 
-        $response = $this->getCartProductsResponseUsingSessionId();
+        $response = $this->getResponse('session');
         $cartProducts = $response->json('data');
         $returnedIds = collect($cartProducts)->pluck('variant_id')->sort()->values();
         $expectedIds = $this->variants->pluck('id')->sort()->values();
@@ -170,15 +187,15 @@ class GetCartProductsTest extends TestCase
             $totalPrice += $product['price'] * $product['qty'];
         }
 
-        $this->assertEquals($response->json('meta.totalPrice'), $totalPrice);
+        $this->assertEquals($totalPrice, $response->json('meta.totalPrice'));
     }
 
-    public function testResponseIncludesExpectedProductsAndTotalPriceUsingUserId()
+    public function testResponseIncludesExpectedProductsAndTotalPriceUsingUserId(): void
     {
         $categories = CategoryHelper::createCategoryOfType(3);
         ProductHelper::createProductsWithVariantsForCategories($categories);
 
-        $response = $this->getCartProductsResponseUsingUserId();
+        $response = $this->getResponse('user');
         $cartProducts = $response->json('data');
         $returnedIds = collect($cartProducts)->pluck('variant_id')->sort()->values();
         $expectedIds = $this->variants->pluck('id')->sort()->values();
@@ -190,6 +207,24 @@ class GetCartProductsTest extends TestCase
             $totalPrice += $product['price'] * $product['qty'];
         }
 
-        $this->assertEquals($response->json('meta.totalPrice'), $totalPrice);
+        $this->assertEquals($totalPrice, $response->json('meta.totalPrice'));
+    }
+
+    public function testReturnsEmptyArrayZeroTotalPriceIfCartIsEmptyUsingSessionId(): void
+    {
+        $response = $this->getResponse('session', false);
+
+        $this->checkSuccess($response);
+        $this->assertEquals([], $response->json('data'));
+        $this->assertEquals(0.0, $response->json('meta.totalPrice'));
+    }
+
+    public function testReturnsEmptyArrayAndZeroTotalPriceIfCartIsEmptyUsingUserId(): void
+    {
+        $response = $this->getResponse('user', false);
+
+        $this->checkSuccess($response);
+        $this->assertEquals([], $response->json('data'));
+        $this->assertEquals(0.0, $response->json('meta.totalPrice'));
     }
 }

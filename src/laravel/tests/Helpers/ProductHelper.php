@@ -11,18 +11,18 @@ use Illuminate\Support\Collection;
 class ProductHelper
 {
     /**
-     * Создает коллекцию продуктов для категории или для нескольких категорий.
+     * Создает продукт или коллекцию продуктов для категории или для нескольких категорий.
      *
      * @param Category|Collection $categories Категория или категории, к которым будут привязаны продукты.
      * @param int $countProducts Количество создаваемых продуктов для каждой категории.
      * @param int $countVariants Количество создаваемых вариантов для каждого продукта.
      * @param bool $productsIsPublished Определяет, будут ли создаваемые продукты помечены как опубликованные.
-     * @return Collection Коллекция созданных продуктов.
+     * @return Product|Collection Продукт или коллекция созданных продуктов.
      */
     public static function createProductsWithVariantsForCategories(Category|Collection $categories,
                                                                    int                 $countProducts = 3,
                                                                    int                 $countVariants = 3,
-                                                                   bool                $productsIsPublished = true): Collection
+                                                                   bool                $productsIsPublished = true): Product|Collection
     {
         (new ProductImageTypeSeeder())->run();
 
@@ -41,7 +41,7 @@ class ProductHelper
             );
         }
 
-        return $products;
+        return $countProducts === 1 ? $products->first() : $products;
     }
 
     /**

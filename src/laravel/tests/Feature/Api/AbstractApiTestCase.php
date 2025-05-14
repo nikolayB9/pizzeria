@@ -32,6 +32,21 @@ abstract class AbstractApiTestCase extends TestCase
     abstract protected function setUpTestContext(): void;
 
     /**
+     * Возвращает тестируемый маршрут.
+     *
+     * @param mixed ...$args Параметр(ы) для вставки в запрос, если они нужны для динамического маршрута.
+     * @return string Маршрут для запроса.
+     */
+    abstract protected function getRoute(array|string|null $routeParameter = null): string;
+
+    /**
+     * Возвращает HTTP-метод (get, post, patch, put, delete) для запроса.
+     *
+     * @return string Название HTTP-метода для запроса (например, 'get', 'post', 'delete').
+     */
+    abstract protected function getMethod(): string;
+
+    /**
      * Метод для проверки успешного ответа на запрос. При необходимости можно переопределить.
      *
      * @param TestResponse $response Ответ от тестируемого запроса.
@@ -66,20 +81,5 @@ abstract class AbstractApiTestCase extends TestCase
             $this->assertEquals($message, $error);
         }
     }
-
-    /**
-     * Возвращает тестируемый маршрут.
-     *
-     * @param string|array|null $routeParameter Параметр(ы) для вставки в запрос, если они нужны для динамического маршрута.
-     * @return string Маршрут для запроса.
-     */
-    abstract protected function getRoute(string|array|null $routeParameter = null): string;
-
-    /**
-     * Возвращает HTTP-метод (get, post, patch, put, delete) для запроса.
-     *
-     * @return string Название HTTP-метода для запроса (например, 'get', 'post', 'delete').
-     */
-    abstract protected function getMethod(): string;
 }
 

@@ -2,19 +2,19 @@
 
 namespace Api\V1\Cart;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Testing\TestResponse;
+use Tests\Feature\Api\AbstractApiTestCase;
 use Tests\Helpers\CartHelper;
 use Tests\Helpers\CategoryHelper;
 use Tests\Helpers\ProductHelper;
-use Tests\Helpers\UserHelper;
-use Tests\TestCase;
+use Tests\Traits\AssertsDatabaseWithAuth;
+use Tests\Traits\HasAuthContext;
 
-class AddProductToCartTest extends TestCase
+class AddProductToCartTest extends AbstractApiTestCase
 {
-    use RefreshDatabase;
+    use HasAuthContext, AssertsDatabaseWithAuth;
 
     protected const CATEGORY_LIMIT = 10;
     protected const COUNT_CATEGORIES = 2;
@@ -24,13 +24,9 @@ class AddProductToCartTest extends TestCase
     protected Collection $variants;
     protected Collection $products;
     protected Collection $categories;
-    protected string $sessionId;
-    protected int $userId;
 
-    protected function setUp(): void
+    protected function setUpTestContext(): void
     {
-        parent::setUp();
-
         $this->categories = CategoryHelper::createCategoryOfType(self::COUNT_CATEGORIES);
 
         foreach ($this->categories as $category) {
@@ -46,40 +42,40 @@ class AddProductToCartTest extends TestCase
         $this->variants = $this->products->flatMap(fn($product) => $product->variants);
     }
 
-    protected function addProductToCartResponseUsingSessionId(mixed $productData): TestResponse
+    protected function getRoute(array|string|null $routeParameter = null): string
     {
-        $this->setSessionId();
-
-        return $this->withCookie('laravel_session', $this->sessionId)
-            ->post('/api/v1/cart', $productData, ['Accept' => 'application/json']);
+        return '/api/v1/cart';
     }
 
-    protected function addProductToCartResponseUsingUserId(mixed $productData): TestResponse
+    protected function getMethod(): string
     {
-        $this->setUserId();
-
-        return $this->post('/api/v1/cart', $productData, ['Accept' => 'application/json']);
+        return 'post';
     }
 
-    protected function setSessionId(): void
+    protected function getResponse(string $authType, mixed $productData): TestResponse
     {
-        if (empty($this->sessionId)) {
-            $this->get('/api/v1/cart');
-            $this->sessionId = session()->getId();
+        if ($authType === 'session') {
+            $this->setSessionId();
+        } else {
+            $this->setUserId();
+        }
+
+        if (is_int($productData)) {
+            $productData = ['variantId' => $productData];
+        }
+
+        $route = $this->getRoute();
+        $method = $this->getMethod();
+
+        if ($authType === 'session') {
+            return $this->withCookie('laravel_session', $this->sessionId)
+                ->$method($route, $productData, ['Accept' => 'application/json']);
+        } else {
+            return $this->$method($route, $productData, ['Accept' => 'application/json']);
         }
     }
 
-    protected function setUserId(): void
-    {
-        if (empty($this->userId)) {
-            $user = UserHelper::createUser();
-
-            $this->userId = $user->id;
-            $this->actingAs($user);
-        }
-    }
-
-    protected function checkSuccess(TestResponse $response, float|int $expectedTotalPrice): void
+    protected function checkSuccess(TestResponse $response, array $expected = []): void
     {
         $response->assertStatus(200);
         $response->assertExactJsonStructure([
@@ -91,39 +87,49 @@ class AddProductToCartTest extends TestCase
         $totalPrice = $response->json('totalPrice');
 
         $this->assertTrue(is_float($totalPrice) || is_int($totalPrice));
-        $this->assertEquals($expectedTotalPrice, $totalPrice);
+
+        if (!isset($expected[0])) {
+            throw new \RuntimeException('Не передана ожидаемая общая стоимость корзины.');
+        }
+
+        $expectedTotal = $expected[0];
+        $this->assertEquals($expectedTotal, $totalPrice);
     }
 
-    protected function checkError(TestResponse $response, int $status, string $message = null): void
+    protected function getRequestToSessionStart(): string
     {
-        $response->assertStatus($status);
+        return '/api/v1/cart';
+    }
 
-        if ($message) {
-            $response->assertExactJsonStructure([
-                'error',
-            ]);
+    protected function getTableName(): string
+    {
+        return 'cart';
+    }
 
-            $error = $response->json('error');
-
-            $this->assertIsString($error);
-            $this->assertEquals($message, $error);
-        }
+    protected function getDatabaseFieldMapping(): array
+    {
+        return [
+            'product_variant_id' => 'id',
+            'qty' => 'qty',
+        ];
     }
 
     public function testAddProductToEmptyCartUsingSessionId(): void
     {
         $variant = $this->variants->random();
-        $response = $this->addProductToCartResponseUsingSessionId(['variantId' => $variant->id]);
+        $response = $this->getResponse('session', $variant->id);
 
-        $this->checkSuccess($response, $variant->price);
+        $this->checkSuccess($response, [$variant->price]);
+        $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
     public function testAddProductToEmptyCartUsingUserId(): void
     {
         $variant = $this->variants->random();
-        $response = $this->addProductToCartResponseUsingUserId(['variantId' => $variant->id]);
+        $response = $this->getResponse('user', $variant->id);
 
-        $this->checkSuccess($response, $variant->price);
+        $this->checkSuccess($response, [$variant->price]);
+        $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
     public function testAddNewProductToNonEmptyCartUsingSessionId(): void
@@ -133,17 +139,18 @@ class AddProductToCartTest extends TestCase
 
         CartHelper::createFromVariantByIdentifier(
             $variants,
-            'session_id',
-            $this->sessionId,
-            false
+            $this->getAuthField(),
         );
 
         $filtered = $this->variants->whereNotIn('id', $variants->pluck('id'));
         $variant = $filtered->random();
-        $response = $this->addProductToCartResponseUsingSessionId(['variantId' => $variant->id]);
+
+        $response = $this->getResponse('session', $variant->id);
+
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, $totalPrice);
+        $this->checkSuccess($response, [$totalPrice]);
+        $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
     public function testAddNewProductToNonEmptyCartUsingUserId(): void
@@ -153,17 +160,18 @@ class AddProductToCartTest extends TestCase
 
         CartHelper::createFromVariantByIdentifier(
             $variants,
-            'user_id',
-            $this->userId,
-            false
+            $this->getAuthField(),
         );
 
         $filtered = $this->variants->whereNotIn('id', $variants->pluck('id'));
         $variant = $filtered->random();
-        $response = $this->addProductToCartResponseUsingSessionId(['variantId' => $variant->id]);
+
+        $response = $this->getResponse('user', $variant->id);
+
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, $totalPrice);
+        $this->checkSuccess($response, [$totalPrice]);
+        $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
     public function testIncreaseQuantityOfExistingProductUsingSessionId(): void
@@ -173,16 +181,17 @@ class AddProductToCartTest extends TestCase
 
         CartHelper::createFromVariantByIdentifier(
             $variants,
-            'session_id',
-            $this->sessionId,
-            false
+            $this->getAuthField(),
         );
 
         $variant = $variants->random();
-        $response = $this->addProductToCartResponseUsingSessionId(['variantId' => $variant->id]);
+
+        $response = $this->getResponse('session', $variant->id);
+
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, $totalPrice);
+        $this->checkSuccess($response, [$totalPrice]);
+        $this->assertDatabase(['id' => $variant->id, 'qty' => 2]);
     }
 
     public function testIncreaseQuantityOfExistingProductUsingUserId(): void
@@ -192,19 +201,20 @@ class AddProductToCartTest extends TestCase
 
         CartHelper::createFromVariantByIdentifier(
             $variants,
-            'user_id',
-            $this->userId,
-            false
+            $this->getAuthField(),
         );
 
         $variant = $variants->random();
-        $response = $this->addProductToCartResponseUsingSessionId(['variantId' => $variant->id]);
+
+        $response = $this->getResponse('user', $variant->id);
+
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, $totalPrice);
+        $this->checkSuccess($response, [$totalPrice]);
+        $this->assertDatabase(['id' => $variant->id, 'qty' => 2]);
     }
 
-    public function testCannotAddNewProductWhenCategoryLimitExceededUsingSessionId()
+    public function testCannotAddNewProductWhenCategoryLimitExceededUsingSessionId(): void
     {
         $this->setSessionId();
 
@@ -212,18 +222,18 @@ class AddProductToCartTest extends TestCase
             $this->categories,
             $this->products,
             $this->variants,
-            'session_id',
-            $this->sessionId,
+            $this->getAuthField(),
             self::CATEGORY_LIMIT,
-            true
+            true,
         );
 
-        $response = $this->addProductToCartResponseUsingSessionId(['variantId' => $variantId]);
+        $response = $this->getResponse('session', $variantId);
 
         $this->checkError($response, 422, 'Достигнут лимит товаров данной категории.');
+        $this->assertDatabase([], ['id' => $variantId]);
     }
 
-    public function testCannotAddNewProductWhenCategoryLimitExceededUsingUserId()
+    public function testCannotAddNewProductWhenCategoryLimitExceededUsingUserId(): void
     {
         $this->setUserId();
 
@@ -231,18 +241,18 @@ class AddProductToCartTest extends TestCase
             $this->categories,
             $this->products,
             $this->variants,
-            'user_id',
-            $this->userId,
+            $this->getAuthField(),
             self::CATEGORY_LIMIT,
-            true
+            true,
         );
 
-        $response = $this->addProductToCartResponseUsingUserId(['variantId' => $variantId]);
+        $response = $this->getResponse('user', $variantId);
 
         $this->checkError($response, 422, 'Достигнут лимит товаров данной категории.');
+        $this->assertDatabase([], ['id' => $variantId]);
     }
 
-    public function testCannotIncreaseQtyOfProductWhenCategoryLimitExceededUsingSessionId()
+    public function testCannotIncreaseQtyOfProductWhenCategoryLimitExceededUsingSessionId(): void
     {
         $this->setSessionId();
 
@@ -250,18 +260,17 @@ class AddProductToCartTest extends TestCase
             $this->categories,
             $this->products,
             $this->variants,
-            'session_id',
-            $this->sessionId,
+            $this->getAuthField(),
             self::CATEGORY_LIMIT,
-            false
+            false,
         );
 
-        $response = $this->addProductToCartResponseUsingSessionId(['variantId' => $variantId]);
+        $response = $this->getResponse('session', $variantId);
 
         $this->checkError($response, 422, 'Достигнут лимит товаров данной категории.');
     }
 
-    public function testCannotIncreaseQtyOfProductWhenCategoryLimitExceededUsingUserId()
+    public function testCannotIncreaseQtyOfProductWhenCategoryLimitExceededUsingUserId(): void
     {
         $this->setUserId();
 
@@ -269,34 +278,17 @@ class AddProductToCartTest extends TestCase
             $this->categories,
             $this->products,
             $this->variants,
-            'user_id',
-            $this->userId,
+            $this->getAuthField(),
             self::CATEGORY_LIMIT,
-            false
+            false,
         );
 
-        $response = $this->addProductToCartResponseUsingUserId(['variantId' => $variantId]);
+        $response = $this->getResponse('user', $variantId);
 
         $this->checkError($response, 422, 'Достигнут лимит товаров данной категории.');
     }
 
-    public function testAddNonExistentProductToCartUsingSessionId()
-    {
-        $nonExistentId = $this->variants->max('id') + 1;
-        $response = $this->addProductToCartResponseUsingSessionId(['variantId' => $nonExistentId]);
-
-        $this->checkError($response, 422);
-    }
-
-    public function testAddNonExistentProductToCartUsingUserId()
-    {
-        $nonExistentId = $this->variants->max('id') + 1;
-        $response = $this->addProductToCartResponseUsingUserId(['variantId' => $nonExistentId]);
-
-        $this->checkError($response, 422);
-    }
-
-    public function testAddUnpublishedProductToCartUsingSessionId()
+    public function testAddUnpublishedProductToCartUsingSessionId(): void
     {
         $unpublishedProducts = ProductHelper::createProductsWithVariantsForCategories(
             $this->categories,
@@ -307,12 +299,13 @@ class AddProductToCartTest extends TestCase
         $variants = $unpublishedProducts->flatMap(fn($product) => $product->variants);
         $unpublishedId = $variants->random()->id;
 
-        $response = $this->addProductToCartResponseUsingSessionId(['variantId' => $unpublishedId]);
+        $response = $this->getResponse('session', ['variantId' => $unpublishedId]);
 
         $this->checkError($response, 403, 'Товар не опубликован и не может быть добавлен в корзину.');
+        $this->assertDatabase([], ['id' => $unpublishedId]);
     }
 
-    public function testAddUnpublishedProductToCartUsingUserId()
+    public function testAddUnpublishedProductToCartUsingUserId(): void
     {
         $unpublishedProducts = ProductHelper::createProductsWithVariantsForCategories(
             $this->categories,
@@ -323,8 +316,67 @@ class AddProductToCartTest extends TestCase
         $variants = $unpublishedProducts->flatMap(fn($product) => $product->variants);
         $unpublishedId = $variants->random()->id;
 
-        $response = $this->addProductToCartResponseUsingUserId(['variantId' => $unpublishedId]);
+        $response = $this->getResponse('user', ['variantId' => $unpublishedId]);
 
         $this->checkError($response, 403, 'Товар не опубликован и не может быть добавлен в корзину.');
+        $this->assertDatabase([], ['id' => $unpublishedId]);
+    }
+
+    public function testAddNonExistentProductIdToCartUsingSessionId(): void
+    {
+        $nonExistentId = $this->variants->max('id') + 1;
+
+        $response = $this->getResponse('session', ['variantId' => $nonExistentId]);
+
+        $this->checkError($response, 422);
+    }
+
+    public function testAddNonExistentProductIdToCartUsingUserId(): void
+    {
+        $nonExistentId = $this->variants->max('id') + 1;
+
+        $response = $this->getResponse('user', ['variantId' => $nonExistentId]);
+
+        $this->checkError($response, 422);
+    }
+
+    public function testAddProductWithInvalidVariantIdTypeUsingSessionId(): void
+    {
+        $invalidVariantId = 'string instead of int';
+
+        $response = $this->getResponse('session', ['variantId' => $invalidVariantId]);
+
+        $this->checkError($response, 422);
+    }
+
+    public function testAddProductWithInvalidVariantIdTypeUsingUserId(): void
+    {
+        $invalidVariantId = 'string instead of int';
+
+        $response = $this->getResponse('user', ['variantId' => $invalidVariantId]);
+
+        $this->checkError($response, 422);
+    }
+
+    public function testAddProductWithWrongVariantIdKeyUsingSessionId(): void
+    {
+        $existedId = $this->variants->random()->id;
+
+        $wrongKey = 'variant_id';
+
+        $response = $this->getResponse('session', [$wrongKey => $existedId]);
+
+        $this->checkError($response, 422);
+    }
+
+    public function testAddProductWithWrongVariantIdKeyUsingUserId(): void
+    {
+        $existedId = $this->variants->random()->id;
+
+        $wrongKey = 'variant_id';
+
+        $response = $this->getResponse('user', [$wrongKey => $existedId]);
+
+        $this->checkError($response, 422);
     }
 }

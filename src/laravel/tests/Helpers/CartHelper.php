@@ -3,6 +3,7 @@
 namespace Tests\Helpers;
 
 use App\Models\Cart;
+use App\Models\ProductVariant;
 use Illuminate\Support\Collection;
 
 class CartHelper
@@ -10,25 +11,27 @@ class CartHelper
     /**
      * Создает записи в таблице корзины для переданных вариантов продуктов.
      *
-     * @param Collection $variants Коллекция вариантов продуктов.
-     * @param string $identifierField Поле-идентификатор пользователя (session_id или user_id).
-     * @param string $identifierValue Значение идентификатора.
-     * @param bool $randomQty
+     * @param ProductVariant|Collection<int, ProductVariant> $variants Вариант продукта или коллекция вариантов.
+     * @param array{field: 'user_id'|'session_id', value: string} $auth Массив с типом идентификации пользователя.
+     * @param bool $randomQty Должно ли количество быть случайным.
+     * @param int $qty Количество (если $randomQty = false).
      * @return void
      */
-    public static function createFromVariantByIdentifier(Collection $variants,
-                                                         string     $identifierField,
-                                                         string     $identifierValue,
-                                                         bool       $randomQty = true): void
+    public static function createFromVariantByIdentifier(ProductVariant|Collection $variants,
+                                                         array                     $auth,
+                                                         bool                      $randomQty = false,
+                                                         int                       $qty = 1): void
     {
-        foreach ($variants as $variant) {
+        $collection = collect()->wrap($variants);
+
+        foreach ($collection as $variant) {
             Cart::factory()->create([
-                'user_id' => $identifierField === 'user_id' ? $identifierValue : null,
-                'session_id' => $identifierField === 'session_id' ? $identifierValue : null,
+                'user_id' => $auth['field'] === 'user_id' ? $auth['value'] : null,
+                'session_id' => $auth['field'] === 'session_id' ? $auth['value'] : null,
                 'product_variant_id' => $variant->id,
                 'price' => $variant->price,
                 'category_id' => $variant->product->productCategory->id,
-                'qty' => $randomQty ? rand(1, 3) : 1,
+                'qty' => $randomQty ? rand(1, 3) : $qty,
             ]);
         }
     }
@@ -37,15 +40,13 @@ class CartHelper
      * Заполняет корзину товарами одной категории до достижения указанного лимита.
      *
      * @param Collection $variants Коллекция вариантов продуктов одной категории.
-     * @param string $identifierField Поле-идентификатор пользователя (session_id или user_id).
-     * @param string $identifierValue Значение идентификатора.
+     * @param array{field: 'user_id'|'session_id', value: string} $auth Массив с типом идентификации пользователя.
      * @param int $categoryLimit Максимальное количество товаров этой категории в корзине.
      * @param int|null $categoryId Явно заданный ID категории (чтобы не делать запрос через отношения).
      * @return void
      */
     public static function fillCartToCategoryLimit(Collection $variants,
-                                                   string     $identifierField,
-                                                   string     $identifierValue,
+                                                   array      $auth,
                                                    int        $categoryLimit,
                                                    ?int       $categoryId = null): void
     {
@@ -60,7 +61,7 @@ class CartHelper
                 $variant = $usedVariants->random();
             }
 
-            $cartItem = Cart::where($identifierField, $identifierValue)
+            $cartItem = Cart::where($auth['field'], $auth['value'])
                 ->where('product_variant_id', $variant->id)
                 ->first();
 
@@ -68,8 +69,8 @@ class CartHelper
                 $cartItem->increment('qty');
             } else {
                 Cart::create([
-                    'user_id' => $identifierField === 'user_id' ? $identifierValue : null,
-                    'session_id' => $identifierField === 'session_id' ? $identifierValue : null,
+                    'user_id' => $auth['field'] === 'user_id' ? $auth['value'] : null,
+                    'session_id' => $auth['field'] === 'session_id' ? $auth['value'] : null,
                     'product_variant_id' => $variant->id,
                     'price' => $variant->price,
                     'category_id' => $categoryId ?? $variant->product->productCategory->id,
@@ -86,8 +87,7 @@ class CartHelper
      * @param Collection $categories Коллекция категорий, из которой выбирается случайная.
      * @param Collection $products Коллекция продуктов всех категорий.
      * @param Collection $variants Коллекция всех вариантов продуктов.
-     * @param string $identifierField Поле-идентификатор пользователя ('session_id' или 'user_id').
-     * @param string $identifierValue Значение идентификатора.
+     * @param array{field: 'user_id'|'session_id', value: string} $auth Массив с типом идентификации пользователя.
      * @param int $categoryLimit Максимальное количество товаров одной категории в корзине.
      * @param bool $rejectVariant Удалять ли выбранный вариант из добавляемых в корзину (true — не будет добавлен).
      * @return int ID случайно выбранного варианта из выбранной категории.
@@ -96,8 +96,7 @@ class CartHelper
         Collection $categories,
         Collection $products,
         Collection $variants,
-        string     $identifierField,
-        string     $identifierValue,
+        array      $auth,
         int        $categoryLimit,
         bool       $rejectVariant
     ): int
@@ -125,8 +124,7 @@ class CartHelper
 
         self::fillCartToCategoryLimit(
             $categoryVariants,
-            $identifierField,
-            $identifierValue,
+            $auth,
             $categoryLimit,
             $categoryId
         );

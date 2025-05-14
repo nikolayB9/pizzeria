@@ -44,7 +44,7 @@ class ProductController extends Controller
         try {
             $product = $this->productService->getProductBySlug($productSlug);
         } catch (ProductNotFoundException) {
-            return response()->json(['error' => 'Продукт не найден'], 404);
+            return response()->json(['error' => 'Продукт не найден.'], 404);
         }
 
         return response()->json([

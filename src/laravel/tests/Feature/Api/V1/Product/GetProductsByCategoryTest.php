@@ -82,7 +82,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
         $this->assertTrue(is_int($product['min_price']) || is_float($product['min_price']) || is_string($product['min_price']));
     }
 
-    public function testResponseIncludesOnlyExpectedCategoryProducts()
+    public function testResponseIncludesOnlyExpectedCategoryProducts(): void
     {
         $otherCategory = CategoryHelper::createCategoryOfType();
         ProductHelper::createProductsWithVariantsForCategories($otherCategory);
@@ -94,7 +94,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
         $this->assertEquals($expectedIds, $returnedIds);
     }
 
-    public function testReturnsEmptyArrayIfCategoryHasNoProducts()
+    public function testReturnsEmptyArrayIfCategoryHasNoProducts(): void
     {
         $categoryWithoutProducts = CategoryHelper::createCategoryOfType();
 
@@ -104,7 +104,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
         $this->assertEquals([], $response->json('data'));
     }
 
-    public function testReturns404ForNonExistentCategorySlug()
+    public function testReturns404ForNonExistentCategorySlug(): void
     {
         $nonExistentSlug = 'non-existent-slug';
         $response = $this->getResponse($nonExistentSlug);
