@@ -11,13 +11,19 @@ use Tests\Helpers\ProductHelper;
 
 class GetProductsByCategoryTest extends AbstractApiTestCase
 {
+    protected const COUNT_CATEGORIES = 1;
+    protected const COUNT_PRODUCTS = 3;
+
     protected Category $category;
     protected Collection $products;
 
     protected function setUpTestContext(): void
     {
-        $this->category = CategoryHelper::createCategoryOfType();
-        $this->products = ProductHelper::createProductsWithVariantsForCategories($this->category);
+        $this->category = CategoryHelper::createCategoryOfType(self::COUNT_CATEGORIES);
+        $this->products = ProductHelper::createProductsWithVariantsForCategories(
+            $this->category,
+            self::COUNT_PRODUCTS,
+        );
     }
 
     protected function getRoute(mixed $routeParameter = null): string
@@ -45,7 +51,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
     public function testReturnsSuccessfulResponse(): void
     {
         $response = $this->getResponse();
-        $this->checkSuccess($response);
+        $response->assertStatus(200);
     }
 
     public function testReturnsExpectedJsonStructure(): void
@@ -53,6 +59,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
         $response = $this->getResponse();
 
         $response->assertExactJsonStructure([
+            'success',
             'data' => [
                 '*' => [
                     'id',
@@ -64,6 +71,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
                     'min_price',
                 ]
             ],
+            'meta',
         ]);
     }
 
@@ -100,7 +108,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
 
         $response = $this->getResponse($categoryWithoutProducts->slug);
 
-        $this->checkSuccess($response);
+        $response->assertStatus(200);
         $this->assertEquals([], $response->json('data'));
     }
 
@@ -109,6 +117,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
         $nonExistentSlug = 'non-existent-slug';
         $response = $this->getResponse($nonExistentSlug);
 
-        $this->checkError($response, 404, 'Категория не найдена');
+        $response->assertStatus(404);
+        $this->assertEquals('Категория не найдена.', $response->json('message'));
     }
 }

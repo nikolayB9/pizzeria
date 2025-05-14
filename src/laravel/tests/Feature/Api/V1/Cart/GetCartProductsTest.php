@@ -14,12 +14,20 @@ class GetCartProductsTest extends AbstractApiTestCase
 {
     use HasAuthContext;
 
+    protected const COUNT_CATEGORIES = 3;
+    protected const COUNT_PRODUCTS_IN_CATEGORY = 3;
+    protected const COUNT_VARIANTS_IN_PRODUCT = 3;
+
     protected Collection $variants;
 
     protected function setUpTestContext(): void
     {
-        $categories = CategoryHelper::createCategoryOfType(3);
-        $products = ProductHelper::createProductsWithVariantsForCategories($categories);
+        $categories = CategoryHelper::createCategoryOfType(self::COUNT_CATEGORIES);
+        $products = ProductHelper::createProductsWithVariantsForCategories(
+            $categories,
+            self::COUNT_PRODUCTS_IN_CATEGORY,
+            self::COUNT_VARIANTS_IN_PRODUCT,
+        );
 
         $this->variants = $products->map(function ($product) {
             return $product->variants->random();
@@ -69,13 +77,13 @@ class GetCartProductsTest extends AbstractApiTestCase
     public function testReturnsSuccessfulResponseUsingSessionId(): void
     {
         $response = $this->getResponse('session');
-        $this->checkSuccess($response);
+        $response->assertStatus(200);
     }
 
     public function testReturnsSuccessfulResponseUsingUserId(): void
     {
         $response = $this->getResponse('user');
-        $this->checkSuccess($response);
+        $response->assertStatus(200);
     }
 
     public function testReturnsExpectedJsonStructureUsingSessionId(): void
@@ -83,6 +91,7 @@ class GetCartProductsTest extends AbstractApiTestCase
         $response = $this->getResponse('session');
 
         $response->assertExactJsonStructure([
+            'success',
             'data' => [
                 '*' => [
                     'name',
@@ -105,6 +114,7 @@ class GetCartProductsTest extends AbstractApiTestCase
         $response = $this->getResponse('user');
 
         $response->assertExactJsonStructure([
+            'success',
             'data' => [
                 '*' => [
                     'name',
@@ -142,7 +152,6 @@ class GetCartProductsTest extends AbstractApiTestCase
 
         $meta = $response->json('meta');
 
-        $this->assertNotEmpty($meta);
         $this->assertTrue(is_int($meta['totalPrice']) || is_float($meta['totalPrice']) || is_string($meta['totalPrice']));
     }
 
@@ -214,7 +223,6 @@ class GetCartProductsTest extends AbstractApiTestCase
     {
         $response = $this->getResponse('session', false);
 
-        $this->checkSuccess($response);
         $this->assertEquals([], $response->json('data'));
         $this->assertEquals(0.0, $response->json('meta.totalPrice'));
     }
@@ -223,7 +231,6 @@ class GetCartProductsTest extends AbstractApiTestCase
     {
         $response = $this->getResponse('user', false);
 
-        $this->checkSuccess($response);
         $this->assertEquals([], $response->json('data'));
         $this->assertEquals(0.0, $response->json('meta.totalPrice'));
     }

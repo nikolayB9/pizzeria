@@ -9,11 +9,13 @@ use Tests\Helpers\ProductHelper;
 
 class GetProductBySlugTest extends AbstractApiTestCase
 {
+    protected const COUNT_PRODUCTS = 1;
+
     protected Product $product;
 
     protected function setUpTestContext(): void
     {
-        $this->product = ProductHelper::createProduct(1, true);
+        $this->product = ProductHelper::createProduct(self::COUNT_PRODUCTS, true);
     }
 
     protected function getRoute(mixed $routeParameter = null): string
@@ -41,7 +43,7 @@ class GetProductBySlugTest extends AbstractApiTestCase
     public function testReturnsSuccessfulResponse(): void
     {
         $response = $this->getResponse();
-        $this->checkSuccess($response);
+        $response->assertStatus(200);
     }
 
     public function testReturnsExpectedJsonStructure(): void
@@ -49,6 +51,7 @@ class GetProductBySlugTest extends AbstractApiTestCase
         $response = $this->getResponse();
 
         $response->assertExactJsonStructure([
+            'success',
             'data' => [
                 'id',
                 'name',
@@ -73,6 +76,7 @@ class GetProductBySlugTest extends AbstractApiTestCase
                     ]
                 ],
             ],
+            'meta',
         ]);
     }
 
@@ -121,6 +125,7 @@ class GetProductBySlugTest extends AbstractApiTestCase
         $nonExistentSlug = 'non-existent-slug';
         $response = $this->getResponse($nonExistentSlug);
 
-        $this->checkError($response, 404, 'Продукт не найден.');
+        $response->assertStatus(404);
+        $this->assertEquals('Продукт не найден.', $response->json('message'));
     }
 }

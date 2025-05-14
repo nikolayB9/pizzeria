@@ -2,6 +2,7 @@
 
 namespace Api\V1\Cart;
 
+use App\Enums\Error\ErrorMessageEnum;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Testing\TestResponse;
@@ -75,24 +76,14 @@ class AddProductToCartTest extends AbstractApiTestCase
         }
     }
 
-    protected function checkSuccess(TestResponse $response, mixed $expected = null): void
+    protected function checkSuccess(TestResponse $response, mixed $data = [], mixed $meta = [], int $status = 200): void
     {
-        $response->assertStatus(200);
-        $response->assertExactJsonStructure([
-            'success',
-            'totalPrice',
-        ]);
-        $this->assertTrue($response->json('success') === true);
+        $meta = $meta === [] ?: ['totalPrice' => $meta];
 
-        $totalPrice = $response->json('totalPrice');
+        parent::checkSuccess($response, $data, $meta, $status);
 
+        $totalPrice = $response->json('meta.totalPrice');
         $this->assertTrue(is_float($totalPrice) || is_int($totalPrice));
-
-        if (is_null($expected)) {
-            throw new \RuntimeException('Не передана ожидаемая общая стоимость корзины.');
-        }
-
-        $this->assertEquals($expected, $totalPrice);
     }
 
     protected function getRequestToSessionStart(): string
@@ -118,7 +109,7 @@ class AddProductToCartTest extends AbstractApiTestCase
         $variant = $this->variants->random();
         $response = $this->getResponse('session', $variant->id);
 
-        $this->checkSuccess($response, $variant->price);
+        $this->checkSuccess($response, meta: $variant->price);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
@@ -127,7 +118,7 @@ class AddProductToCartTest extends AbstractApiTestCase
         $variant = $this->variants->random();
         $response = $this->getResponse('user', $variant->id);
 
-        $this->checkSuccess($response, $variant->price);
+        $this->checkSuccess($response, meta: $variant->price);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
@@ -148,7 +139,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, $totalPrice);
+        $this->checkSuccess($response, meta: $totalPrice);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
@@ -169,7 +160,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, $totalPrice);
+        $this->checkSuccess($response, meta: $totalPrice);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 1]);
     }
 
@@ -189,7 +180,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, $totalPrice);
+        $this->checkSuccess($response, meta: $totalPrice);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 2]);
     }
 
@@ -209,7 +200,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $totalPrice = (float)$variant->price + $variants->sum('price');
 
-        $this->checkSuccess($response, $totalPrice);
+        $this->checkSuccess($response, meta: $totalPrice);
         $this->assertDatabase(['id' => $variant->id, 'qty' => 2]);
     }
 
@@ -327,7 +318,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $response = $this->getResponse('session', ['variantId' => $nonExistentId]);
 
-        $this->checkError($response, 422);
+        $this->checkError($response, 422, ErrorMessageEnum::VALIDATION->value);
     }
 
     public function testAddNonExistentProductIdToCartUsingUserId(): void
@@ -336,7 +327,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $response = $this->getResponse('user', ['variantId' => $nonExistentId]);
 
-        $this->checkError($response, 422);
+        $this->checkError($response, 422, ErrorMessageEnum::VALIDATION->value);
     }
 
     public function testAddProductWithInvalidVariantIdTypeUsingSessionId(): void
@@ -345,7 +336,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $response = $this->getResponse('session', ['variantId' => $invalidVariantId]);
 
-        $this->checkError($response, 422);
+        $this->checkError($response, 422, ErrorMessageEnum::VALIDATION->value);
     }
 
     public function testAddProductWithInvalidVariantIdTypeUsingUserId(): void
@@ -354,7 +345,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $response = $this->getResponse('user', ['variantId' => $invalidVariantId]);
 
-        $this->checkError($response, 422);
+        $this->checkError($response, 422, ErrorMessageEnum::VALIDATION->value);
     }
 
     public function testAddProductWithWrongVariantIdKeyUsingSessionId(): void
@@ -365,7 +356,7 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $response = $this->getResponse('session', [$wrongKey => $existedId]);
 
-        $this->checkError($response, 422);
+        $this->checkError($response, 422, ErrorMessageEnum::VALIDATION->value);
     }
 
     public function testAddProductWithWrongVariantIdKeyUsingUserId(): void
@@ -376,6 +367,6 @@ class AddProductToCartTest extends AbstractApiTestCase
 
         $response = $this->getResponse('user', [$wrongKey => $existedId]);
 
-        $this->checkError($response, 422);
+        $this->checkError($response, 422, ErrorMessageEnum::VALIDATION->value);
     }
 }

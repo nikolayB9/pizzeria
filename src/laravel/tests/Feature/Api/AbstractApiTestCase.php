@@ -47,42 +47,59 @@ abstract class AbstractApiTestCase extends TestCase
     abstract protected function getMethod(): string;
 
     /**
-     * Метод для проверки успешного ответа на запрос. При необходимости можно переопределить.
+     * Метод для проверки успешного ответа на запрос.
      *
      * @param TestResponse $response Ответ от тестируемого запроса.
-     * @param array $expected Ожидаемые значения для проверки (если есть).
-     * @return void
-     */
-    protected function checkSuccess(TestResponse $response, mixed $expected = null): void
-    {
-        $response->assertStatus(200);
-    }
-
-    /**
-     * Метод для проверки ошибки в ответе на запрос. При необходимости можно переопределить.
-     *
-     * @param TestResponse $response Ответ от тестируемого запроса.
+     * @param mixed $data Ожидаемые основные данные для проверки (если есть).
+     * @param mixed $meta Ожидаемые дополнительные данные для проверки (если есть).
      * @param int $status Ожидаемый HTTP-статус код.
-     * @param string|null $message Ожидаемое сообщение ошибки (если есть).
-     * @param mixed $expected Дополнительные ожидаемые значения для проверки (если есть).
      * @return void
      */
-    protected function checkError(TestResponse $response,
-                                  int $status,
-                                  string $message = null,
-                                  mixed $expected = null): void
+    protected function checkSuccess(TestResponse $response, mixed $data = [], mixed $meta = [], int $status = 200): void
     {
         $response->assertStatus($status);
 
-        if ($message) {
-            $response->assertExactJsonStructure([
-                'error',
-            ]);
+        $response->assertExactJsonStructure([
+            'success',
+            'data',
+            'meta',
+        ]);
 
-            $error = $response->json('error');
+        $this->assertTrue($response->json('success'));
+        $this->assertEquals($data, $response->json('data'));
+        $this->assertIsArray($response->json('meta'));
+        $this->assertEquals($meta, $response->json('meta'));
+    }
 
-            $this->assertIsString($error);
-            $this->assertEquals($message, $error);
+    /**
+     * Метод для проверки ошибки в ответе на запрос.
+     *
+     * @param TestResponse $response Ответ от тестируемого запроса.
+     * @param int $status Ожидаемый HTTP-статус код.
+     * @param string $message Ожидаемое сообщение ошибки.
+     * @param array $errors Дополнительные ошибки (если есть).
+     * @return void
+     */
+    protected function checkError(TestResponse $response,
+                                  int          $status,
+                                  string       $message,
+                                  array        $errors = []): void
+    {
+        $response->assertStatus($status);
+
+        $response->assertExactJsonStructure([
+            'success',
+            'message',
+            'errors',
+        ]);
+
+        $this->assertFalse($response->json('success'));
+        $this->assertIsString($response->json('message'));
+        $this->assertEquals($message, $response->json('message'));
+        $this->assertIsArray($response->json('errors'));
+
+        if (!empty($errors)) {
+            $this->assertEquals($errors, $response->json('errors'));
         }
     }
 }
