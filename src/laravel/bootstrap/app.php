@@ -1,8 +1,11 @@
 <?php
 
+use App\Enums\Error\ErrorMessageEnum;
+use App\Http\Responses\ApiResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'remember.old.session.id' => \App\Http\Middleware\RememberOldSessionId::class]
         );
     })
-    ->withExceptions(function (Exceptions $exceptions) {
-        //
+    ->withExceptions(function (Illuminate\Foundation\Configuration\Exceptions $exceptions) {
+        $exceptions->render(function (ValidationException $e, $request) {
+            if ($request->expectsJson()) {
+                return ApiResponse::fail(ErrorMessageEnum::VALIDATION->value, $e->status, $e->errors());
+            }
+        });
     })->create();

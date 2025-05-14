@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Exceptions\Category\CategoryNotFoundException;
 use App\Exceptions\Product\ProductNotFoundException;
 use App\Http\Controllers\Controller;
+use App\Http\Responses\ApiResponse;
 use App\Services\Api\V1\ProductService;
 use Illuminate\Http\JsonResponse;
 
@@ -25,12 +26,12 @@ class ProductController extends Controller
         try {
             $products = $this->productService->getProductsByCategorySlug($categorySlug);
         } catch (CategoryNotFoundException) {
-            return response()->json(['error' => 'Категория не найдена'], 404);
+            return ApiResponse::fail('Категория не найдена.', 404);
         }
 
-        return response()->json([
-            'data' => $products,
-        ]);
+        return ApiResponse::success(
+            data: $products,
+        );
     }
 
     /**
@@ -44,11 +45,11 @@ class ProductController extends Controller
         try {
             $product = $this->productService->getProductBySlug($productSlug);
         } catch (ProductNotFoundException) {
-            return response()->json(['error' => 'Продукт не найден.'], 404);
+            return ApiResponse::fail('Продукт не найден.', 404);
         }
 
-        return response()->json([
-            'data' => $product,
-        ]);
+        return ApiResponse::success(
+            data: $product,
+        );
     }
 }

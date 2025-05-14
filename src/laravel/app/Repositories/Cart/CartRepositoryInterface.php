@@ -19,25 +19,6 @@ interface CartRepositoryInterface
     public function getItemsByIdentifier(string $identifierField, string $value): Collection;
 
     /**
-     * Возвращает общую стоимость товаров в корзине по заданному идентификатору пользователя.
-     *
-     * @param string $identifierField
-     * @param string $value
-     * @return float
-     */
-    public function getTotalPriceByIdentifier(string $identifierField, string $value): float;
-
-    /**
-     * Возвращает общее количество товаров из корзины для указанной категории и идентификатора пользователя.
-     *
-     * @param string $categoryId
-     * @param string $identifierField
-     * @param string $identifierValue
-     * @return int
-     */
-    public function getTotalQuantityByCategoryAndIdentifier(string $categoryId, string $identifierField, string $identifierValue): int;
-
-    /**
      * Добавляет товар в корзину или увеличивает его количество, если он уже есть.
      *
      * @param AddToCartProductDto $productDto
@@ -59,4 +40,33 @@ interface CartRepositoryInterface
      * @throws ProductVariantNotFoundInCartException
      */
     public function deleteProductFromCartByIdentifier(int $productVariantId, string $identifierField, string $identifierValue): void;
+
+    /**
+     * Очищает корзину пользователя по идентификатору.
+     *
+     * @param string $identifierField
+     * @param string $identifierValue
+     * @return void
+     * @throws CartUpdateException
+     */
+    public function clearCartByIdentifier(string $identifierField, string $identifierValue): void;
+
+    /**
+     * Возвращает общую стоимость товаров в корзине по заданному идентификатору пользователя.
+     *
+     * @param string $identifierField
+     * @param string $value
+     * @return float
+     */
+    public function getTotalPriceByIdentifier(string $identifierField, string $value): float;
+
+    /**
+     * Возвращает общее количество товаров из корзины для указанной категории и идентификатора пользователя.
+     *
+     * @param string $categoryId
+     * @param string $identifierField
+     * @param string $identifierValue
+     * @return int
+     */
+    public function getTotalQuantityByCategoryAndIdentifier(string $categoryId, string $identifierField, string $identifierValue): int;
 }

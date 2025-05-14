@@ -84,6 +84,19 @@ class CartService
     }
 
     /**
+     * Очищает корзину пользователя.
+     *
+     * @return void
+     * @throws CartUpdateException Если произошла ошибка при попытке очистить корзину.
+     */
+    public function clearUserCart(): void
+    {
+        $auth = $this->getAuthField();
+
+        $this->cartRepository->clearCartByIdentifier($auth['field'], $auth['value']);
+    }
+
+    /**
      * Привязывает корзину, созданную до авторизации, к авторизованному пользователю.
      *
      * Актуально, если пользователь добавил товары в корзину до входа в аккаунт.

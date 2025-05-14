@@ -9,7 +9,7 @@ use App\Exceptions\Product\ProductNotPublishedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Cart\AddToCartRequest;
 use App\Http\Requests\Api\V1\Cart\DeleteFromCartRequest;
-use App\Models\Cart;
+use App\Http\Responses\ApiResponse;
 use App\Services\Api\V1\CartService;
 use Illuminate\Http\JsonResponse;
 
@@ -28,12 +28,10 @@ class CartController extends Controller
     {
         $cartProducts = $this->cartService->getUserCartProducts();
 
-        return response()->json([
-            'data' => $cartProducts,
-            'meta' => [
-                'totalPrice' => $this->cartService->getTotalPrice($cartProducts, false),
-            ]
-        ]);
+        return ApiResponse::success(
+            data: $cartProducts,
+            meta: ['totalPrice' => $this->cartService->getTotalPrice($cartProducts, false)],
+        );
     }
 
     /**
@@ -47,23 +45,25 @@ class CartController extends Controller
         try {
             $this->cartService->addProduct($request->validated()['variantId']);
         } catch (ProductNotPublishedException) {
-            return response()->json([
-                'error' => 'Товар не опубликован и не может быть добавлен в корзину.',
-            ], 403);
+            return ApiResponse::fail(
+                'Товар не опубликован и не может быть добавлен в корзину.',
+                403,
+            );
         } catch (CategoryLimitExceededException) {
-            return response()->json([
-                'error' => 'Достигнут лимит товаров данной категории.',
-            ], 422);
+            return ApiResponse::fail(
+                'Достигнут лимит товаров данной категории.',
+                422,
+            );
         } catch (CartUpdateException) {
-            return response()->json([
-                'error' => 'Не удалось обновить корзину, попробуйте еще раз.',
-            ], 422);
+            return ApiResponse::fail(
+                'Не удалось добавить товар в корзину. Пожалуйста, попробуйте позже.',
+                500,
+            );
         }
 
-        return response()->json([
-            'success' => true,
-            'totalPrice' => $this->cartService->getTotalPrice(),
-        ]);
+        return ApiResponse::success(
+            meta: ['totalPrice' => $this->cartService->getTotalPrice()],
+        );
     }
 
     /**
@@ -77,30 +77,38 @@ class CartController extends Controller
         try {
             $this->cartService->deleteProduct($request->validated()['variantId']);
         } catch (ProductVariantNotFoundInCartException) {
-            return response()->json([
-                'error' => 'Товар не найден в корзине.'
-            ], 422);
+            return ApiResponse::fail(
+                'Товар не найден в корзине.',
+                422,
+            );
         } catch (CartUpdateException) {
-            return response()->json([
-                'error' => 'Не удалось удалить товар из корзины, попробуйте еще раз.'
-            ], 422);
+            return ApiResponse::fail(
+                'Не удалось удалить товар из корзины. Пожалуйста, попробуйте позже.',
+                500,
+            );
         }
 
-        return response()->json([
-            'success' => true,
-            'totalPrice' => $this->cartService->getTotalPrice(),
-        ]);
+        return ApiResponse::success(
+            meta: ['totalPrice' => $this->cartService->getTotalPrice()],
+        );
     }
 
+    /**
+     * Очищает корзину.
+     *
+     * @return JsonResponse JSON-ответ со статусом.
+     */
     public function clear(): JsonResponse
     {
-        $auth = $this->cartService->getAuthField();
+        try {
+            $this->cartService->clearUserCart();
+        } catch (CartUpdateException) {
+            return ApiResponse::fail(
+                'Не удалось очистить корзину. Пожалуйста, попробуйте позже.',
+                500,
+            );
+        }
 
-        Cart::where($auth['field'], $auth['value'])
-            ->delete();
-
-        return response()->json([
-            'status' => 'Корзина очищена',
-        ]);
+        return ApiResponse::success();
     }
 }
