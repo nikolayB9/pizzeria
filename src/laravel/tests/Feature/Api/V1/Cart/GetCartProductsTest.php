@@ -53,11 +53,11 @@ class GetCartProductsTest extends AbstractApiTestCase
     {
         if ($authType === 'session') {
             $this->setSessionId();
+            $auth = $this->getAuthField('session');
         } else {
             $this->setUserId();
+            $auth = $this->getAuthField('user');
         }
-
-        $auth = $this->getAuthField();
 
         if ($createCartItems) {
             CartHelper::createFromVariantByIdentifier($this->variants, $auth, true);
@@ -77,13 +77,13 @@ class GetCartProductsTest extends AbstractApiTestCase
     public function testReturnsSuccessfulResponseUsingSessionId(): void
     {
         $response = $this->getResponse('session');
-        $response->assertStatus(200);
+        $this->checkSuccess($response);
     }
 
     public function testReturnsSuccessfulResponseUsingUserId(): void
     {
         $response = $this->getResponse('user');
-        $response->assertStatus(200);
+        $this->checkSuccess($response);
     }
 
     public function testReturnsExpectedJsonStructureUsingSessionId(): void
@@ -135,6 +135,9 @@ class GetCartProductsTest extends AbstractApiTestCase
     public function testReturnedFieldsHaveExpectedTypesUsingSessionId(): void
     {
         $response = $this->getResponse('session');
+
+        $this->assertTrue($response->json('success'));
+
         $cartProducts = $response->json('data');
 
         $this->assertNotEmpty($cartProducts);
@@ -145,19 +148,20 @@ class GetCartProductsTest extends AbstractApiTestCase
         $this->assertIsString($product['name']);
         $this->assertIsInt($product['variant_id']);
         $this->assertIsString($product['variant_name']);
-        $this->assertTrue(is_int($product['price']) || is_float($product['price']) || is_string($product['price']));
+        $this->assertTrue(is_int($product['price']) || is_float($product['price']));
         $this->assertIsInt($product['qty']);
         $this->assertIsString($product['preview_image_url']);
         $this->assertIsInt($product['category_id']);
 
-        $meta = $response->json('meta');
+        $totalPrice = $response->json('meta.totalPrice');
 
-        $this->assertTrue(is_int($meta['totalPrice']) || is_float($meta['totalPrice']) || is_string($meta['totalPrice']));
+        $this->assertTrue(is_int($totalPrice) || is_float($totalPrice));
     }
 
     public function testReturnedFieldsHaveExpectedTypesUsingUserId(): void
     {
         $response = $this->getResponse('user');
+
         $cartProducts = $response->json('data');
 
         $this->assertNotEmpty($cartProducts);
@@ -168,15 +172,14 @@ class GetCartProductsTest extends AbstractApiTestCase
         $this->assertIsString($product['name']);
         $this->assertIsInt($product['variant_id']);
         $this->assertIsString($product['variant_name']);
-        $this->assertTrue(is_int($product['price']) || is_float($product['price']) || is_string($product['price']));
+        $this->assertTrue(is_int($product['price']) || is_float($product['price']));
         $this->assertIsInt($product['qty']);
         $this->assertIsString($product['preview_image_url']);
         $this->assertIsInt($product['category_id']);
 
-        $meta = $response->json('meta');
+        $totalPrice = $response->json('meta.totalPrice');
 
-        $this->assertNotEmpty($meta);
-        $this->assertTrue(is_int($meta['totalPrice']) || is_float($meta['totalPrice']) || is_string($meta['totalPrice']));
+        $this->assertTrue(is_int($totalPrice) || is_float($totalPrice));
     }
 
     public function testResponseIncludesExpectedProductsAndTotalPriceUsingSessionId(): void
@@ -185,18 +188,20 @@ class GetCartProductsTest extends AbstractApiTestCase
         ProductHelper::createProductsWithVariantsForCategories($categories);
 
         $response = $this->getResponse('session');
+
         $cartProducts = $response->json('data');
         $returnedIds = collect($cartProducts)->pluck('variant_id')->sort()->values();
         $expectedIds = $this->variants->pluck('id')->sort()->values();
 
         $this->assertEquals($expectedIds, $returnedIds);
 
-        $totalPrice = 0;
+        $totalPrice = 0.0;
+
         foreach ($cartProducts as $product) {
             $totalPrice += $product['price'] * $product['qty'];
         }
 
-        $this->assertEquals($totalPrice, $response->json('meta.totalPrice'));
+        $this->assertEquals(round($totalPrice, 2), $response->json('meta.totalPrice'));
     }
 
     public function testResponseIncludesExpectedProductsAndTotalPriceUsingUserId(): void
@@ -205,21 +210,23 @@ class GetCartProductsTest extends AbstractApiTestCase
         ProductHelper::createProductsWithVariantsForCategories($categories);
 
         $response = $this->getResponse('user');
+
         $cartProducts = $response->json('data');
         $returnedIds = collect($cartProducts)->pluck('variant_id')->sort()->values();
         $expectedIds = $this->variants->pluck('id')->sort()->values();
 
         $this->assertEquals($expectedIds, $returnedIds);
 
-        $totalPrice = 0;
+        $totalPrice = 0.0;
+
         foreach ($cartProducts as $product) {
             $totalPrice += $product['price'] * $product['qty'];
         }
 
-        $this->assertEquals($totalPrice, $response->json('meta.totalPrice'));
+        $this->assertEquals(round($totalPrice, 2), $response->json('meta.totalPrice'));
     }
 
-    public function testReturnsEmptyArrayZeroTotalPriceIfCartIsEmptyUsingSessionId(): void
+    public function testReturnsEmptyArrayAndZeroTotalPriceIfCartIsEmptyUsingSessionId(): void
     {
         $response = $this->getResponse('session', false);
 

@@ -97,20 +97,6 @@ class CartService
     }
 
     /**
-     * Привязывает корзину, созданную до авторизации, к авторизованному пользователю.
-     *
-     * Актуально, если пользователь добавил товары в корзину до входа в аккаунт.
-     */
-    public function mergeCartFromSessionToUser(string $oldSessionId, int $userId): void
-    {
-        Cart::where('session_id', $oldSessionId)
-            ->update([
-                'user_id' => $userId,
-                'session_id' => null,
-            ]);
-    }
-
-    /**
      * Возвращает массив с типом идентификатора пользователя и его значением.
      *
      * @return array{field: 'user_id'|'session_id', value: string} Массив с типом идентификации пользователя.
@@ -166,7 +152,9 @@ class CartService
      * @throws CategoryLimitNotSetInConfigException Если лимит для категории не задан в конфигурации.
      * @throws CategoryLimitExceededException Если лимит товаров для категории превышен.
      */
-    protected function throwIfCategoryLimitExceeded(int $categoryId, string $identifierField, string $identifierValue): void
+    protected function throwIfCategoryLimitExceeded(int $categoryId,
+                                                    string $identifierField,
+                                                    string $identifierValue): void
     {
         $totalQty = $this->cartRepository->getTotalQuantityByCategoryAndIdentifier(
             $categoryId,
@@ -181,7 +169,9 @@ class CartService
         try {
             $categorySlug = app(CategoryRepositoryInterface::class)->getSlugById($categoryId);
         } catch (CategoryNotFoundException) {
-            throw new CategoryForLimitCheckNotFoundException("Категория с ID [$categoryId], проверяемая на лимит товаров в корзине, не найдена.");
+            throw new CategoryForLimitCheckNotFoundException(
+                "Категория с ID [$categoryId], проверяемая на лимит товаров в корзине, не найдена."
+            );
         }
 
         $limit = config("cart.limits_by_category_slug.$categorySlug");
@@ -191,7 +181,23 @@ class CartService
         }
 
         if ($totalQty >= $limit) {
-            throw new CategoryLimitExceededException("Нельзя добавить больше [$limit] товаров категории [$categorySlug] в корзину.");
+            throw new CategoryLimitExceededException(
+                "Нельзя добавить больше [$limit] товаров категории [$categorySlug] в корзину."
+            );
         }
+    }
+
+    /**
+     * Привязывает корзину, созданную до авторизации, к авторизованному пользователю.
+     *
+     * Актуально, если пользователь добавил товары в корзину до входа в аккаунт.
+     */
+    public function mergeCartFromSessionToUser(string $oldSessionId, int $userId): void
+    {
+        Cart::where('session_id', $oldSessionId)
+            ->update([
+                'user_id' => $userId,
+                'session_id' => null,
+            ]);
     }
 }

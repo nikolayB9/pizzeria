@@ -83,6 +83,7 @@ class AddProductToCartTest extends AbstractApiTestCase
         parent::checkSuccess($response, $data, $meta, $status);
 
         $totalPrice = $response->json('meta.totalPrice');
+
         $this->assertTrue(is_float($totalPrice) || is_int($totalPrice));
     }
 
@@ -125,6 +126,7 @@ class AddProductToCartTest extends AbstractApiTestCase
     public function testAddNewProductToNonEmptyCartUsingSessionId(): void
     {
         $this->setSessionId();
+
         $variants = $this->variants->random(3);
 
         CartHelper::createFromVariantByIdentifier(
@@ -146,6 +148,7 @@ class AddProductToCartTest extends AbstractApiTestCase
     public function testAddNewProductToNonEmptyCartUsingUserId(): void
     {
         $this->setUserId();
+
         $variants = $this->variants->random(3);
 
         CartHelper::createFromVariantByIdentifier(
@@ -167,6 +170,7 @@ class AddProductToCartTest extends AbstractApiTestCase
     public function testIncreaseQuantityOfExistingProductUsingSessionId(): void
     {
         $this->setSessionId();
+
         $variants = $this->variants->random(3);
 
         CartHelper::createFromVariantByIdentifier(
@@ -187,6 +191,7 @@ class AddProductToCartTest extends AbstractApiTestCase
     public function testIncreaseQuantityOfExistingProductUsingUserId(): void
     {
         $this->setUserId();
+
         $variants = $this->variants->random(3);
 
         CartHelper::createFromVariantByIdentifier(

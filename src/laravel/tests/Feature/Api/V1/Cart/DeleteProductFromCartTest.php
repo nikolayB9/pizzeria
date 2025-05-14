@@ -74,6 +74,7 @@ class DeleteProductFromCartTest extends AbstractApiTestCase
         parent::checkSuccess($response, $data, $meta, $status);
 
         $totalPrice = $response->json('meta.totalPrice');
+
         $this->assertTrue(is_float($totalPrice) || is_int($totalPrice));
     }
 

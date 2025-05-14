@@ -51,11 +51,14 @@ abstract class AbstractApiTestCase extends TestCase
      *
      * @param TestResponse $response Ответ от тестируемого запроса.
      * @param mixed $data Ожидаемые основные данные для проверки (если есть).
-     * @param mixed $meta Ожидаемые дополнительные данные для проверки (если есть).
+     * @param array $meta Ожидаемые дополнительные данные для проверки (если есть).
      * @param int $status Ожидаемый HTTP-статус код.
      * @return void
      */
-    protected function checkSuccess(TestResponse $response, mixed $data = [], mixed $meta = [], int $status = 200): void
+    protected function checkSuccess(TestResponse $response,
+                                    mixed        $data = [],
+                                    array        $meta = [],
+                                    int          $status = 200): void
     {
         $response->assertStatus($status);
 
@@ -66,9 +69,16 @@ abstract class AbstractApiTestCase extends TestCase
         ]);
 
         $this->assertTrue($response->json('success'));
-        $this->assertEquals($data, $response->json('data'));
+
+        if (!empty($data)) {
+            $this->assertEquals($data, $response->json('data'));
+        }
+
         $this->assertIsArray($response->json('meta'));
-        $this->assertEquals($meta, $response->json('meta'));
+
+        if (!empty($meta)) {
+            $this->assertEquals($meta, $response->json('meta'));
+        }
     }
 
     /**

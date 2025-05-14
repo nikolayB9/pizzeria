@@ -43,7 +43,8 @@ class GetProductBySlugTest extends AbstractApiTestCase
     public function testReturnsSuccessfulResponse(): void
     {
         $response = $this->getResponse();
-        $response->assertStatus(200);
+
+        $this->checkSuccess($response);
     }
 
     public function testReturnsExpectedJsonStructure(): void
@@ -83,6 +84,7 @@ class GetProductBySlugTest extends AbstractApiTestCase
     public function testReturnedFieldsHaveExpectedTypes(): void
     {
         $response = $this->getResponse();
+
         $product = $response->json('data');
 
         $this->assertIsInt($product['id']);
@@ -95,8 +97,8 @@ class GetProductBySlugTest extends AbstractApiTestCase
         $variant = $product['variants'][0];
         $this->assertIsInt($variant['id']);
         $this->assertIsString($variant['name']);
-        $this->assertTrue(is_int($variant['price']) || is_float($variant['price']) || is_string($variant['price']));
-        $this->assertTrue(is_null($variant['old_price']) || is_int($variant['old_price']) || is_float($variant['old_price']) || is_string($variant['old_price']));
+        $this->assertTrue(is_int($variant['price']) || is_float($variant['price']));
+        $this->assertTrue(is_null($variant['old_price']) || is_int($variant['old_price']) || is_float($variant['old_price']));
         $this->assertIsArray($variant['parameters']);
         $this->assertNotEmpty($variant['parameters']);
 
@@ -114,18 +116,19 @@ class GetProductBySlugTest extends AbstractApiTestCase
         ProductHelper::createProduct(3);
 
         $response = $this->getResponse();
-        $responseProduct = $response->json('data');
 
-        $this->assertEquals($this->product->id, $responseProduct['id']);
-        $this->assertEquals($this->product->name, $responseProduct['name']);
+        $product = $response->json('data');
+
+        $this->assertEquals($this->product->id, $product['id']);
+        $this->assertEquals($this->product->name, $product['name']);
     }
 
     public function testReturns404ForNonExistentSlug(): void
     {
         $nonExistentSlug = 'non-existent-slug';
+
         $response = $this->getResponse($nonExistentSlug);
 
-        $response->assertStatus(404);
-        $this->assertEquals('Продукт не найден.', $response->json('message'));
+        $this->checkError($response, 404, 'Продукт не найден.');
     }
 }

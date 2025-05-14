@@ -51,7 +51,8 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
     public function testReturnsSuccessfulResponse(): void
     {
         $response = $this->getResponse();
-        $response->assertStatus(200);
+
+        $this->checkSuccess($response);
     }
 
     public function testReturnsExpectedJsonStructure(): void
@@ -78,6 +79,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
     public function testReturnedFieldsHaveExpectedTypes(): void
     {
         $response = $this->getResponse();
+
         $products = $response->json('data');
         $product = array_pop($products);
 
@@ -87,7 +89,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
         $this->assertIsString($product['slug']);
         $this->assertIsString($product['preview_image_url']);
         $this->assertIsBool($product['has_multiple_variants']);
-        $this->assertTrue(is_int($product['min_price']) || is_float($product['min_price']) || is_string($product['min_price']));
+        $this->assertTrue(is_int($product['min_price']) || is_float($product['min_price']));
     }
 
     public function testResponseIncludesOnlyExpectedCategoryProducts(): void
@@ -96,6 +98,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
         ProductHelper::createProductsWithVariantsForCategories($otherCategory);
 
         $response = $this->getResponse();
+
         $returnedIds = collect($response->json('data'))->pluck('id')->sort()->values();
         $expectedIds = $this->products->pluck('id')->sort()->values();
 
@@ -108,16 +111,16 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
 
         $response = $this->getResponse($categoryWithoutProducts->slug);
 
-        $response->assertStatus(200);
+        $this->checkSuccess($response);
         $this->assertEquals([], $response->json('data'));
     }
 
     public function testReturns404ForNonExistentCategorySlug(): void
     {
         $nonExistentSlug = 'non-existent-slug';
+
         $response = $this->getResponse($nonExistentSlug);
 
-        $response->assertStatus(404);
-        $this->assertEquals('Категория не найдена.', $response->json('message'));
+        $this->checkError($response, 404, 'Категория не найдена.');
     }
 }
