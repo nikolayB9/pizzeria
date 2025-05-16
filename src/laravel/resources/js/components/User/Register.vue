@@ -34,7 +34,7 @@ export default {
                     })
                         .then(res => {
                             localStorage.setItem('x_xsrf_token', res.config.headers['X-XSRF-TOKEN'])
-                            this.$router.push({name: 'main.index'})
+                            this.$router.go(-1)
                         })
                         .catch(err => {
                             console.error('Ошибка регистрации', err);

@@ -64,8 +64,24 @@ export default {
                 });
         },
         isCategoryActive(slug) {
-            return this.activeCategorySlug === slug ||
-                (!this.activeCategorySlug && this.productCategories.length > 0 && slug === this.productCategories[0].slug);
+            // Активна только маркетинговая категория
+            if (this.isMarketingCategorySelected()) {
+                return this.activeCategorySlug === slug;
+            }
+
+            // Если выбрана "Все" — активна первая продуктовая категория
+            if (!this.activeCategorySlug && this.productCategories.length > 0) {
+                return slug === this.productCategories[0].slug;
+            }
+
+            // Если выбрана продуктовая категория — активна только она
+            return this.activeCategorySlug === slug;
+        },
+        isMarketingCategorySelected() {
+            return this.marketingCategories?.some(cat => cat.slug === this.activeCategorySlug);
+        },
+        isProductCategorySelected() {
+            return this.productCategories?.some(cat => cat.slug === this.activeCategorySlug);
         }
     }
 }
@@ -78,7 +94,7 @@ export default {
             <router-link
                 :to="{ name: 'main.index' }"
                 class="category-link"
-                :class="{ active: !activeCategorySlug }"
+                :class="{ active: !activeCategorySlug || isProductCategorySelected() }"
                 active-class="active"
             >
                 Все
@@ -95,18 +111,23 @@ export default {
         </div>
 
         <!-- Продуктовые категории -->
-        <div v-if="productCategories" class="category-row product-row">
-            <template v-for="prodCategory in productCategories" :key="prodCategory.id">
-                <router-link
-                    :to="{ name: 'category.products', params: { categorySlug: prodCategory.slug } }"
-                    class="category-link"
-                    active-class="active"
-                    :class="{ active: isCategoryActive(prodCategory.slug) }"
-                >
-                    {{ prodCategory.name }}
-                </router-link>
-            </template>
-        </div>
+        <transition name="fade">
+            <div
+                v-if="productCategories && !isMarketingCategorySelected()"
+                class="category-row product-row"
+            >
+                <template v-for="prodCategory in productCategories" :key="prodCategory.id">
+                    <router-link
+                        :to="{ name: 'category.products', params: { categorySlug: prodCategory.slug } }"
+                        class="category-link"
+                        active-class="active"
+                        :class="{ active: isCategoryActive(prodCategory.slug) }"
+                    >
+                        {{ prodCategory.name }}
+                    </router-link>
+                </template>
+            </div>
+        </transition>
     </div>
 
     <div v-if="products">
@@ -128,6 +149,18 @@ export default {
 </template>
 
 <style scoped>
+/* Fade transition */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+    transform: translateY(10px); /* немного сдвигается вниз при появлении/исчезновении */
+}
+
 .category-row {
     display: flex;
     flex-wrap: wrap;
@@ -167,7 +200,6 @@ export default {
     font-weight: bold;
     border-color: #007bff;
 }
-
 
 .menu {
     list-style: none;

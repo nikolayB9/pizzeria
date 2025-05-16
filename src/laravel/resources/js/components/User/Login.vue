@@ -34,7 +34,7 @@ export default {
                         .then(res => {
                             localStorage.setItem('x_xsrf_token', res.config.headers['X-XSRF-TOKEN'])
                             this.fetchCart()
-                            this.$router.push({name: 'main.index'})
+                            this.$router.go(-1)
                         })
                         .catch(err => {
                             console.error('Ошибка входа', err);

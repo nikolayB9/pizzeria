@@ -4,6 +4,12 @@ import {useCart} from '@/composables/useCart'
 export default {
     name: "Index",
 
+    data() {
+        return {
+            token: null,
+        }
+    },
+
     setup() {
         const {cartTotalPrice, cartProducts, fetchCart, addToCart, deleteFromCart, clearCart} = useCart()
         return {cartTotalPrice, cartProducts, fetchCart, addToCart, deleteFromCart, clearCart}
@@ -11,8 +17,20 @@ export default {
 
     mounted() {
         this.fetchCart()
+        this.getToken()
     },
 
+    watch: {
+        $route(to, from) {
+            this.getToken()
+        }
+    },
+
+    methods: {
+        getToken() {
+            this.token = localStorage.getItem('x_xsrf_token')
+        },
+    },
 
 }
 </script>
@@ -24,7 +42,10 @@ export default {
             Очистить корзину
         </button>
     </div>
-    <div v-if="cartProducts">
+    <div v-if="!cartTotalPrice">
+        Корзина пуста.
+    </div>
+    <div v-if="cartProducts && cartTotalPrice">
         <ul class="cart-list">
             <li v-for="product in cartProducts" class="cart-item">
                 <img :src="product.preview_image_url" alt="preview">
@@ -41,8 +62,16 @@ export default {
             </li>
         </ul>
         <div class="cart-total">Общая стоимость: {{ cartTotalPrice }} ₽</div>
-        <div v-if="cartTotalPrice" class="checkout">
+
+        <div v-if="token" class="checkout">
             <a href="#">Оформить заказ</a>
+        </div>
+
+        <div v-if="!token" class="checkout">
+            <router-link :to="{name: 'user.login' }">Войти</router-link>
+            или
+            <router-link :to="{name: 'user.register' }">Зарегистрироваться</router-link>
+            для оформления заказа.
         </div>
     </div>
 </template>
@@ -133,7 +162,7 @@ export default {
 }
 
 .checkout {
-    margin-top: 12px;
+    margin-top: 20px;
 }
 
 .checkout a {
