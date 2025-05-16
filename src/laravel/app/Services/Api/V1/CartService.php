@@ -44,6 +44,7 @@ class CartService
      * Добавляет вариант продукта в корзину или увеличивает его количество, если он уже есть.
      *
      * @param int $variantId ID варианта продукта, добавляемого в корзину.
+     *
      * @return void
      * @throws ProductNotPublishedException Если связанный продукт не опубликован.
      * @throws CategoryLimitExceededException Если лимит категории превышен.
@@ -72,6 +73,7 @@ class CartService
      * Удаляет вариант продукта из корзины или уменьшает его количество.
      *
      * @param int $variantId ID варианта продукта.
+     *
      * @return void
      * @throws CartUpdateException Если произошла ошибка при удалении или уменьшении количества.
      * @throws ProductVariantNotFoundInCartException Если вариант продукта с таким ID не найден в корзине пользователя.
@@ -117,6 +119,7 @@ class CartService
      *
      * @param CartProductListItemDto[] $cartProducts Массив DTO продуктов в корзине.
      * @param bool $calculateIfEmpty Делать ли запрос к базе, если массив пуст.
+     *
      * @return float Общая стоимость товаров в корзине.
      */
     public function getTotalPrice(array $cartProducts = [], bool $calculateIfEmpty = true): float
@@ -147,14 +150,17 @@ class CartService
      * @param int $categoryId ID категории, для которой проверяется лимит.
      * @param string $identifierField Поле-идентификатор пользователя (например, 'user_id' или 'session_id').
      * @param string $identifierValue Значение идентификатора.
+     *
      * @return void
      * @throws CategoryForLimitCheckNotFoundException Если категория с заданным ID не найдена.
      * @throws CategoryLimitNotSetInConfigException Если лимит для категории не задан в конфигурации.
      * @throws CategoryLimitExceededException Если лимит товаров для категории превышен.
      */
-    protected function throwIfCategoryLimitExceeded(int $categoryId,
-                                                    string $identifierField,
-                                                    string $identifierValue): void
+    protected function throwIfCategoryLimitExceeded(
+        int    $categoryId,
+        string $identifierField,
+        string $identifierValue
+    ): void
     {
         $totalQty = $this->cartRepository->getTotalQuantityByCategoryAndIdentifier(
             $categoryId,

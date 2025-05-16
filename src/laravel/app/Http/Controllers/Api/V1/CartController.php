@@ -38,6 +38,7 @@ class CartController extends Controller
      * Добавляет продукт в корзину, если не превышен лимит по категории.
      *
      * @param AddToCartRequest $request Валидация переданного variantId.
+     *
      * @return JsonResponse JSON-ответ со статусом и общей стоимостью корзины.
      */
     public function store(AddToCartRequest $request): JsonResponse
@@ -70,6 +71,7 @@ class CartController extends Controller
      * Удаляет товар из корзины или уменьшает его количество.
      *
      * @param DeleteFromCartRequest $request Валидация переданного variantId.
+     *
      * @return JsonResponse JSON-ответ со статусом и общей стоимостью корзины.
      */
     public function destroy(DeleteFromCartRequest $request): JsonResponse

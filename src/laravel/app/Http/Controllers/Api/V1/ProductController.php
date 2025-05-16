@@ -18,13 +18,13 @@ class ProductController extends Controller
     /**
      * Возвращает опубликованные продукты по slug категории.
      *
-     * @param string $categorySlug Slug категории.
+     * @param string $slug Slug категории.
      * @return JsonResponse Список продуктов или 404, если категория не найдена.
      */
-    public function getByCategory(string $categorySlug): JsonResponse
+    public function indexByCategory(string $slug): JsonResponse
     {
         try {
-            $products = $this->productService->getProductsByCategorySlug($categorySlug);
+            $products = $this->productService->getProductsByCategorySlug($slug);
         } catch (CategoryNotFoundException) {
             return ApiResponse::fail('Категория не найдена.', 404);
         }
@@ -37,13 +37,13 @@ class ProductController extends Controller
     /**
      * Возвращает продукт по slug или 404, если не найден.
      *
-     * @param string $productSlug Slug продукта.
+     * @param string $slug Slug продукта.
      * @return JsonResponse Продукт или 404, если не найден.
      */
-    public function show(string $productSlug): JsonResponse
+    public function show(string $slug): JsonResponse
     {
         try {
-            $product = $this->productService->getProductBySlug($productSlug);
+            $product = $this->productService->getProductBySlug($slug);
         } catch (ProductNotFoundException) {
             return ApiResponse::fail('Продукт не найден.', 404);
         }
