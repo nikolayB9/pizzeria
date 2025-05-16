@@ -25,6 +25,7 @@ export default {
     watch: {
         $route(to, from) {
             this.getToken()
+            this.getUserPreview()
         }
     },
 
@@ -90,7 +91,6 @@ export default {
 }
 
 .navbar-left,
-.navbar-right,
 .navbar-cart {
     display: flex;
     align-items: center;
