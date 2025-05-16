@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\V1\CartController;
+use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
@@ -18,8 +19,10 @@ Route::middleware([
 ])->prefix('v1')->group(function () {
 
     // Публичные маршруты
-    Route::get('/products/category/{categorySlug}', [ProductController::class, 'getByCategory']);
-    Route::get('/products/{productSlug}', [ProductController::class, 'show']);
+    Route::get('/categories', [CategoryController::class, 'index']);
+
+    Route::get('/products/category/{slug}', [ProductController::class, 'indexByCategory']);
+    Route::get('/products/{slug}', [ProductController::class, 'show']);
 
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);
@@ -30,6 +33,8 @@ Route::middleware([
     Route::middleware('auth')->group(function () {
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
+        Route::get('/user/preview', [UserController::class, 'preview']);
+        Route::get('/user/addresses', [UserController::class, 'addresses']);
         Route::get('/user', [UserController::class, 'show']);
     });
 

@@ -5,9 +5,20 @@ namespace App\Repositories\Category;
 use App\Exceptions\Category\CategoryNotFoundException;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Collection;
 
 class EloquentCategoryRepository implements CategoryRepositoryInterface
 {
+    /**
+     * Возвращает коллекцию со всеми категориями.
+     *
+     * @return Collection Коллекция категорий.
+     */
+    public function getAll(): Collection
+    {
+        return Category::all();
+    }
+
     /**
      * Получает модель категории по slug с выборкой только поля id.
      *
