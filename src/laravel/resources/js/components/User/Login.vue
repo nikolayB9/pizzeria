@@ -1,4 +1,6 @@
 <script>
+import {useCart} from '@/composables/useCart'
+
 export default {
     name: "Login",
 
@@ -8,6 +10,11 @@ export default {
             password: null,
             errors: [],
         }
+    },
+
+    setup() {
+        const {fetchCart} = useCart()
+        return {fetchCart}
     },
 
     computed: {
@@ -26,7 +33,8 @@ export default {
                     })
                         .then(res => {
                             localStorage.setItem('x_xsrf_token', res.config.headers['X-XSRF-TOKEN'])
-                            this.$router.push({name: 'product.index'})
+                            this.fetchCart()
+                            this.$router.push({name: 'main.index'})
                         })
                         .catch(err => {
                             console.error('Ошибка входа', err);

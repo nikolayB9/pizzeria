@@ -5,27 +5,26 @@ export default {
     name: 'App',
 
     setup() {
-        const {cartTotalPrice, fetchCart} = useCart()
-        return {cartTotalPrice, fetchCart}
+        const {cartTotalPrice, fetchCart, resetCartLocally} = useCart()
+        return {cartTotalPrice, fetchCart, resetCartLocally}
     },
 
     data() {
         return {
             token: null,
-            user: null,
+            userName: null,
         }
     },
 
     mounted() {
         this.getToken()
-        this.getUser()
+        this.getUserPreview()
         this.fetchCart()
     },
 
     watch: {
         $route(to, from) {
             this.getToken()
-            this.getUser()
         }
     },
 
@@ -37,15 +36,16 @@ export default {
             axios.post('/api/v1/logout')
                 .then(res => {
                     localStorage.removeItem('x_xsrf_token')
+                    this.resetCartLocally()
                     this.token = null
                     this.$router.push({name: 'user.login'})
                 })
         },
-        getUser() {
+        getUserPreview() {
             if (this.token) {
-                axios.get('/api/v1/user')
+                axios.get('/api/v1/user/preview')
                     .then(res => {
-                        this.user = res.data.data
+                        this.userName = res.data.data.name
                     })
             }
         }
@@ -55,14 +55,13 @@ export default {
 <template>
     <header class="navbar">
         <div class="navbar-left">
-            <router-link class="nav-link" :to="{ name: 'product.index' }">Главная</router-link>
+            <router-link class="nav-link" :to="{ name: 'main.index' }">Главная</router-link>
+            <template v-if="token">
+                <a href="#" class="nav-link" @click.prevent="logout">Выйти</a>
+                <span class="username" v-if="userName">{{ userName }}</span>
+            </template>
             <router-link v-if="!token" class="nav-link" :to="{ name: 'user.login' }">Войти</router-link>
             <router-link v-if="!token" class="nav-link" :to="{ name: 'user.register' }">Регистрация</router-link>
-        </div>
-
-        <div class="navbar-right" v-if="token">
-            <span class="username" v-if="user">{{ user.name }}</span>
-            <a href="#" class="nav-link" @click.prevent="logout">Выйти</a>
         </div>
 
         <div class="navbar-cart" v-if="cartTotalPrice">

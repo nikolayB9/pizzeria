@@ -6,14 +6,14 @@ const cartProducts = ref([])
 
 async function fetchCart() {
     const response = await axios.get('/api/v1/cart')
-    cartTotalPrice.value = response.data.totalPrice
-    cartProducts.value = response.data.cartProducts
+    cartTotalPrice.value = response.data.meta.totalPrice
+    cartProducts.value = response.data.data
 }
 
 async function addToCart(variantId) {
     try {
-        const response = await axios.post('/api/v1/cart', { variantId })
-        cartTotalPrice.value = response.data.totalPrice
+        const response = await axios.post('/api/v1/cart', { variantId: variantId })
+        cartTotalPrice.value = response.data.meta.totalPrice
 
         const product = cartProducts.value.find(p => p.variant_id === variantId)
 
@@ -36,7 +36,7 @@ async function addToCart(variantId) {
 
 async function deleteFromCart(variantId) {
     const response = await axios.delete('/api/v1/cart', { data: { variantId } })
-    cartTotalPrice.value = response.data.totalPrice
+    cartTotalPrice.value = response.data.meta.totalPrice
 
     const index = cartProducts.value.findIndex(p => p.variant_id === variantId)
 
@@ -55,6 +55,11 @@ async function clearCart() {
     cartProducts.value = []
 }
 
+function resetCartLocally() {
+    cartTotalPrice.value = 0
+    cartProducts.value = []
+}
+
 export function useCart() {
     return {
         cartProducts,
@@ -63,5 +68,6 @@ export function useCart() {
         addToCart,
         deleteFromCart,
         clearCart,
+        resetCartLocally,
     }
 }

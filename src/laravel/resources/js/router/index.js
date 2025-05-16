@@ -3,8 +3,13 @@ import { createWebHistory, createRouter } from 'vue-router'
 const routes = [
     {
         path: '/',
-        component: () => import('../components/Product/Index.vue'),
-        name: 'product.index'
+        component: () => import('../components/Main/Index.vue'),
+        name: 'main.index'
+    },
+    {
+        path: '/category/:categorySlug',
+        component: () => import('../components/Main/Index.vue'),
+        name: 'category.products'
     },
     {
         path: '/product/:productSlug',
