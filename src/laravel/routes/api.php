@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
@@ -34,8 +36,11 @@ Route::middleware([
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
         Route::get('/user/preview', [UserController::class, 'preview']);
-        Route::get('/user/checkout-data', [UserController::class, 'checkoutData']);
         Route::get('/user', [UserController::class, 'show']);
+
+        Route::post('/addresses', [AddressController::class, 'store']);
+
+        Route::get('/checkout/data', [CheckoutController::class, 'getData']);
     });
 
     // Авторизация

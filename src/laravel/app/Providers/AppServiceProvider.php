@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Repositories\Address\AddressRepositoryInterface;
+use App\Repositories\Address\EloquentAddressRepository;
 use App\Repositories\Cart\CartRepositoryInterface;
 use App\Repositories\Cart\EloquentCartRepository;
 use App\Repositories\Category\CategoryRepositoryInterface;
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CategoryRepositoryInterface::class, EloquentCategoryRepository::class);
         $this->app->bind(ProductRepositoryInterface::class, EloquentProductRepository::class);
         $this->app->bind(CartRepositoryInterface::class, EloquentCartRepository::class);
+        $this->app->bind(AddressRepositoryInterface::class, EloquentAddressRepository::class);
     }
 
     /**
