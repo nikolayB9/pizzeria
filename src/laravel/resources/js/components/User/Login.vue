@@ -35,6 +35,9 @@ export default {
                             localStorage.setItem('x_xsrf_token', res.config.headers['X-XSRF-TOKEN'])
                             this.fetchCart()
                             this.$router.go(-1)
+                            if (res.data.meta.cart_merge === false) {
+                                alert('Не удалось перенести корзину после входа. Пожалуйста, проверьте её содержимое.')
+                            }
                         })
                         .catch(err => {
                             console.error('Ошибка входа', err);
