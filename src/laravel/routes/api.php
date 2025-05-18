@@ -40,7 +40,7 @@ Route::middleware([
 
         Route::post('/addresses', [AddressController::class, 'store']);
 
-        Route::get('/checkout/data', [CheckoutController::class, 'getData']);
+        Route::get('/checkout/data', [CheckoutController::class, 'getUserData']);
     });
 
     // Авторизация

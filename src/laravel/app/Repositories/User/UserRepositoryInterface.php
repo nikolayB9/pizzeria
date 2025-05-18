@@ -17,5 +17,13 @@ interface UserRepositoryInterface
      */
     public function getPreviewModelById(int $userId): User;
 
+    /**
+     * Получает модель пользователя по ID с минимальным набором данных для оформления заказа.
+     *
+     * @param int $userId
+     *
+     * @return User
+     * @throws MissingUserException
+     */
     public function getCheckoutDataById(int $userId): User;
 }

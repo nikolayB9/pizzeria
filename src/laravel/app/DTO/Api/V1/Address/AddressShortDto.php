@@ -6,7 +6,7 @@ use App\DTO\Traits\RequiresPreload;
 use App\Models\Address;
 use Illuminate\Support\Collection;
 
-class AddressListItemDto
+class AddressShortDto
 {
     use RequiresPreload;
 
@@ -43,7 +43,7 @@ class AddressListItemDto
      *
      * @param Collection<int, Address> $addresses Коллекция моделей Address.
      *
-     * @return AddressListItemDto[] Массив DTO.
+     * @return AddressShortDto[] Массив DTO.
      */
     public static function collection(Collection $addresses): array
     {

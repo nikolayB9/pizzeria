@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\User\UserRoleEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -59,5 +60,15 @@ class User extends Authenticatable
     public function addresses(): hasMany
     {
         return $this->hasMany(Address::class);
+    }
+
+    public function latestOrder(): HasOne
+    {
+        return $this->hasOne(Order::class)->latestOfMany();
+    }
+
+    public function latestAddress(): HasOne
+    {
+        return $this->hasOne(Address::class)->latestOfMany();
     }
 }

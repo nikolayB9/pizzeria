@@ -9,6 +9,8 @@ class Address extends Model
 {
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
+    protected $with = ['city', 'street'];
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);

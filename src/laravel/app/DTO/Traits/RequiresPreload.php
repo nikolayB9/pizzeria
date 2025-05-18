@@ -17,7 +17,9 @@ trait RequiresPreload
      * Гарантирует, что отношение модели было предварительно загружено.
      *
      * @param Model $model Модель Eloquent, у которой проверяются отношения.
-     * @param string|array $relations Название или список названий отношений, которые должны быть предварительно загружены.
+     * @param string|array $relations Название или список названий отношений, которые должны быть предварительно
+     *     загружены.
+     *
      * @return void
      * @throws RequiredRelationMissingException Если отношение не было предварительно загружено.
      */
@@ -36,7 +38,9 @@ trait RequiresPreload
      * Гарантирует, что отношение модели было предварительно загружено и не равно null.
      *
      * @param Model $model Модель Eloquent, у которой проверяются отношения.
-     * @param string|array $relations Название или список названий отношений, которые должны быть загружены и не равны null.
+     * @param string|array $relations Название или список названий отношений, которые должны быть загружены и не равны
+     *     null.
+     *
      * @return void
      * @throws RequiredRelationMissingException Если отношение не было предварительно загружено.
      * @throws RelationIsNullException Если загруженное отношение равно null.
@@ -55,20 +59,68 @@ trait RequiresPreload
     }
 
     /**
-     * Гарантирует, что указанные (в том числе вложенные) отношения модели загружены и не равны null.
+     * Гарантирует, что указанные (в том числе вложенные) отношения модели загружены.
      *
-     * Метод проверяет каждую часть отношения, переданного в точечной нотации (например, 'productVariant.product.previewImage'),
-     * и выбрасывает исключение, если хотя бы одно из них не было предварительно загружено или является null.
-     * Повторяющиеся части путей отношений проверяются только один раз, чтобы избежать дублирующих проверок при вложенных связях.
+     * Метод проверяет каждую часть отношения, переданного в точечной нотации (например,
+     * 'productVariant.product.previewImage'), и выбрасывает исключение, если хотя бы одно из них не было
+     * предварительно загружено. Повторяющиеся части путей отношений проверяются только один раз, чтобы избежать
+     * дублирующих проверок при вложенных связях.
      *
      * @param Model $model Модель Eloquent, у которой проверяются отношения.
-     * @param string|array $relations Отношение или список отношений (в том числе вложенных через точку), которые должны быть загружены.
+     * @param string|array $relations Отношение или список отношений (в том числе вложенных через точку), которые
+     *     должны быть загружены.
+     *
+     * @return void
+     * @throws RequiredRelationMissingException Если хотя бы одно из указанных отношений не загружено.
+     */
+    private static function checkRequireAllRelationPaths(Model $model, string|array $relations): void
+    {
+        $relations = (array)$relations;
+        $checkedPaths = [];
+
+        foreach ($relations as $relationPath) {
+            $paths = explode('.', $relationPath);
+            $currentModel = $model;
+            $currentPath = '';
+
+            foreach ($paths as $path) {
+                $currentPath = ltrim("$currentPath.$path", '.');
+
+                if (!in_array($currentPath, $checkedPaths, true)) {
+                    self::checkRequireRelations($currentModel, $path);
+                    $checkedPaths[] = $currentPath;
+                }
+
+                $currentModel = $currentModel->$path;
+
+                if ($currentModel instanceof \Illuminate\Support\Collection && $currentModel->isNotEmpty()) {
+                    $currentModel = $currentModel->first();
+                }
+
+                if (!$currentModel instanceof Model) {
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Гарантирует, что указанные (в том числе вложенные) отношения модели загружены и не равны null.
+     *
+     * Метод проверяет каждую часть отношения, переданного в точечной нотации (например,
+     * 'productVariant.product.previewImage'), и выбрасывает исключение, если хотя бы одно из них не было
+     * предварительно загружено или является null. Повторяющиеся части путей отношений проверяются только один раз,
+     * чтобы избежать дублирующих проверок при вложенных связях.
+     *
+     * @param Model $model Модель Eloquent, у которой проверяются отношения.
+     * @param string|array $relations Отношение или список отношений (в том числе вложенных через точку), которые
+     *     должны быть загружены.
+     *
      * @return void
      * @throws RequiredRelationMissingException Если хотя бы одно из указанных отношений не загружено.
      * @throws RelationIsNullException Если загруженное отношение равно null.
      */
-    private static function checkRequireAllRelationPaths(Model $model, string|array $relations): void
-
+    private static function checkRequireNotNullAllRelationPaths(Model $model, string|array $relations): void
     {
         $relations = (array)$relations;
         $checkedPaths = [];
@@ -103,11 +155,14 @@ trait RequiresPreload
      * Гарантирует, что отношение модели было предварительно загружено и является экземплярами Collection.
      *
      * @param Model $model Модель Eloquent, у которой проверяются отношения.
-     * @param string|array $relations Название или список названий отношений, которые должны быть загружены и представлять собой коллекции.
+     * @param string|array $relations Название или список названий отношений, которые должны быть загружены и
+     *     представлять собой коллекции.
+     *
      * @return void
      * @throws RequiredRelationMissingException Если отношение не было предварительно загружено.
      * @throws RelationIsNullException Если загруженное отношение равно null.
-     * @throws RelationIsNotCollectionException Если загруженное отношение не является коллекцией Illuminate\Support\Collection.
+     * @throws RelationIsNotCollectionException Если загруженное отношение не является коллекцией
+     *     Illuminate\Support\Collection.
      */
     private static function checkRequireCollectionInRelations(Model $model, string|array $relations): void
     {
@@ -126,7 +181,9 @@ trait RequiresPreload
      * Гарантирует, что агрегатные атрибуты (например, поля из withCount/withSum) были предзагружены в модель.
      *
      * @param Model $model Модель Eloquent, у которой проверяется наличие агрегатных атрибутов.
-     * @param string|array $aggregates Название или список названий агрегатных полей (например, variants_count, variants_min_price).
+     * @param string|array $aggregates Название или список названий агрегатных полей (например, variants_count,
+     *     variants_min_price).
+     *
      * @return void
      * @throws AggregateAttributeMissingException Если указанный агрегат отсутствует в загруженных атрибутах модели.
      */
@@ -147,6 +204,7 @@ trait RequiresPreload
      *
      * @param Model $model Модель Eloquent, у которой проверяется наличие pivot-атрибутов.
      * @param string|array $pivots Название или список названий pivot-полей.
+     *
      * @return void
      * @throws PivotMissingException Если отсутствует объект pivot.
      * @throws PivotAttributeMissingException Если хотя бы один указанный атрибут отсутствует в pivot.

@@ -2,7 +2,7 @@
 
 namespace App\Services\Api\V1;
 
-use App\DTO\Api\V1\Address\AddressListItemDto;
+use App\DTO\Api\V1\Address\AddressShortDto;
 use App\DTO\Api\V1\Address\CreateAddressDto;
 use App\Exceptions\Address\UserAddressNotAddException;
 use App\Repositories\Address\AddressRepositoryInterface;
@@ -18,13 +18,13 @@ class AddressService
      *
      * @param CreateAddressDto $addressDto DTO с данными для создания адреса.
      *
-     * @return AddressListItemDto DTO для отображения созданного адреса в списке.
+     * @return AddressShortDto DTO для отображения созданного адреса в списке.
      * @throws UserAddressNotAddException Если произошла ошибка при создании адреса.
      */
-    public function createUserAddress(CreateAddressDto $addressDto): AddressListItemDto
+    public function createUserAddress(CreateAddressDto $addressDto): AddressShortDto
     {
         $newAddress = $this->addressRepository->createAddress($addressDto);
 
-        return AddressListItemDto::fromModel($newAddress);
+        return AddressShortDto::fromModel($newAddress);
     }
 }

@@ -28,9 +28,4 @@ class UserController
             data: $this->userService->getPreviewData()
         );
     }
-
-    public function checkoutData()
-    {
-
-    }
 }

@@ -24,6 +24,7 @@ class AddToCartProductDto
      * Создаёт DTO из модели ProductVariant.
      *
      * @param ProductVariant $variant Экземпляр модели ProductVariant с необходимыми предзагруженными отношениями.
+     *
      * @return self
      * @throws RequiredRelationMissingException Если хотя бы одно из указанных отношений не загружено.
      * @throws RelationIsNullException Если загруженное отношение равно null.
@@ -32,7 +33,7 @@ class AddToCartProductDto
      */
     public static function fromModel(ProductVariant $variant): self
     {
-        self::checkRequireAllRelationPaths($variant, 'product.productCategoryRelation');
+        self::checkRequireNotNullAllRelationPaths($variant, 'product.productCategoryRelation');
 
         return new self(
             product_variant_id: $variant->id,

@@ -32,6 +32,7 @@ class CartProductListItemDto
      *  productVariant.product.previewImage, productVariant.product.productCategoryRelation.
      *
      * @param Cart $cart Экземпляр модели Cart с необходимыми предзагруженными отношениями.
+     *
      * @return self
      * @throws RequiredRelationMissingException Если одно из указанных отношений не загружено.
      * @throws RelationIsNullException Если загруженное отношение равно null.
@@ -40,7 +41,7 @@ class CartProductListItemDto
      */
     public static function fromModel(Cart $cart): self
     {
-        self::checkRequireAllRelationPaths($cart, [
+        self::checkRequireNotNullAllRelationPaths($cart, [
             'productVariant.product.previewImage',
             'productVariant.product.productCategoryRelation',
         ]);
@@ -62,6 +63,7 @@ class CartProductListItemDto
      * Преобразует коллекцию моделей в массив DTO.
      *
      * @param Collection $cart Коллекция моделей Cart.
+     *
      * @return CartProductListItemDto[] Массив DTO.
      * @throws RequiredRelationMissingException
      * @throws RelationIsNullException
