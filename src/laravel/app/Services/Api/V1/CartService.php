@@ -4,6 +4,7 @@ namespace App\Services\Api\V1;
 
 use App\DTO\Api\V1\Cart\AddToCartProductDto;
 use App\DTO\Api\V1\Cart\CartProductListItemDto;
+use App\Exceptions\Cart\CartMergeException;
 use App\Exceptions\Cart\CartUpdateException;
 use App\Exceptions\Cart\CategoryForLimitCheckNotFoundException;
 use App\Exceptions\Cart\CategoryLimitExceededException;
@@ -11,7 +12,6 @@ use App\Exceptions\Cart\CategoryLimitNotSetInConfigException;
 use App\Exceptions\Cart\ProductVariantNotFoundInCartException;
 use App\Exceptions\Category\CategoryNotFoundException;
 use App\Exceptions\Product\ProductNotPublishedException;
-use App\Models\Cart;
 use App\Repositories\Cart\CartRepositoryInterface;
 use App\Repositories\Category\CategoryRepositoryInterface;
 use App\Repositories\Product\ProductRepositoryInterface;
@@ -194,16 +194,29 @@ class CartService
     }
 
     /**
-     * Привязывает корзину, созданную до авторизации, к авторизованному пользователю.
+     * Выполняет перенос записей корзины от сессии к авторизованному пользователю.
      *
-     * Актуально, если пользователь добавил товары в корзину до входа в аккаунт.
+     * Если пользователь добавлял товары в корзину будучи неавторизованным,
+     * эти записи переназначаются на его user_id после авторизации.
+     * При этом предварительно очищаются старые записи, оставшиеся от предыдущих сессий.
+     *
+     * @param string $oldSessionId ID сессии неавторизованного пользователя.
+     * @param int $userId ID авторизованного пользователя.
+     *
+     * @return void
+     * @throws CartMergeException В случае ошибки при обновлении данных корзины.
      */
     public function mergeCartFromSessionToUser(string $oldSessionId, int $userId): void
     {
-        Cart::where('session_id', $oldSessionId)
-            ->update([
-                'user_id' => $userId,
-                'session_id' => null,
-            ]);
+        $existItemsForSessionId = $this->cartRepository->hasItemsByIdentifier(
+            'session_id',
+            $oldSessionId
+        );
+
+        if (!$existItemsForSessionId) {
+            return;
+        }
+
+        $this->cartRepository->transferCartFromSessionToUser($oldSessionId, $userId);
     }
 }

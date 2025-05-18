@@ -34,7 +34,7 @@ Route::middleware([
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
         Route::get('/user/preview', [UserController::class, 'preview']);
-        Route::get('/user/addresses', [UserController::class, 'addresses']);
+        Route::get('/user/checkout-data', [UserController::class, 'checkoutData']);
         Route::get('/user', [UserController::class, 'show']);
     });
 

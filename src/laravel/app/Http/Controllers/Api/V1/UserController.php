@@ -29,7 +29,7 @@ class UserController
         );
     }
 
-    public function addresses()
+    public function checkoutData()
     {
 
     }

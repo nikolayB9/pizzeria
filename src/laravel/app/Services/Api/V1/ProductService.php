@@ -18,13 +18,13 @@ class ProductService
     /**
      * Возвращает опубликованные продукты категории по её slug.
      *
-     * @param string $categorySlug Slug категории.
+     * @param string $slug Slug категории.
      * @return array Массив DTO продуктов, либо пустой массив, если таких нет.
      * @throws CategoryNotFoundException Если категория не найдена.
      */
-    public function getProductsByCategorySlug(string $categorySlug): array
+    public function getProductsByCategorySlug(string $slug): array
     {
-        $category = app(CategoryRepositoryInterface::class)->getModelWithOnlyIdBySlug($categorySlug);
+        $category = app(CategoryRepositoryInterface::class)->getModelWithOnlyIdBySlug($slug);
         $products = $this->productRepository->getPublishedForCategory($category);
 
         if ($products->isEmpty()) {
@@ -37,13 +37,13 @@ class ProductService
     /**
      * Возвращает DTO опубликованного продукта по его slug.
      *
-     * @param string $productSlug Slug продукта.
+     * @param string $slug Slug продукта.
      * @return ProductDto DTO продукта.
      * @throws ProductNotFoundException Если продукт не найден.
      */
-    public function getProductBySlug(string $productSlug): ProductDto
+    public function getProductBySlug(string $slug): ProductDto
     {
-        $product = $this->productRepository->getBySlug($productSlug);
+        $product = $this->productRepository->getBySlug($slug);
 
         return ProductDto::fromModel($product);
     }

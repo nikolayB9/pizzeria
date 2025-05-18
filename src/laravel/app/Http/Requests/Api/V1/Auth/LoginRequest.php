@@ -30,13 +30,14 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Пытается выполнить аутентификацию пользователя по email и паролю.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @return void
+     * @throws ValidationException Если аутентификация не удалась (неверный email или пароль).
      */
     public function authenticate(): void
     {
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (!Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
