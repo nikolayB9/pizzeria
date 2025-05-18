@@ -20,6 +20,7 @@ class OrderSeeder extends Seeder
             'address_id' => $address->id,
             'delivery_price' => 155,
             'total_price' => 1353,
+            'delivery_time' => now(),
             'status' => OrderStatusEnum::CREATED->value,
             'comment' => null,
         ];

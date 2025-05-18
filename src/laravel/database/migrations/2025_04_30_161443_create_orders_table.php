@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -17,6 +16,7 @@ return new class extends Migration
             $table->foreignId('address_id')->constrained('addresses');
             $table->decimal('delivery_price');
             $table->decimal('total_price');
+            $table->dateTime('delivery_time');
             $table->foreignId('status')->constrained('order_statuses', 'id');
             $table->string('comment')->nullable();
             $table->timestamps();

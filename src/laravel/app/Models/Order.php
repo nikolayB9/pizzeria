@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Order extends Model
@@ -19,5 +20,15 @@ class Order extends Model
             ->withPivot(['qty', 'price'])
             ->with(['product' => fn($q) => $q->select('id', 'name')])
             ->select('id', 'name', 'product_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function address(): BelongsTo
+    {
+        return $this->belongsTo(Address::class);
     }
 }
