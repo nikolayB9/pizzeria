@@ -14,9 +14,13 @@ class CategoryHelper
      *
      * @param int $countCategories Количество создаваемых категорий.
      * @param CategoryTypeEnum $typeEnum Тип категории.
+     *
      * @return Category|Collection Одна категория или коллекция категорий.
      */
-    public static function createCategoryOfType(int $countCategories = 1, CategoryTypeEnum $typeEnum = CategoryTypeEnum::ProductType): Category|Collection
+    public static function createCategoryOfType(
+        int              $countCategories = 1,
+        CategoryTypeEnum $typeEnum = CategoryTypeEnum::ProductType
+    ): Category|Collection
     {
         (new CategoryTypeSeeder())->run();
 
