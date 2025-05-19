@@ -4,13 +4,30 @@ namespace App\Services\Api\V1;
 
 use App\DTO\Api\V1\Address\AddressShortDto;
 use App\DTO\Api\V1\Address\CreateAddressDto;
+use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
 use App\Repositories\Address\AddressRepositoryInterface;
+use App\Services\Traits\AuthenticatedUserTrait;
 
 class AddressService
 {
+    use AuthenticatedUserTrait;
+
     public function __construct(private readonly AddressRepositoryInterface $addressRepository)
     {
+    }
+
+    /**
+     * Возвращает все адреса авторизованного пользователя.
+     *
+     * @return AddressShortDto[] Массив DTO с сокращённой информацией об адресах (город, улица, дом).
+     */
+    public function getUserAddresses(): array
+    {
+        $userId = $this->userIdOrFail();
+        $userAddresses = $this->addressRepository->getAddressesByUserId($userId);
+
+        return AddressShortDto::collection($userAddresses);
     }
 
     /**
@@ -23,8 +40,24 @@ class AddressService
      */
     public function createUserAddress(CreateAddressDto $addressDto): AddressShortDto
     {
-        $newAddress = $this->addressRepository->createAddress($addressDto);
+        $userId = $this->userIdOrFail();
+        $newAddress = $this->addressRepository->createAddressForUser($userId, $addressDto);
 
         return AddressShortDto::fromModel($newAddress);
+    }
+
+    /**
+     * Устанавливает адрес пользователя по умолчанию (is_default = true).
+     *
+     * @param int $addressId ID адреса.
+     *
+     * @return void
+     * @throws FailedSetDefaultAddressException Если не удалось установить адрес по умолчанию.
+     */
+    public function setDefaultUserAddress(int $addressId): void
+    {
+        $userId = $this->userIdOrFail();
+
+        $this->addressRepository->setDefaultUserAddressById($userId, $addressId);
     }
 }

@@ -15,6 +15,7 @@ class AddressShortDto
         public string $city,
         public string $street,
         public string $house,
+        public bool   $is_default,
     )
     {
     }
@@ -35,6 +36,7 @@ class AddressShortDto
             city: $address->city->name,
             street: $address->street->name,
             house: $address->house,
+            is_default: $address->is_default,
         );
     }
 

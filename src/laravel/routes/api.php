@@ -38,9 +38,13 @@ Route::middleware([
         Route::get('/user/preview', [UserController::class, 'preview']);
         Route::get('/user', [UserController::class, 'show']);
 
+        Route::get('/addresses', [AddressController::class, 'index']);
         Route::post('/addresses', [AddressController::class, 'store']);
+        Route::patch('/addresses/{id}', [AddressController::class, 'update']);
+        Route::patch('/addresses/{id}/default', [AddressController::class, 'setDefault']);
+        Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
 
-        Route::get('/checkout/data', [CheckoutController::class, 'getUserData']);
+        Route::get('/checkout/user-data', [CheckoutController::class, 'userData']);
     });
 
     // Авторизация

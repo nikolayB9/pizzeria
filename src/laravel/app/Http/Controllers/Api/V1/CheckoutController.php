@@ -17,7 +17,7 @@ class CheckoutController
      *
      * @return JsonResponse JSON-ответ с данными для оформления заказа.
      */
-    public function getUserData(): JsonResponse
+    public function userData(): JsonResponse
     {
         $checkoutData = $this->checkoutService->getCheckoutUserData();
 

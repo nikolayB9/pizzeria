@@ -40,11 +40,7 @@ class EloquentUserRepository implements UserRepositoryInterface
         try {
             return User::where('id', $userId)
                 ->select('id', 'name', 'email', 'phone_number')
-                ->with([
-                    'latestOrder',
-                    'latestOrder.address:id,city_id,street_id,house',
-                    'latestAddress',
-                ])
+                ->with('defaultAddress:id,user_id,is_default,city_id,street_id,house')
                 ->firstOrFail();
         } catch (ModelNotFoundException) {
             throw new MissingUserException("Пользователь с ID [$userId] не найден.");

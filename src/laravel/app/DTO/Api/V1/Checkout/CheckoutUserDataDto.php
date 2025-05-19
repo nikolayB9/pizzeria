@@ -22,15 +22,15 @@ class CheckoutUserDataDto
     /**
      * Создает DTO из модели User.
      *
-     * @param User $user Модель User с предзагруженными отношениями latestOrder.address, latestAddress.
+     * @param User $user Модель User с предзагруженными отношениями defaultAddress, latestOrder.address, latestAddress.
      *
      * @return self
      */
     public static function fromModel(User $user): self
     {
-        self::checkRequireAllRelationPaths($user, ['latestOrder.address', 'latestAddress']);
+        self::checkRequireRelations($user, 'defaultAddress');
 
-        $addressModel = $user->latestOrder?->address ?? $user->latestAddress;
+        $addressModel = $user->defaultAddress ?? null;
 
         return new self(
             name: $user->name,

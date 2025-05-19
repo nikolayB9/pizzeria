@@ -11,6 +11,10 @@ class Address extends Model
 
     protected $with = ['city', 'street'];
 
+    protected $casts = [
+        'is_default' => 'boolean',
+    ];
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);

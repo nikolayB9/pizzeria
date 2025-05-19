@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
 use App\Http\Requests\Api\V1\Address\StoreUserAddressRequest;
 use App\Http\Responses\ApiResponse;
@@ -12,6 +13,20 @@ class AddressController
 {
     public function __construct(private readonly AddressService $addressService)
     {
+    }
+
+    /**
+     * Возвращает список адресов авторизованного пользователя.
+     *
+     * @return JsonResponse JSON-ответ с массивом адресов в сокращённом формате (город, улица, дом).
+     */
+    public function index(): JsonResponse
+    {
+        $addresses = $this->addressService->getUserAddresses();
+
+        return ApiResponse::success(
+            data: $addresses,
+        );
     }
 
     /**
@@ -35,5 +50,36 @@ class AddressController
         return ApiResponse::success(
             data: $address,
         );
+    }
+
+    public function update()
+    {
+
+    }
+
+    /**
+     * Устанавливает адрес по умолчанию для авторизованного пользователя.
+     *
+     * @param int $id ID адреса, который нужно сделать основным.
+     *
+     * @return JsonResponse JSON-ответ: success = true в случае успеха.
+     */
+    public function setDefault(int $id): JsonResponse
+    {
+        try {
+            $this->addressService->setDefaultUserAddress($id);
+        } catch (FailedSetDefaultAddressException $e) {
+            return ApiResponse::fail(
+                message: $e->getMessage(),
+                status: 500,
+            );
+        }
+
+        return ApiResponse::success();
+    }
+
+    public function destroy()
+    {
+
     }
 }

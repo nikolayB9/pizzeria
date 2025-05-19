@@ -13,6 +13,7 @@ class CreateAddressDto
         public ?string $floor,
         public ?string $flat,
         public ?string $intercom_code,
+        public bool    $is_default = true,
     )
     {
     }
@@ -26,6 +27,7 @@ class CreateAddressDto
     {
         return [
             'user_id' => $this->user_id,
+            'is_default' => $this->is_default,
             'city_id' => $this->city_id,
             'street_id' => $this->street_id,
             'house' => $this->house,

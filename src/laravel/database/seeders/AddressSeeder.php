@@ -17,6 +17,7 @@ class AddressSeeder extends Seeder
 
         $addressData = [
             'user_id' => $user->id,
+            'is_default' => true,
             'city_id' => $city->id,
             'street_id' => $street->id,
             'house' => '135',
