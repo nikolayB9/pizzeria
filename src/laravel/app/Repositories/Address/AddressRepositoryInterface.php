@@ -6,6 +6,7 @@ use App\DTO\Api\V1\Address\CreateAddressDto;
 use App\DTO\Api\V1\Address\UpdateAddressDto;
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
+use App\Exceptions\Address\UserAddressNotDeletedException;
 use App\Exceptions\Address\UserAddressNotFoundException;
 use App\Exceptions\Address\UserAddressNotUpdatedException;
 use App\Models\Address;
@@ -68,4 +69,16 @@ interface AddressRepositoryInterface
      * @throws FailedSetDefaultAddressException
      */
     public function setDefaultUserAddressById(int $userId, int $addressId): void;
+
+    /**
+     * Удаляет адрес, если он не связан с заказами. Иначе — отвязывает его от пользователя, установив user_id = null.
+     *
+     * @param int $userId
+     * @param int $addressId
+     *
+     * @return void
+     * @throws UserAddressNotFoundException
+     * @throws UserAddressNotDeletedException
+     */
+    public function deleteUserAddressById(int $userId, int $addressId): void;
 }

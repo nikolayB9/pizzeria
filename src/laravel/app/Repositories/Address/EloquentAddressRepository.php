@@ -6,6 +6,7 @@ use App\DTO\Api\V1\Address\CreateAddressDto;
 use App\DTO\Api\V1\Address\UpdateAddressDto;
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
+use App\Exceptions\Address\UserAddressNotDeletedException;
 use App\Exceptions\Address\UserAddressNotFoundException;
 use App\Exceptions\Address\UserAddressNotUpdatedException;
 use App\Models\Address;
@@ -159,6 +160,54 @@ class EloquentAddressRepository implements AddressRepositoryInterface
             ]);
 
             throw new FailedSetDefaultAddressException('Не удалось установить адрес по умолчанию.');
+        }
+    }
+
+    /**
+     * Удаляет адрес, если он не связан с заказами. Иначе — отвязывает его от пользователя, установив user_id = null.
+     *
+     * @param int $userId ID пользователя.
+     * @param int $addressId ID удаляемого адреса.
+     *
+     * @return void
+     * @throws UserAddressNotFoundException Если адрес не найден.
+     * @throws UserAddressNotDeletedException Если произошла ошибка при удалении адреса.
+     */
+    public function deleteUserAddressById(int $userId, int $addressId): void
+    {
+        try {
+            $address = Address::where('id', $addressId)->where('user_id', $userId)->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            Log::error("Адрес с ID [$addressId] и user_id [$userId] не найден.", [
+                'exception' => $e,
+                'user_id' => $userId,
+                'address_id' => $addressId,
+                'method' => __METHOD__,
+            ]);
+
+            throw new UserAddressNotFoundException('Адрес не найден.');
+        }
+
+        try {
+            if ($address->orders()->exists()) {
+                $address->update([
+                    'user_id' => null,
+                    'is_default' => false,
+                ]);
+            } else {
+                $address->delete();
+            }
+        } catch (\Throwable $e) {
+            Log::error('Ошибка при удалении адреса.', [
+                'exception' => $e,
+                'user_id' => $userId,
+                'address_id' => $addressId,
+                'method' => __METHOD__,
+            ]);
+
+            throw new UserAddressNotDeletedException(
+                'Не удалось удалить адрес. Пожалуйста, попробуйте снова.'
+            );
         }
     }
 

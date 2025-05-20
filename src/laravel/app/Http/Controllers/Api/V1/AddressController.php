@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
+use App\Exceptions\Address\UserAddressNotDeletedException;
 use App\Exceptions\Address\UserAddressNotFoundException;
 use App\Exceptions\Address\UserAddressNotUpdatedException;
 use App\Http\Requests\Api\V1\Address\StoreUserAddressRequest;
@@ -124,8 +125,29 @@ class AddressController
         return ApiResponse::success();
     }
 
-    public function destroy()
+    /**
+     * Удаляет адрес авторизованного пользователя.
+     *
+     * @param int $id ID удаляемого адреса.
+     *
+     * @return JsonResponse JSON-ответ: success = true в случае успеха.
+     */
+    public function destroy(int $id): JsonResponse
     {
+        try {
+            $this->addressService->deleteUserAddress($id);
+        } catch (UserAddressNotFoundException $e) {
+            return ApiResponse::fail(
+                message: $e->getMessage(),
+                status: 404,
+            );
+        } catch (UserAddressNotDeletedException $e) {
+            return ApiResponse::fail(
+                message: $e->getMessage(),
+                status: 500,
+            );
+        }
 
+        return ApiResponse::success();
     }
 }

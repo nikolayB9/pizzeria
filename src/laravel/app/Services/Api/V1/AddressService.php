@@ -8,6 +8,7 @@ use App\DTO\Api\V1\Address\CreateAddressDto;
 use App\DTO\Api\V1\Address\UpdateAddressDto;
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
+use App\Exceptions\Address\UserAddressNotDeletedException;
 use App\Exceptions\Address\UserAddressNotFoundException;
 use App\Exceptions\Address\UserAddressNotUpdatedException;
 use App\Repositories\Address\AddressRepositoryInterface;
@@ -93,5 +94,22 @@ class AddressService
         $userId = $this->userIdOrFail();
 
         $this->addressRepository->setDefaultUserAddressById($userId, $addressId);
+    }
+
+    /**
+     * Удаляет адрес текущего авторизованного пользователя.
+     *
+     * Если адрес используется в заказах, он не удаляется, а отвязывается от пользователя.
+     *
+     * @param int $addressId ID удаляемого адреса.
+     *
+     * @return void
+     * @throws UserAddressNotFoundException Если адрес не найден.
+     * @throws UserAddressNotDeletedException Если произошла ошибка при удалении адреса.
+     */
+    public function deleteUserAddress(int $addressId): void
+    {
+        $userId = $this->userIdOrFail();
+        $this->addressRepository->deleteUserAddressById($userId, $addressId);
     }
 }
