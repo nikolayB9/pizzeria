@@ -50,6 +50,7 @@ Route::middleware([
         Route::get('/cities/{id}/streets', [CityController::class, 'streets']);
 
         Route::get('/checkout/user-data', [CheckoutController::class, 'userData']);
+        Route::get('/checkout/summary-data', [CheckoutController::class, 'summaryData']);
     });
 
     // Авторизация
