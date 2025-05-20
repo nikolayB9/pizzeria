@@ -1,4 +1,4 @@
-import { createWebHistory, createRouter } from 'vue-router'
+import {createRouter, createWebHistory} from 'vue-router'
 
 const routes = [
     {
@@ -30,6 +30,16 @@ const routes = [
         path: '/cart',
         component: () => import('../components/Cart/Index.vue'),
         name: 'cart.index'
+    },
+    {
+        path: '/checkout',
+        component: () => import('../components/Checkout/Index.vue'),
+        name: 'checkout.index'
+    },
+    {
+        path: '/addresses',
+        component: () => import('../components/Address/Index.vue'),
+        name: 'address.index'
     },
 ]
 

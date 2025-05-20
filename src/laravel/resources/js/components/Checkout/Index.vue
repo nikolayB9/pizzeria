@@ -7,6 +7,8 @@ export default {
     data() {
         return {
             token: null,
+            checkoutData: null,
+            address: null,
         }
     },
 
@@ -18,6 +20,7 @@ export default {
     mounted() {
         this.fetchCart()
         this.getToken()
+        this.getCheckoutData()
     },
 
     watch: {
@@ -30,21 +33,53 @@ export default {
         getToken() {
             this.token = localStorage.getItem('x_xsrf_token')
         },
+        getCheckoutData() {
+            axios.get('/api/v1/checkout/user-data')
+                .then(res => {
+                    console.log(res)
+                    this.checkoutData = res.data.data
+                    this.address = this.checkoutData.address
+                })
+        },
+        storeOrder() {
+            if (!this.address) {
+                alert('Добавьте адрес доставки');
+                return;
+            }
+            axios.post('/api/v1/orders', {
+                address_id: this.address.id
+            })
+        },
+        goToAddresses() {
+            this.$router.push({name: 'address.index', query: {fromCheckout: '1'}});
+        }
     },
 
 }
 </script>
 
 <template>
-    <h1>Корзина</h1>
-    <div class="cart-clear">
-        <button v-if="cartTotalPrice" @click.prevent="clearCart()" class="clear-btn">
-            Очистить корзину
-        </button>
-    </div>
+    <h1>Оформление заказа</h1>
     <div v-if="!cartTotalPrice">
-        Корзина пуста.
+        Добавьте товары для заказа.
     </div>
+
+    <div v-if="checkoutData">
+        <div>Имя: {{ checkoutData.name }}</div>
+        <div>Email: {{ checkoutData.email }}</div>
+        <div>Номер телефона: {{ checkoutData.phone_number }}</div>
+
+        <div>
+            <span v-if="address">
+                {{ address.city }}, {{ address.street }}, {{ address.house }}
+            </span>
+            <span v-else>
+                Добавить новый адрес
+            </span>
+            <button @click="goToAddresses"> ></button>
+        </div>
+    </div>
+
     <div v-if="cartProducts && cartTotalPrice">
         <ul class="cart-list">
             <li v-for="product in cartProducts" class="cart-item">
@@ -64,7 +99,7 @@ export default {
         <div class="cart-total">Общая стоимость: {{ cartTotalPrice }} ₽</div>
 
         <div v-if="token" class="checkout">
-            <router-link :to="{ name: 'checkout.index' }">Оформить заказ</router-link>
+            <a href="#">Оформить заказ</a>
         </div>
 
         <div v-if="!token" class="checkout">
