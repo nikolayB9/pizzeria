@@ -5,6 +5,7 @@ namespace App\Repositories\Address;
 use App\DTO\Api\V1\Address\CreateAddressDto;
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
+use App\Exceptions\Address\UserAddressNotFoundException;
 use App\Models\Address;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
@@ -27,6 +28,35 @@ class EloquentAddressRepository implements AddressRepositoryInterface
             ->orderBy('is_default', 'desc')
             ->orderBy('id', 'desc')
             ->get();
+    }
+
+    /**
+     * Возвращает адрес пользователя по ID и user_id.
+     *
+     * @param int $userId ID пользователя, к которому относится адрес.
+     * @param int $addressId ID адреса.
+     *
+     * @return Address Модель Address со всеми полями.
+     * @throws UserAddressNotFoundException Если адрес пользователя не найден.
+     */
+    public function getUserAddressById(int $userId, int $addressId): Address
+    {
+        try {
+            $address = Address::where('id', $addressId)
+                ->where('user_id', $userId)
+                ->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            Log::error("Адрес с ID [$addressId] и user_id [$userId] не найден.", [
+                'exception' => $e,
+                'user_id' => $userId,
+                'address_id' => $addressId,
+                'method' => __METHOD__,
+            ]);
+
+            throw new UserAddressNotFoundException('Адрес не найден.');
+        }
+
+        return $address;
     }
 
     /**

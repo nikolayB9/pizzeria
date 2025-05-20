@@ -2,10 +2,12 @@
 
 namespace App\Services\Api\V1;
 
+use App\DTO\Api\V1\Address\AddressDto;
 use App\DTO\Api\V1\Address\AddressShortDto;
 use App\DTO\Api\V1\Address\CreateAddressDto;
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
+use App\Exceptions\Address\UserAddressNotFoundException;
 use App\Repositories\Address\AddressRepositoryInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 
@@ -28,6 +30,22 @@ class AddressService
         $userAddresses = $this->addressRepository->getAddressesByUserId($userId);
 
         return AddressShortDto::collection($userAddresses);
+    }
+
+    /**
+     * Возвращает адрес по его ID для авторизованного пользователя.
+     *
+     * @param int $addressId ID адреса пользователя.
+     *
+     * @return AddressDto DTO с полными данными адреса.
+     * @throws UserAddressNotFoundException Если адрес не найден.
+     */
+    public function getUserAddress(int $addressId): AddressDto
+    {
+        $userId = $this->userIdOrFail();
+        $address = $this->addressRepository->getUserAddressById($userId, $addressId);
+
+        return AddressDto::fromModel($address);
     }
 
     /**

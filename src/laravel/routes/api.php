@@ -40,6 +40,7 @@ Route::middleware([
         Route::get('/user', [UserController::class, 'show']);
 
         Route::get('/addresses', [AddressController::class, 'index']);
+        Route::get('/addresses/{id}', [AddressController::class, 'show']);
         Route::post('/addresses', [AddressController::class, 'store']);
         Route::patch('/addresses/{id}', [AddressController::class, 'update']);
         Route::patch('/addresses/{id}/default', [AddressController::class, 'setDefault']);

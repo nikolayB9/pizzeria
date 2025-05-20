@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
+use App\Exceptions\Address\UserAddressNotFoundException;
 use App\Http\Requests\Api\V1\Address\StoreUserAddressRequest;
 use App\Http\Responses\ApiResponse;
 use App\Services\Api\V1\AddressService;
@@ -26,6 +27,29 @@ class AddressController
 
         return ApiResponse::success(
             data: $addresses,
+        );
+    }
+
+    /**
+     * Возвращает полный адрес по его ID для авторизованного пользователя.
+     *
+     * @param int $id ID адреса пользователя.
+     *
+     * @return JsonResponse JSON-ответ, содержащий DTO с полными данными адреса.
+     */
+    public function show(int $id): JsonResponse
+    {
+        try {
+            $address = $this->addressService->getUserAddress($id);
+        } catch (UserAddressNotFoundException $e) {
+            return ApiResponse::fail(
+                $e->getMessage(),
+                404,
+            );
+        }
+
+        return ApiResponse::success(
+            data: $address,
         );
     }
 
