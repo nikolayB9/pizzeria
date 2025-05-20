@@ -68,6 +68,11 @@ class User extends Authenticatable
             ->where('is_default', true);
     }
 
+    public function latestAddress(): HasOne
+    {
+        return $this->hasOne(Address::class)->latestOfMany();
+    }
+
     public function latestOrder(): HasOne
     {
         return $this->hasOne(Order::class)->latestOfMany();

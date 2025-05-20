@@ -115,6 +115,11 @@ class AddressController
     {
         try {
             $this->addressService->setDefaultUserAddress($id);
+        } catch (UserAddressNotFoundException $e) {
+            return ApiResponse::fail(
+                message: $e->getMessage(),
+                status: 404,
+            );
         } catch (FailedSetDefaultAddressException $e) {
             return ApiResponse::fail(
                 message: $e->getMessage(),

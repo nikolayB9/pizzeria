@@ -87,6 +87,7 @@ class AddressService
      * @param int $addressId ID адреса.
      *
      * @return void
+     * @throws UserAddressNotFoundException Если адрес не найден.
      * @throws FailedSetDefaultAddressException Если не удалось установить адрес по умолчанию.
      */
     public function setDefaultUserAddress(int $addressId): void

@@ -65,13 +65,13 @@ interface AddressRepositoryInterface
      * @param int $addressId
      *
      * @return void
-     *
+     * @throws UserAddressNotFoundException
      * @throws FailedSetDefaultAddressException
      */
     public function setDefaultUserAddressById(int $userId, int $addressId): void;
 
     /**
-     * Удаляет адрес, если он не связан с заказами. Иначе — отвязывает его от пользователя, установив user_id = null.
+     * Удаляет адрес, если он не связан с заказами. Иначе — отвязывает его от пользователя.
      *
      * @param int $userId
      * @param int $addressId

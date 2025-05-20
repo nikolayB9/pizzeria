@@ -10,6 +10,7 @@ use App\Exceptions\Address\UserAddressNotDeletedException;
 use App\Exceptions\Address\UserAddressNotFoundException;
 use App\Exceptions\Address\UserAddressNotUpdatedException;
 use App\Models\Address;
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -44,22 +45,7 @@ class EloquentAddressRepository implements AddressRepositoryInterface
      */
     public function getUserAddressById(int $userId, int $addressId): Address
     {
-        try {
-            $address = Address::where('id', $addressId)
-                ->where('user_id', $userId)
-                ->firstOrFail();
-        } catch (ModelNotFoundException $e) {
-            Log::error("Адрес с ID [$addressId] и user_id [$userId] не найден.", [
-                'exception' => $e,
-                'user_id' => $userId,
-                'address_id' => $addressId,
-                'method' => __METHOD__,
-            ]);
-
-            throw new UserAddressNotFoundException('Адрес не найден.');
-        }
-
-        return $address;
+        return $this->getUserAddressOrFail($userId, $addressId);
     }
 
     /**
@@ -76,7 +62,7 @@ class EloquentAddressRepository implements AddressRepositoryInterface
         try {
             DB::transaction(function () use ($userId, $dto) {
                 $address = Address::create($dto->toArray());
-                $this->setDefaultUserAddressInternal($userId, $address->id);
+                $this->setDefaultUserAddressInternal($userId, $address);
             });
         } catch (\Throwable $e) {
             Log::error('Ошибка при добавлении нового адреса пользователя.', [
@@ -105,18 +91,7 @@ class EloquentAddressRepository implements AddressRepositoryInterface
      */
     public function updateUserAddressFromDto(int $userId, int $addressId, UpdateAddressDto $dto): void
     {
-        try {
-            $address = Address::where('id', $addressId)->where('user_id', $userId)->firstOrFail();
-        } catch (ModelNotFoundException $e) {
-            Log::error("Адрес с ID [$addressId] и user_id [$userId] не найден.", [
-                'exception' => $e,
-                'user_id' => $userId,
-                'address_id' => $addressId,
-                'method' => __METHOD__,
-            ]);
-
-            throw new UserAddressNotFoundException('Адрес не найден.');
-        }
+        $address = $this->getUserAddressOrFail($userId, $addressId);
 
         try {
             $address->update($dto->toArray());
@@ -142,21 +117,23 @@ class EloquentAddressRepository implements AddressRepositoryInterface
      * @param int $addressId ID адреса, который нужно сделать основным.
      *
      * @return void
-     *
+     * @throws UserAddressNotFoundException Если адрес не найден.
      * @throws FailedSetDefaultAddressException При ошибке во время установки.
      */
     public function setDefaultUserAddressById(int $userId, int $addressId): void
     {
+        $address = $this->getUserAddressOrFail($userId, $addressId);
+
         try {
-            DB::transaction(function () use ($userId, $addressId) {
-                $this->setDefaultUserAddressInternal($userId, $addressId);
+            DB::transaction(function () use ($userId, $address) {
+                $this->setDefaultUserAddressInternal($userId, $address);
             });
         } catch (\Throwable $e) {
             Log::error('Ошибка при установке адреса по умолчанию.', [
-                'exception' => $e,
                 'user_id' => $userId,
                 'address_id' => $addressId,
                 'method' => __METHOD__,
+                'exception' => $e->getMessage(),
             ]);
 
             throw new FailedSetDefaultAddressException('Не удалось установить адрес по умолчанию.');
@@ -166,37 +143,37 @@ class EloquentAddressRepository implements AddressRepositoryInterface
     /**
      * Удаляет адрес, если он не связан с заказами. Иначе — отвязывает его от пользователя, установив user_id = null.
      *
+     * После удаления или отвязки, если у пользователя остались адреса и ни один из них не является дефолтным,
+     * автоматически назначается последний добавленный адрес как дефолтный.
+     *
      * @param int $userId ID пользователя.
      * @param int $addressId ID удаляемого адреса.
      *
      * @return void
-     * @throws UserAddressNotFoundException Если адрес не найден.
-     * @throws UserAddressNotDeletedException Если произошла ошибка при удалении адреса.
+     * @throws UserAddressNotFoundException Если адрес не найден или не принадлежит пользователю.
+     * @throws UserAddressNotDeletedException Если произошла ошибка при удалении или обновлении адреса.
      */
     public function deleteUserAddressById(int $userId, int $addressId): void
     {
-        try {
-            $address = Address::where('id', $addressId)->where('user_id', $userId)->firstOrFail();
-        } catch (ModelNotFoundException $e) {
-            Log::error("Адрес с ID [$addressId] и user_id [$userId] не найден.", [
-                'exception' => $e,
-                'user_id' => $userId,
-                'address_id' => $addressId,
-                'method' => __METHOD__,
-            ]);
-
-            throw new UserAddressNotFoundException('Адрес не найден.');
-        }
+        $address = $this->getUserAddressOrFail($userId, $addressId);
 
         try {
-            if ($address->orders()->exists()) {
-                $address->update([
-                    'user_id' => null,
-                    'is_default' => false,
-                ]);
-            } else {
-                $address->delete();
-            }
+            DB::transaction(function () use ($userId, $address) {
+                if ($address->orders()->exists()) {
+                    $address->update([
+                        'user_id' => null,
+                        'is_default' => false,
+                    ]);
+                } else {
+                    $address->delete();
+                }
+
+                $user = User::find($userId);
+
+                if (!$user->defaultAddress()->exists() && $user->latestAddress()->exists()) {
+                    $this->setDefaultUserAddressInternal($userId, $user->latestAddress);
+                }
+            });
         } catch (\Throwable $e) {
             Log::error('Ошибка при удалении адреса.', [
                 'exception' => $e,
@@ -212,22 +189,46 @@ class EloquentAddressRepository implements AddressRepositoryInterface
     }
 
     /**
+     * Проверяет существование адреса пользователя и возвращает его.
+     *
+     * @param int $userId ID пользователя.
+     * @param int $addressId ID адреса пользователя.
+     *
+     * @return Address Модель Address со всеми полями.
+     * @throws UserAddressNotFoundException Если адрес не найден.
+     */
+    private function getUserAddressOrFail(int $userId, int $addressId): Address
+    {
+        try {
+            return Address::where('id', $addressId)
+                ->where('user_id', $userId)
+                ->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            Log::warning('Не удалось найти адрес для пользователя', [
+                'user_id' => $userId,
+                'address_id' => $addressId,
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
+            throw new UserAddressNotFoundException('Адрес не найден.');
+        }
+    }
+
+    /**
      * Устанавливает указанный адрес пользователя как адрес по умолчанию.
      *
      * @param int $userId ID пользователя.
-     * @param int $addressId ID адреса, который нужно сделать основным (is_default = true).
+     * @param Address $address Модель адреса, который нужно сделать основным (is_default = true).
      *
      * @return void
-     * @throws ModelNotFoundException Если адрес пользователя не найден.
      */
-    private function setDefaultUserAddressInternal(int $userId, int $addressId): void
+    private function setDefaultUserAddressInternal(int $userId, Address $address): void
     {
-        $newDefaultAddress = Address::where('id', $addressId)->where('user_id', $userId)->firstOrFail();
-
         Address::where('user_id', $userId)
-            ->whereNot('id', $addressId)
+            ->whereNot('id', $address->id)
             ->update(['is_default' => false]);
 
-        $newDefaultAddress->update(['is_default' => true]);
+        $address->update(['is_default' => true]);
     }
 }
