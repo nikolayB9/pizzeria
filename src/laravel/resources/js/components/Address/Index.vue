@@ -207,12 +207,12 @@ export default {
             <!-- Кнопка редактирования -->
             <button @click="openEditModal(address.id)">✏️</button>
         </div>
+    </div>
 
-        <div>
-            <button @click="openCreateModal" class="btn btn-primary">
-                + Новый адрес
-            </button>
-        </div>
+    <div>
+        <button @click="openCreateModal" class="btn btn-primary">
+            + Новый адрес
+        </button>
     </div>
 
     <div v-if="fromCheckout">
