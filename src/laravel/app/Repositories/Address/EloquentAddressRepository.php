@@ -3,9 +3,11 @@
 namespace App\Repositories\Address;
 
 use App\DTO\Api\V1\Address\CreateAddressDto;
+use App\DTO\Api\V1\Address\UpdateAddressDto;
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
 use App\Exceptions\Address\UserAddressNotFoundException;
+use App\Exceptions\Address\UserAddressNotUpdatedException;
 use App\Models\Address;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
@@ -60,22 +62,20 @@ class EloquentAddressRepository implements AddressRepositoryInterface
     }
 
     /**
-     * Создает и возвращает адрес пользователя.
+     * Создает новый адрес пользователя.
      *
      * @param int $userId Идентификатор пользователя.
      * @param CreateAddressDto $dto DTO с данными для создания адреса.
      *
-     * @return Address Модель созданного адреса с предзагруженными отношениями city и street.
+     * @return void
      * @throws UserAddressNotAddException Если произошла ошибка при создании адреса.
      */
-    public function createAddressForUser(int $userId, CreateAddressDto $dto): Address
+    public function createAddressForUser(int $userId, CreateAddressDto $dto): void
     {
         try {
-            return DB::transaction(function () use ($userId, $dto) {
+            DB::transaction(function () use ($userId, $dto) {
                 $address = Address::create($dto->toArray());
                 $this->setDefaultUserAddressInternal($userId, $address->id);
-                $address->load(['city', 'street']);
-                return $address;
             });
         } catch (\Throwable $e) {
             Log::error('Ошибка при добавлении нового адреса пользователя.', [
@@ -87,6 +87,49 @@ class EloquentAddressRepository implements AddressRepositoryInterface
 
             throw new UserAddressNotAddException(
                 'Не удалось добавить новый адрес. Пожалуйста, попробуйте снова.'
+            );
+        }
+    }
+
+    /**
+     * Редактирует данные адреса пользователя.
+     *
+     * @param int $userId ID пользователя, которому принадлежит адрес.
+     * @param int $addressId ID изменяемого адреса.
+     * @param UpdateAddressDto $dto DTO с данными для редактирования.
+     *
+     * @return void
+     * @throws UserAddressNotFoundException Если адрес пользователя не найден.
+     * @throws UserAddressNotUpdatedException Если произошла ошибка при редактировании данных адреса.
+     */
+    public function updateUserAddressFromDto(int $userId, int $addressId, UpdateAddressDto $dto): void
+    {
+        try {
+            $address = Address::where('id', $addressId)->where('user_id', $userId)->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            Log::error("Адрес с ID [$addressId] и user_id [$userId] не найден.", [
+                'exception' => $e,
+                'user_id' => $userId,
+                'address_id' => $addressId,
+                'method' => __METHOD__,
+            ]);
+
+            throw new UserAddressNotFoundException('Адрес не найден.');
+        }
+
+        try {
+            $address->update($dto->toArray());
+        } catch (\Throwable $e) {
+            Log::error('Ошибка при изменении данных адреса.', [
+                'exception' => $e,
+                'user_id' => $userId,
+                'address_id' => $addressId,
+                'dto' => $dto,
+                'method' => __METHOD__,
+            ]);
+
+            throw new UserAddressNotUpdatedException(
+                'Не удалось изменить данные адреса. Пожалуйста, попробуйте снова.'
             );
         }
     }

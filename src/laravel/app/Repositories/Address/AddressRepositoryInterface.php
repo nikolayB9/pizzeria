@@ -3,9 +3,11 @@
 namespace App\Repositories\Address;
 
 use App\DTO\Api\V1\Address\CreateAddressDto;
+use App\DTO\Api\V1\Address\UpdateAddressDto;
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
 use App\Exceptions\Address\UserAddressNotFoundException;
+use App\Exceptions\Address\UserAddressNotUpdatedException;
 use App\Models\Address;
 use Illuminate\Support\Collection;
 
@@ -32,15 +34,28 @@ interface AddressRepositoryInterface
     public function getUserAddressById(int $userId, int $addressId): Address;
 
     /**
-     * Создает и возвращает адрес пользователя.
+     * Создает новый адрес пользователя.
      *
      * @param int $userId
      * @param CreateAddressDto $dto
      *
-     * @return Address
+     * @return void
      * @throws UserAddressNotAddException
      */
-    public function createAddressForUser(int $userId, CreateAddressDto $dto): Address;
+    public function createAddressForUser(int $userId, CreateAddressDto $dto): void;
+
+    /**
+     * Редактирует данные адреса пользователя.
+     *
+     * @param int $userId
+     * @param int $addressId
+     * @param UpdateAddressDto $dto
+     *
+     * @return void
+     * @throws UserAddressNotFoundException
+     * @throws UserAddressNotUpdatedException
+     */
+    public function updateUserAddressFromDto(int $userId, int $addressId, UpdateAddressDto $dto): void;
 
     /**
      * Устанавливает адрес пользователя как основной (is_default = true).

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
 use App\Exceptions\Address\UserAddressNotFoundException;
+use App\Exceptions\Address\UserAddressNotUpdatedException;
 use App\Http\Requests\Api\V1\Address\StoreUserAddressRequest;
+use App\Http\Requests\Api\V1\Address\UpdateUserAddressRequest;
 use App\Http\Responses\ApiResponse;
 use App\Services\Api\V1\AddressService;
 use Illuminate\Http\JsonResponse;
@@ -58,12 +60,12 @@ class AddressController
      *
      * @param StoreUserAddressRequest $request Валидированные данные запроса.
      *
-     * @return JsonResponse JSON-ответ с DTO нового адреса для отображения в списке.
+     * @return JsonResponse JSON-ответ: success = true в случае успеха.
      */
     public function store(StoreUserAddressRequest $request): JsonResponse
     {
         try {
-            $address = $this->addressService->createUserAddress($request->toDto());
+            $this->addressService->createUserAddress($request->toDto());
         } catch (UserAddressNotAddException $e) {
             return ApiResponse::fail(
                 message: $e->getMessage(),
@@ -71,14 +73,34 @@ class AddressController
             );
         }
 
-        return ApiResponse::success(
-            data: $address,
-        );
+        return ApiResponse::success();
     }
 
-    public function update()
+    /**
+     * Редактирует адрес авторизованного пользователя.
+     *
+     * @param int $id ID редактируемого адреса.
+     * @param UpdateUserAddressRequest $request Валидированные данные запроса.
+     *
+     * @return JsonResponse JSON-ответ: success = true в случае успеха.
+     */
+    public function update(int $id, UpdateUserAddressRequest $request): JsonResponse
     {
+        try {
+            $this->addressService->updateUserAddress($id, $request->toDto());
+        } catch (UserAddressNotFoundException $e) {
+            return ApiResponse::fail(
+                message: $e->getMessage(),
+                status: 404,
+            );
+        } catch (UserAddressNotUpdatedException $e) {
+            return ApiResponse::fail(
+                message: $e->getMessage(),
+                status: 500,
+            );
+        }
 
+        return ApiResponse::success();
     }
 
     /**

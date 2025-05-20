@@ -5,9 +5,11 @@ namespace App\Services\Api\V1;
 use App\DTO\Api\V1\Address\AddressDto;
 use App\DTO\Api\V1\Address\AddressShortDto;
 use App\DTO\Api\V1\Address\CreateAddressDto;
+use App\DTO\Api\V1\Address\UpdateAddressDto;
 use App\Exceptions\Address\FailedSetDefaultAddressException;
 use App\Exceptions\Address\UserAddressNotAddException;
 use App\Exceptions\Address\UserAddressNotFoundException;
+use App\Exceptions\Address\UserAddressNotUpdatedException;
 use App\Repositories\Address\AddressRepositoryInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 
@@ -53,15 +55,29 @@ class AddressService
      *
      * @param CreateAddressDto $addressDto DTO с данными для создания адреса.
      *
-     * @return AddressShortDto DTO для отображения созданного адреса в списке.
+     * @return void
      * @throws UserAddressNotAddException Если произошла ошибка при создании адреса.
      */
-    public function createUserAddress(CreateAddressDto $addressDto): AddressShortDto
+    public function createUserAddress(CreateAddressDto $addressDto): void
     {
         $userId = $this->userIdOrFail();
-        $newAddress = $this->addressRepository->createAddressForUser($userId, $addressDto);
+        $this->addressRepository->createAddressForUser($userId, $addressDto);
+    }
 
-        return AddressShortDto::fromModel($newAddress);
+    /**
+     * Редактирует данные адреса пользователя.
+     *
+     * @param int $addressId ID редактируемого адреса.
+     * @param UpdateAddressDto $addressDto DTO с данными для редактирования.
+     *
+     * @return void
+     * @throws UserAddressNotFoundException Если адрес не найден.
+     * @throws UserAddressNotUpdatedException Если произошла ошибка при редактировании адреса.
+     */
+    public function updateUserAddress(int $addressId, UpdateAddressDto $addressDto): void
+    {
+        $userId = $this->userIdOrFail();
+        $this->addressRepository->updateUserAddressFromDto($userId, $addressId, $addressDto);
     }
 
     /**
