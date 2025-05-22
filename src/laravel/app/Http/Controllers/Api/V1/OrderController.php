@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Exceptions\Cart\CartIsEmptyException;
+use App\Exceptions\Order\InvalidDeliveryTimeException;
+use App\Exceptions\Order\OrderNotCreateException;
+use App\Exceptions\User\MissingDefaultUserAddressException;
+use App\Http\Requests\Api\V1\Order\StoreOrderRequest;
+use App\Http\Responses\ApiResponse;
+use App\Services\Api\V1\OrderService;
+use Illuminate\Http\JsonResponse;
+
+class OrderController
+{
+    public function __construct(private readonly OrderService $orderService)
+    {
+    }
+
+    /**
+     * Создает заказ.
+     *
+     * @param StoreOrderRequest $request Валидированные данные запроса для создания заказа.
+     *
+     * @return JsonResponse JSON-ответ: success = true в случае успеха.
+     */
+    public function store(StoreOrderRequest $request): JsonResponse
+    {
+        try {
+            $this->orderService->storeOrder($request->toDto());
+        } catch (MissingDefaultUserAddressException $e) {
+            return ApiResponse::fail(
+                $e->getMessage(),
+                404,
+            );
+        } catch (InvalidDeliveryTimeException|CartIsEmptyException $e) {
+            return ApiResponse::fail(
+                $e->getMessage(),
+                422,
+            );
+        } catch (OrderNotCreateException $e) {
+            return ApiResponse::fail(
+                $e->getMessage(),
+                500,
+            );
+        }
+
+        return ApiResponse::success(status: 201);
+    }
+}

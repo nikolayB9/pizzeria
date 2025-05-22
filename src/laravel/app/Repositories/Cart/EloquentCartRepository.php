@@ -3,34 +3,54 @@
 namespace App\Repositories\Cart;
 
 use App\DTO\Api\V1\Cart\AddToCartProductDto;
+use App\DTO\Api\V1\Cart\CartDetailedItemDto;
+use App\DTO\Api\V1\Cart\CartRawItemDto;
 use App\Exceptions\Cart\CartMergeException;
 use App\Exceptions\Cart\CartUpdateException;
 use App\Exceptions\Cart\ProductVariantNotFoundInCartException;
 use App\Models\Cart;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class EloquentCartRepository implements CartRepositoryInterface
 {
     /**
-     * Возвращает товары из корзины по заданному идентификатору пользователя.
+     * Возвращает полный набор данных о позициях корзины (с названиями, категориями, изображениями и пр.).
      *
      * @param string $field Поле-идентификатор пользователя (user_id или session_id).
      * @param int|string $value Значение идентификатора.
      *
-     * @return Collection Коллекция моделей Cart с необходимыми отношениями.
+     * @return CartDetailedItemDto[] Массив DTO с данными товаров в корзине, или пустой массив, если корзина пуста.
      */
-    public function getItemsByIdentifier(string $field, int|string $value): Collection
+    public function getDetailedCartItemsByIdentifier(string $field, int|string $value): array
     {
-        return Cart::where($field, $value)
-            ->with([
-                'productVariant:id,name,product_id',
-                'productVariant.product:id,name',
-                'productVariant.product.previewImage:id,image_path,product_id',
-                'productVariant.product.productCategoryRelation:id,type',
-            ])
-            ->get();
+        return CartDetailedItemDto::collection(
+            Cart::where($field, $value)
+                ->with([
+                    'productVariant:id,name,product_id',
+                    'productVariant.product:id,name',
+                    'productVariant.product.previewImage:id,image_path,product_id',
+                    'productVariant.product.productCategoryRelation:id,type',
+                ])
+                ->get()
+        );
+    }
+
+    /**
+     * Возвращает минимальный набор данных о позициях корзины (только поля из таблицы, без связей).
+     *
+     * @param string $field Поле-идентификатор пользователя (user_id или session_id).
+     * @param int|string $value Значение идентификатора.
+     *
+     * @return CartRawItemDto[] Массив DTO с данными товаров в корзине, или пустой массив, если корзина пуста.
+     */
+    public function getRawCartItemsByIdentifier(string $field, int|string $value): array
+    {
+        return CartRawItemDto::collection(
+            Cart::where($field, $value)
+                ->select('product_variant_id', 'price', 'qty')
+                ->get()
+        );
     }
 
     /**
@@ -144,13 +164,13 @@ class EloquentCartRepository implements CartRepositoryInterface
                 ->delete();
         } catch (\Throwable $e) {
             Log::error('Ошибка при попытке очистить корзину', [
-                'exception' => $e,
                 'identifier_field' => $field,
                 'identifier_value' => $value,
                 'method' => __METHOD__,
+                'exception' => $e->getMessage(),
             ]);
 
-            throw new CartUpdateException("Непредвиденная ошибка при попытке очистить корзину: {$e->getMessage()}");
+            throw new CartUpdateException('Непредвиденная ошибка при попытке очистить корзину.');
         }
     }
 
@@ -266,5 +286,4 @@ class EloquentCartRepository implements CartRepositoryInterface
             throw new CartMergeException();
         }
     }
-
 }

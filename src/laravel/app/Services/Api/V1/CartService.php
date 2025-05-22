@@ -3,18 +3,21 @@
 namespace App\Services\Api\V1;
 
 use App\DTO\Api\V1\Cart\AddToCartProductDto;
-use App\DTO\Api\V1\Cart\CartProductListItemDto;
+use App\DTO\Api\V1\Cart\CartDetailedItemDto;
+use App\DTO\Api\V1\Cart\CartRawItemDto;
 use App\Exceptions\Cart\CartMergeException;
 use App\Exceptions\Cart\CartUpdateException;
 use App\Exceptions\Cart\CategoryForLimitCheckNotFoundException;
 use App\Exceptions\Cart\CategoryLimitExceededException;
 use App\Exceptions\Cart\CategoryLimitNotSetInConfigException;
+use App\Exceptions\Cart\InvalidCartProductDataException;
 use App\Exceptions\Cart\ProductVariantNotFoundInCartException;
 use App\Exceptions\Category\CategoryNotFoundException;
 use App\Exceptions\Product\ProductNotPublishedException;
 use App\Repositories\Cart\CartRepositoryInterface;
 use App\Repositories\Category\CategoryRepositoryInterface;
 use App\Repositories\Product\ProductRepositoryInterface;
+use Illuminate\Support\Facades\Log;
 
 class CartService
 {
@@ -25,19 +28,13 @@ class CartService
     /**
      * Возвращает продукты из корзины текущего пользователя или сессии.
      *
-     * @return CartProductListItemDto[] Массив DTO продуктов в корзине или пустой массив, если корзина пуста.
+     * @return CartDetailedItemDto[] Массив DTO с данными товаров в корзине, или пустой массив, если корзина пуста.
      */
     public function getUserCartProducts(): array
     {
         $auth = $this->getAuthField();
 
-        $cartItems = $this->cartRepository->getItemsByIdentifier($auth['field'], $auth['value']);
-
-        if ($cartItems->isEmpty()) {
-            return [];
-        }
-
-        return CartProductListItemDto::collection($cartItems);
+        return $this->cartRepository->getDetailedCartItemsByIdentifier($auth['field'], $auth['value']);
     }
 
     /**
@@ -117,14 +114,18 @@ class CartService
      * Если пуст и $calculateIfEmpty = true — стоимость рассчитывается из базы.
      * Иначе возвращается 0.
      *
-     * @param CartProductListItemDto[] $cartProducts Массив DTO продуктов в корзине.
+     * @param CartDetailedItemDto[]|CartRawItemDto[] $cartProducts Массив DTO с товарами в корзине.
      * @param bool $calculateIfEmpty Делать ли запрос к базе, если массив пуст.
      *
      * @return float Общая стоимость товаров в корзине.
+     * @throws InvalidCartProductDataException Если одно из значений price или qty некорректно.
      */
     public function getTotalPrice(array $cartProducts = [], bool $calculateIfEmpty = true): float
     {
         if (empty($cartProducts) && !$calculateIfEmpty) {
+            Log::info('Расчет общей стоимости пропущен, корзина пуста и флаг расчета выключен', [
+                'method' => __METHOD__,
+            ]);
             return 0.0;
         }
 
@@ -132,8 +133,23 @@ class CartService
             $totalPrice = 0.0;
 
             foreach ($cartProducts as $product) {
+                if (!isset($product->price, $product->qty)
+                    || !is_numeric($product->price) || !is_numeric($product->qty)
+                    || $product->price < 0 || $product->qty < 1
+                ) {
+                    Log::error('Ошибка в цене или количестве товара при расчете общей стоимости корзины', [
+                        'cart_product' => $product,
+                        'method' => __METHOD__,
+                    ]);
+
+                    throw new InvalidCartProductDataException(
+                        'Некорректные данные товара. Расчет стоимости невозможен.'
+                    );
+                }
+
                 $totalPrice += $product->price * $product->qty;
             }
+
 
             return round((float)$totalPrice, 2);
         }

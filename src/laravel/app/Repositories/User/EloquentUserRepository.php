@@ -2,6 +2,8 @@
 
 namespace App\Repositories\User;
 
+use App\DTO\Api\V1\Checkout\CheckoutUserDataDto;
+use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Exceptions\User\MissingUserException;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -28,22 +30,54 @@ class EloquentUserRepository implements UserRepositoryInterface
     }
 
     /**
-     * Получает модель пользователя по ID с минимальным набором данных для оформления заказа.
+     * Возвращает DTO с минимальным набором данных для оформления заказа, включая дефолтный адрес.
      *
      * @param int $userId Идентификатор пользователя.
      *
-     * @return User Модель пользователя с предзагруженными latestOrder (и его address) и latestAddress.
+     * @return CheckoutUserDataDto Данные пользователя с дефолтным адресом.
      * @throws MissingUserException Если пользователь не найден (Runtime: ожидается существующий $userId).
      */
-    public function getCheckoutDataById(int $userId): User
+    public function getCheckoutInfo(int $userId): CheckoutUserDataDto
     {
         try {
-            return User::where('id', $userId)
+            $user = User::where('id', $userId)
                 ->select('id', 'name', 'email', 'phone_number')
-                ->with('defaultAddress:id,user_id,is_default,city_id,street_id,house')
+                ->with([
+                    'defaultAddress:id,user_id,is_default,city_id,street_id,house',
+                ])
+                ->firstOrFail();
+
+            return CheckoutUserDataDto::fromModel($user);
+        } catch (ModelNotFoundException) {
+            throw new MissingUserException("Пользователь с ID [$userId] не найден.");
+        }
+    }
+
+
+    /**
+     * Возвращает ID дефолтного адреса доставки для пользователя или выбрасывает исключение, если адрес не найден.
+     *
+     * @param int $userId ID пользователя.
+     *
+     * @return int ID адреса пользователя, используемого по умолчанию для доставки заказов.
+     * @throws MissingUserException Если пользователь не найден (Runtime: ожидается существующий $userId).
+     * @throws MissingDefaultUserAddressException Если дефолтный адрес не найден.
+     */
+    public function getDefaultAddressIdOrThrow(int $userId): int
+    {
+        try {
+            $user = User::where('id', $userId)
+                ->select('id')
+                ->with('defaultAddress:id,user_id')
                 ->firstOrFail();
         } catch (ModelNotFoundException) {
             throw new MissingUserException("Пользователь с ID [$userId] не найден.");
         }
+
+        if (!$user->defaultAddress) {
+            throw new MissingDefaultUserAddressException('Не найден дефолтный адрес пользователя.');
+        }
+
+        return $user->defaultAddress->id;
     }
 }

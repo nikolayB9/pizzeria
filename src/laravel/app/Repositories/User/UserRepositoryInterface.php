@@ -2,6 +2,8 @@
 
 namespace App\Repositories\User;
 
+use App\DTO\Api\V1\Checkout\CheckoutUserDataDto;
+use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Exceptions\User\MissingUserException;
 use App\Models\User;
 
@@ -18,12 +20,23 @@ interface UserRepositoryInterface
     public function getPreviewModelById(int $userId): User;
 
     /**
-     * Получает модель пользователя по ID с минимальным набором данных для оформления заказа.
+     * Возвращает DTO с минимальным набором данных для оформления заказа, включая дефолтный адрес.
      *
      * @param int $userId
      *
-     * @return User
+     * @return CheckoutUserDataDto
      * @throws MissingUserException
      */
-    public function getCheckoutDataById(int $userId): User;
+    public function getCheckoutInfo(int $userId): CheckoutUserDataDto;
+
+    /**
+     * Возвращает ID дефолтного адреса доставки для пользователя или выбрасывает исключение, если адрес не найден.
+     *
+     * @param int $userId
+     *
+     * @return int
+     * @throws MissingUserException
+     * @throws MissingDefaultUserAddressException
+     */
+    public function getDefaultAddressIdOrThrow(int $userId): int;
 }

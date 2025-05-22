@@ -14,7 +14,7 @@ class OrderProductSeeder extends Seeder
     {
         $user = User::where('email', 'user@mail.ru')->firstOrFail();
         $order = Order::where('user_id', $user->id)
-            ->where('total_price', 1353)
+            ->where('total', 1353)
             ->firstOrFail();
         $product = Product::where('slug', 'vetcina-i-syr')->firstOrFail();
         $productVariant = ProductVariant::where('product_id', $product->id)

@@ -14,10 +14,10 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained('users');
             $table->foreignId('address_id')->constrained('addresses');
-            $table->decimal('delivery_price');
-            $table->decimal('total_price');
-            $table->dateTime('delivery_time');
+            $table->decimal('delivery_cost');
+            $table->decimal('total');
             $table->foreignId('status')->constrained('order_statuses', 'id');
+            $table->dateTime('delivery_at');
             $table->string('comment')->nullable();
             $table->timestamps();
         });

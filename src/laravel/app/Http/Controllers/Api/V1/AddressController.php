@@ -74,7 +74,7 @@ class AddressController
             );
         }
 
-        return ApiResponse::success();
+        return ApiResponse::success(status: 201);
     }
 
     /**

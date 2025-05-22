@@ -9,7 +9,7 @@ use App\Exceptions\Product\MissingProductCategoryException;
 use App\Models\Cart;
 use Illuminate\Support\Collection;
 
-class CartProductListItemDto
+class CartDetailedItemDto
 {
     use RequiresPreload;
 
@@ -64,7 +64,7 @@ class CartProductListItemDto
      *
      * @param Collection $cart Коллекция моделей Cart.
      *
-     * @return CartProductListItemDto[] Массив DTO.
+     * @return CartDetailedItemDto[] Массив DTO.
      * @throws RequiredRelationMissingException
      * @throws RelationIsNullException
      * @throws MissingProductCategoryException

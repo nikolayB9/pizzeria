@@ -18,9 +18,9 @@ class OrderSeeder extends Seeder
         $orderData = [
             'user_id' => $user->id,
             'address_id' => $address->id,
-            'delivery_price' => 155,
-            'total_price' => 1353,
-            'delivery_time' => now(),
+            'delivery_cost' => 155,
+            'total' => 1353,
+            'delivery_at' => now(),
             'status' => OrderStatusEnum::CREATED->value,
             'comment' => null,
         ];

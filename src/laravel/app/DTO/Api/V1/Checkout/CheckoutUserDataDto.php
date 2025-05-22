@@ -22,7 +22,7 @@ class CheckoutUserDataDto
     /**
      * Создает DTO из модели User.
      *
-     * @param User $user Модель User с предзагруженными отношениями defaultAddress, latestOrder.address, latestAddress.
+     * @param User $user Модель User с предзагруженным отношением defaultAddress.
      *
      * @return self
      */

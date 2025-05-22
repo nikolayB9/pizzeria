@@ -14,28 +14,14 @@ class CheckoutController
     }
 
     /**
-     * Возвращает данные авторизованного пользователя для оформления заказа.
+     * Возвращает предварительные данные для оформления заказа.
      *
-     * @return JsonResponse JSON-ответ с данными для оформления заказа.
+     * @return JsonResponse JSON-ответ с необходимыми данными.
      */
-    public function userData(): JsonResponse
-    {
-        $checkoutData = $this->checkoutService->getCheckoutUserData();
-
-        return ApiResponse::success(
-            data: $checkoutData
-        );
-    }
-
-    /**
-     * Возвращает данные по стоимости товаров, доставке и общей сумме заказа.
-     *
-     * @return JsonResponse JSON с данными успешного ответа или ошибкой, если корзина пуста.
-     */
-    public function summaryData(): JsonResponse
+    public function show(): JsonResponse
     {
         try {
-            $data = $this->checkoutService->getOrderSummary();
+            $data = $this->checkoutService->getCheckoutData();
         } catch (CartIsEmptyException $e) {
             return ApiResponse::fail(
                 $e->getMessage(),

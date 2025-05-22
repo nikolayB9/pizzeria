@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\CityController;
+use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
@@ -37,7 +38,6 @@ Route::middleware([
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
         Route::get('/user/preview', [UserController::class, 'preview']);
-        Route::get('/user', [UserController::class, 'show']);
 
         Route::get('/addresses', [AddressController::class, 'index']);
         Route::get('/addresses/{id}', [AddressController::class, 'show']);
@@ -49,8 +49,9 @@ Route::middleware([
         Route::get('/cities', [CityController::class, 'index']);
         Route::get('/cities/{id}/streets', [CityController::class, 'streets']);
 
-        Route::get('/checkout/user-data', [CheckoutController::class, 'userData']);
-        Route::get('/checkout/summary-data', [CheckoutController::class, 'summaryData']);
+        Route::get('/checkout', [CheckoutController::class, 'show']);
+
+        Route::post('/orders', [OrderController::class, 'store']);
     });
 
     // Авторизация

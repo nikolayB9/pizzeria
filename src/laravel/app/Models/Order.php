@@ -10,16 +10,10 @@ class Order extends Model
 {
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
-    /**
-     * Получить варианты продуктов, относящиеся к заказу, с указанием количества и цены,
-     * а также минимальной информацией о связанных продуктах (id и name).
-     */
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(ProductVariant::class, 'order_product')
-            ->withPivot(['qty', 'price'])
-            ->with(['product' => fn($q) => $q->select('id', 'name')])
-            ->select('id', 'name', 'product_id');
+            ->withPivot(['qty', 'price']);
     }
 
     public function user(): BelongsTo
