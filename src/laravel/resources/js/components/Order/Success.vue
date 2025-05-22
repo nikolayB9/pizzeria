@@ -1,0 +1,48 @@
+<script>
+import {useCart} from '@/composables/useCart'
+
+export default {
+    name: "Index",
+
+    data() {
+        return {
+            token: null,
+        }
+    },
+
+    setup() {
+        const {fetchCart} = useCart()
+        return {fetchCart}
+    },
+
+    mounted() {
+        this.fetchCart()
+        this.getToken()
+    },
+
+    watch: {
+        $route(to, from) {
+            this.getToken()
+        }
+    },
+
+    methods: {
+        getToken() {
+            this.token = localStorage.getItem('x_xsrf_token')
+        },
+    },
+
+}
+</script>
+
+<template>
+    <h1>Спасибо за заказ!</h1>
+    <div v-if="token">
+        <!--        <router-link :to="{ name: 'checkout.index' }">Оформить заказ</router-link>-->
+    </div>
+</template>
+
+<style scoped>
+
+</style>
+

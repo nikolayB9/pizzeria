@@ -37,6 +37,11 @@ const routes = [
         name: 'checkout.index'
     },
     {
+        path: '/order/success',
+        component: () => import('../components/Order/Success.vue'),
+        name: 'order.success'
+    },
+    {
         path: '/addresses',
         component: () => import('../components/Address/Index.vue'),
         name: 'address.index'
