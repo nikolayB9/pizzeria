@@ -42,6 +42,11 @@ const routes = [
         name: 'order.success'
     },
     {
+        path: '/order',
+        component: () => import('../components/Order/Index.vue'),
+        name: 'order.index'
+    },
+    {
         path: '/addresses',
         component: () => import('../components/Address/Index.vue'),
         name: 'address.index'

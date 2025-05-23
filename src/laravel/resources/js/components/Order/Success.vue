@@ -38,7 +38,7 @@ export default {
 <template>
     <h1>Спасибо за заказ!</h1>
     <div v-if="token">
-        <!--        <router-link :to="{ name: 'checkout.index' }">Оформить заказ</router-link>-->
+        <router-link :to="{ name: 'order.index' }">Перейти в Мои заказы</router-link>
     </div>
 </template>
 

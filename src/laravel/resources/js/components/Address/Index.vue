@@ -189,7 +189,7 @@ export default {
 </script>
 
 <template>
-    <h1>Мои адреса</h1>
+    <h1>Адреса доставки</h1>
 
     <div v-if="addresses.length > 0">
         <div v-for="address in addresses" :key="address.id">

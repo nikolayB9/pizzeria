@@ -13,6 +13,7 @@ export default {
         return {
             token: null,
             userName: null,
+            showDropdown: false,
         }
     },
 
@@ -49,7 +50,15 @@ export default {
                         this.userName = res.data.data.name
                     })
             }
-        }
+        },
+        toggleDropdown() {
+            this.showDropdown = !this.showDropdown;
+        },
+        closeDropdown() {
+            setTimeout(() => {
+                this.showDropdown = false;
+            }, 150);
+        },
     }
 }
 </script>
@@ -59,7 +68,14 @@ export default {
             <router-link class="nav-link" :to="{ name: 'main.index' }">Главная</router-link>
             <template v-if="token">
                 <a href="#" class="nav-link" @click.prevent="logout">Выйти</a>
-                <span class="username" v-if="userName">{{ userName }}</span>
+                <div class="user-menu" @click="toggleDropdown" @blur="closeDropdown" tabindex="0">
+                    <span class="username" v-if="userName">{{ userName }}</span>
+
+                    <div class="dropdown" v-if="showDropdown">
+                        <router-link :to="{ name: 'order.index' }">Мои заказы</router-link>
+                        <router-link :to="{ name: 'address.index' }">Адреса доставки</router-link>
+                    </div>
+                </div>
             </template>
             <router-link v-if="!token" class="nav-link" :to="{ name: 'user.login' }">Войти</router-link>
             <router-link v-if="!token" class="nav-link" :to="{ name: 'user.register' }">Регистрация</router-link>
@@ -79,6 +95,47 @@ export default {
 
 
 <style scoped>
+.user-menu {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    outline: none;
+}
+
+.username {
+    font-weight: bold;
+    padding: 6px 12px;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+    user-select: none;
+}
+
+.dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 6px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    min-width: 200px;
+    z-index: 1000;
+    padding: 8px 0;
+}
+
+.dropdown a {
+    display: block;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.dropdown a:hover {
+    background-color: #f7f7f7;
+}
+
 .navbar {
     display: flex;
     justify-content: space-between;
