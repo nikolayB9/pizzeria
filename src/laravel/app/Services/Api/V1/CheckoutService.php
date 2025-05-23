@@ -6,7 +6,7 @@ use App\DTO\Api\V1\Cart\CartDetailedItemDto;
 use App\DTO\Api\V1\Checkout\CheckoutSummaryDto;
 use App\Exceptions\Cart\CartIsEmptyException;
 use App\Repositories\Cart\CartRepositoryInterface;
-use App\Repositories\User\UserRepositoryInterface;
+use App\Repositories\Profile\ProfileRepositoryInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 use Illuminate\Support\Facades\Log;
 
@@ -14,9 +14,9 @@ class CheckoutService
 {
     use AuthenticatedUserTrait;
 
-    public function __construct(private readonly UserRepositoryInterface $userRepository,
-                                private readonly CartRepositoryInterface $cartRepository,
-                                private readonly CartService             $cartService)
+    public function __construct(private readonly ProfileRepositoryInterface $userRepository,
+                                private readonly CartRepositoryInterface    $cartRepository,
+                                private readonly CartService                $cartService)
     {
     }
 

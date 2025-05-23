@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\CityController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
-use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
@@ -37,7 +37,8 @@ Route::middleware([
     Route::middleware('auth')->group(function () {
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
-        Route::get('/user/preview', [UserController::class, 'preview']);
+        Route::get('/profile', [ProfileController::class, 'show']);
+        Route::get('/profile/preview', [ProfileController::class, 'preview']);
 
         Route::get('/addresses', [AddressController::class, 'index']);
         Route::get('/addresses/{id}', [AddressController::class, 'show']);

@@ -1,15 +1,36 @@
 <?php
 
-namespace App\Repositories\User;
+namespace App\Repositories\Profile;
 
 use App\DTO\Api\V1\Checkout\CheckoutUserDataDto;
+use App\DTO\Api\V1\Profile\ProfileDto;
 use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Exceptions\User\MissingUserException;
+use App\Exceptions\User\UserNotFoundException;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-class EloquentUserRepository implements UserRepositoryInterface
+class EloquentProfileRepository implements ProfileRepositoryInterface
 {
+    /**
+     * Возвращает данные пользователя по его ID.
+     *
+     * @param int $userId ID пользователя.
+     *
+     * @return ProfileDto Данные профиля пользователя.
+     * @throws UserNotFoundException Если пользователь не найден.
+     */
+    public function getProfileById(int $userId): ProfileDto
+    {
+        try {
+            return ProfileDto::fromModel(
+                User::where('id', $userId)->firstOrFail()
+            );
+        } catch (ModelNotFoundException $e) {
+            throw new UserNotFoundException('Профиль не найден.');
+        }
+    }
+
     /**
      * Получает модель пользователя по ID с минимальным набором полей для формирования превью.
      *

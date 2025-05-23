@@ -14,8 +14,8 @@ use App\Repositories\Order\EloquentOrderRepository;
 use App\Repositories\Order\OrderRepositoryInterface;
 use App\Repositories\Product\EloquentProductRepository;
 use App\Repositories\Product\ProductRepositoryInterface;
-use App\Repositories\User\EloquentUserRepository;
-use App\Repositories\User\UserRepositoryInterface;
+use App\Repositories\Profile\EloquentProfileRepository;
+use App\Repositories\Profile\ProfileRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(UserRepositoryInterface::class, EloquentUserRepository::class);
+        $this->app->bind(ProfileRepositoryInterface::class, EloquentProfileRepository::class);
         $this->app->bind(CategoryRepositoryInterface::class, EloquentCategoryRepository::class);
         $this->app->bind(ProductRepositoryInterface::class, EloquentProductRepository::class);
         $this->app->bind(CartRepositoryInterface::class, EloquentCartRepository::class);

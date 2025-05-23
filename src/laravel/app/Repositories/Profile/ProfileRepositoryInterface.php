@@ -1,14 +1,26 @@
 <?php
 
-namespace App\Repositories\User;
+namespace App\Repositories\Profile;
 
 use App\DTO\Api\V1\Checkout\CheckoutUserDataDto;
+use App\DTO\Api\V1\Profile\ProfileDto;
 use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Exceptions\User\MissingUserException;
+use App\Exceptions\User\UserNotFoundException;
 use App\Models\User;
 
-interface UserRepositoryInterface
+interface ProfileRepositoryInterface
 {
+    /**
+     * Возвращает данные пользователя по его ID.
+     *
+     * @param int $userId
+     *
+     * @return ProfileDto
+     * @throws UserNotFoundException
+     */
+    public function getProfileById(int $userId): ProfileDto;
+
     /**
      * Получает модель пользователя по ID с минимальным набором полей для дальнейшего формирования превью.
      *

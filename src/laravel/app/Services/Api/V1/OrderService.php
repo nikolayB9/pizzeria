@@ -15,7 +15,7 @@ use App\Exceptions\Order\OrderNotFoundException;
 use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Repositories\Cart\CartRepositoryInterface;
 use App\Repositories\Order\OrderRepositoryInterface;
-use App\Repositories\User\UserRepositoryInterface;
+use App\Repositories\Profile\ProfileRepositoryInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
@@ -24,11 +24,11 @@ class OrderService
 {
     use AuthenticatedUserTrait;
 
-    public function __construct(private readonly OrderRepositoryInterface $orderRepository,
-                                private readonly UserRepositoryInterface  $userRepository,
-                                private readonly CartRepositoryInterface  $cartRepository,
-                                private readonly CartService              $cartService,
-                                private readonly CheckoutService          $checkoutService)
+    public function __construct(private readonly OrderRepositoryInterface   $orderRepository,
+                                private readonly ProfileRepositoryInterface $userRepository,
+                                private readonly CartRepositoryInterface    $cartRepository,
+                                private readonly CartService                $cartService,
+                                private readonly CheckoutService            $checkoutService)
     {
     }
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\DTO\Api\V1\User;
+namespace App\DTO\Api\V1\Profile;
 
 use App\Models\User;
 
-class UserPreviewDto
+class ProfilePreviewDto
 {
     public function __construct(
         public string $name,
