@@ -6,6 +6,7 @@ use App\Exceptions\Cart\CartIsEmptyException;
 use App\Exceptions\Order\InvalidDeliveryTimeException;
 use App\Exceptions\Order\OrderNotCreateException;
 use App\Exceptions\User\MissingDefaultUserAddressException;
+use App\Http\Requests\Api\V1\Order\IndexOrderRequest;
 use App\Http\Requests\Api\V1\Order\StoreOrderRequest;
 use App\Http\Responses\ApiResponse;
 use App\Services\Api\V1\OrderService;
@@ -15,6 +16,25 @@ class OrderController
 {
     public function __construct(private readonly OrderService $orderService)
     {
+    }
+
+    /**
+     * Возвращает список заказов авторизованного пользователя для переданной страницы.
+     *
+     * @param IndexOrderRequest $request Валидированные данные запроса (номер страницы).
+     *
+     * @return JsonResponse JSON-ответ со списком заказов и информацией о пагинации.
+     */
+    public function index(IndexOrderRequest $request): JsonResponse
+    {
+        $page = $request->validated()['page'] ?? null;
+
+        $paginatedOrders = $this->orderService->getUserOrders($page);
+
+        return ApiResponse::success(
+            data: $paginatedOrders->data,
+            meta: $paginatedOrders->meta,
+        );
     }
 
     /**

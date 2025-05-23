@@ -4,6 +4,7 @@ namespace App\Repositories\Order;
 
 use App\DTO\Api\V1\Cart\CartRawItemDto;
 use App\DTO\Api\V1\Order\CreateOrderDto;
+use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Exceptions\Order\OrderNotCreateException;
 use App\Models\Order;
 use App\Repositories\Cart\CartRepositoryInterface;
@@ -15,6 +16,29 @@ class EloquentOrderRepository implements OrderRepositoryInterface
 {
     public function __construct(private readonly CartRepositoryInterface $cartRepository)
     {
+    }
+
+    /**
+     * Получает список заказов пользователя с постраничной разбивкой.
+     *
+     * @param int $userId ID пользователя.
+     * @param int|null $page Номер страницы для пагинации (null — первая страница).
+     *
+     * @return PaginatedOrderListDto Список заказов и информация о пагинации.
+     */
+    public function getPaginatedOrderListByUserId(int $userId, ?int $page): PaginatedOrderListDto
+    {
+        return PaginatedOrderListDto::fromPaginator(
+            Order::where('user_id', $userId)
+                ->select(['id', 'user_id', 'address_id', 'total', 'status', 'created_at'])
+                ->with([
+                    'address:id,city_id,street_id,house,is_default',
+                    'products:id,product_id',
+                    'products.product:id',
+                    'products.product.previewImage',
+                ])
+                ->paginate(10, ['*'], 'page', $page)
+        );
     }
 
     /**

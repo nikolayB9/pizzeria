@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Order\OrderStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -9,6 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Order extends Model
 {
     protected $guarded = ['id', 'created_at', 'updated_at'];
+
+    protected $casts = [
+        'status' => OrderStatusEnum::class,
+    ];
 
     public function products(): BelongsToMany
     {

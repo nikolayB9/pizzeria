@@ -51,6 +51,7 @@ Route::middleware([
 
         Route::get('/checkout', [CheckoutController::class, 'show']);
 
+        Route::get('/orders', [OrderController::class, 'index']);
         Route::post('/orders', [OrderController::class, 'store']);
     });
 

@@ -5,6 +5,7 @@ namespace App\Services\Api\V1;
 use App\DTO\Api\V1\Cart\CartRawItemDto;
 use App\DTO\Api\V1\Order\CreateOrderDto;
 use App\DTO\Api\V1\Order\CreateOrderInputDto;
+use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Enums\Order\OrderStatusEnum;
 use App\Exceptions\Cart\CartIsEmptyException;
 use App\Exceptions\Order\InvalidDeliveryTimeException;
@@ -27,6 +28,20 @@ class OrderService
                                 private readonly CartService              $cartService,
                                 private readonly CheckoutService          $checkoutService)
     {
+    }
+
+    /**
+     * Возвращает список заказов авторизованного пользователя для указанной страницы.
+     *
+     * @param int|null $page Номер страницы для пагинации (null — первая страница).
+     *
+     * @return PaginatedOrderListDto Список заказов и информация о пагинации.
+     */
+    public function getUserOrders(?int $page): PaginatedOrderListDto
+    {
+        $userId = $this->userIdOrFail();
+
+        return $this->orderRepository->getPaginatedOrderListByUserId($userId, $page);
     }
 
     /**

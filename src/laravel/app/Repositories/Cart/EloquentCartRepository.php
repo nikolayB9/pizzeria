@@ -29,7 +29,7 @@ class EloquentCartRepository implements CartRepositoryInterface
                 ->with([
                     'productVariant:id,name,product_id',
                     'productVariant.product:id,name',
-                    'productVariant.product.previewImage:id,image_path,product_id',
+                    'productVariant.product.previewImage',
                     'productVariant.product.productCategoryRelation:id,type',
                 ])
                 ->get()
