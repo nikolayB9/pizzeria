@@ -46,29 +46,31 @@ export default {
     <div v-if="orders">
         <div v-for="order in orders" class="order-card">
 
-            <!-- Дата и статус -->
-            <div class="order-header">
-                <div>{{ order.created_at }}</div>
-                <div class="order-status">{{ order.status }}</div>
-            </div>
+            <router-link :to="{ name: 'order.show', params: {id: order.id} }">
+                <!-- Дата и статус -->
+                <div class="order-header">
+                    <div>{{ order.created_at }}</div>
+                    <div class="order-status">{{ order.status }}</div>
+                </div>
 
-            <!-- Адрес -->
-            <div class="order-label">Доставка</div>
-            <div class="order-address">
-                {{ order.address.city }}, {{ order.address.street }}, {{ order.address.house }}
-            </div>
+                <!-- Адрес -->
+                <div class="order-label">Доставка</div>
+                <div class="order-address">
+                    {{ order.address.city }}, {{ order.address.street }}, {{ order.address.house }}
+                </div>
 
-            <!-- Превью товаров -->
-            <div class="order-products">
-                <template v-for="(preview, index) in order.product_previews" :key="index">
-                    <img :src="preview.url" alt="Товар">
-                </template>
-            </div>
+                <!-- Превью товаров -->
+                <div class="order-products">
+                    <template v-for="(preview, index) in order.product_previews" :key="index">
+                        <img :src="preview.url" alt="Товар">
+                    </template>
+                </div>
 
-            <!-- Сумма -->
-            <div class="order-total">
-                Сумма: {{ order.total }} ₽
-            </div>
+                <!-- Сумма -->
+                <div class="order-total">
+                    Сумма: {{ order.total }} ₽
+                </div>
+            </router-link>
         </div>
     </div>
 
@@ -101,6 +103,10 @@ export default {
     margin-bottom: 24px;
     background-color: #fff;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.order-card a {
+    text-decoration: none;
 }
 
 .order-header {

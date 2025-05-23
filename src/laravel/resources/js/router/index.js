@@ -47,6 +47,11 @@ const routes = [
         name: 'order.index'
     },
     {
+        path: '/order/:id',
+        component: () => import('../components/Order/Show.vue'),
+        name: 'order.show'
+    },
+    {
         path: '/addresses',
         component: () => import('../components/Address/Index.vue'),
         name: 'address.index'
