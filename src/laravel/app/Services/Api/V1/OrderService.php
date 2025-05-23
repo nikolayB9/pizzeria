@@ -5,11 +5,13 @@ namespace App\Services\Api\V1;
 use App\DTO\Api\V1\Cart\CartRawItemDto;
 use App\DTO\Api\V1\Order\CreateOrderDto;
 use App\DTO\Api\V1\Order\CreateOrderInputDto;
+use App\DTO\Api\V1\Order\OrderDto;
 use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Enums\Order\OrderStatusEnum;
 use App\Exceptions\Cart\CartIsEmptyException;
 use App\Exceptions\Order\InvalidDeliveryTimeException;
 use App\Exceptions\Order\OrderNotCreateException;
+use App\Exceptions\Order\OrderNotFoundException;
 use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Repositories\Cart\CartRepositoryInterface;
 use App\Repositories\Order\OrderRepositoryInterface;
@@ -42,6 +44,21 @@ class OrderService
         $userId = $this->userIdOrFail();
 
         return $this->orderRepository->getPaginatedOrderListByUserId($userId, $page);
+    }
+
+    /**
+     * Возвращает данные заказа по его ID для авторизованного пользователя.
+     *
+     * @param int $orderId ID пользователя.
+     *
+     * @return OrderDto DTO с данными для отображения подробной информации о заказе.
+     * @throws OrderNotFoundException Если заказ не найден или не принадлежит пользователю.
+     */
+    public function getUserOrder(int $orderId): OrderDto
+    {
+        $userId = $this->userIdOrFail();
+
+        return $this->orderRepository->getUserOrderById($userId, $orderId);
     }
 
     /**

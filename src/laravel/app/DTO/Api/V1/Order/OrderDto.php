@@ -7,20 +7,20 @@ use App\DTO\Traits\RequiresPreload;
 use App\Exceptions\Dto\RelationIsNullException;
 use App\Exceptions\Dto\RequiredRelationMissingException;
 use App\Models\Order;
-use Illuminate\Support\Collection;
 
-class OrderListItemDto
+class OrderDto
 {
     use RequiresPreload;
 
-    /** @param OrderProductPreviewDto[] $product_previews */
+    /** @param OrderProductListItemDto[] $products */
     public function __construct(
         public int             $id,
-        public string          $created_at,
-        public AddressShortDto $address,
+        public array           $products,
         public float           $total,
+        public float           $delivery_cost,
+        public AddressShortDto $address,
+        public string          $created_at,
         public string          $status,
-        public array           $product_previews,
     )
     {
     }
@@ -40,25 +40,12 @@ class OrderListItemDto
 
         return new self(
             id: $order->id,
-            created_at: $order->created_at->translatedFormat('d F Yг. H:i'),
-            address: AddressShortDto::fromModel($order->address),
+            products: OrderProductListItemDto::collection($order->products),
             total: $order->total,
+            delivery_cost: $order->delivery_cost,
+            address: AddressShortDto::fromModel($order->address),
+            created_at: $order->created_at->translatedFormat('d F Yг. H:i'),
             status: $order->status->label(),
-            product_previews: OrderProductPreviewDto::collection($order->products),
         );
-    }
-
-    /**
-     * Преобразует коллекцию моделей в массив DTO.
-     *
-     * @param Collection<int, Order> $orders Коллекция моделей Order.
-     *
-     * @return OrderListItemDto[] Массив DTO.
-     * @throws RequiredRelationMissingException
-     * @throws RelationIsNullException
-     */
-    public static function collection(Collection $orders): array
-    {
-        return $orders->map(fn($order) => self::fromModel($order))->toArray();
     }
 }

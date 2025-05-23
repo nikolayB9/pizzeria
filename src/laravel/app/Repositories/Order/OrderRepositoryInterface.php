@@ -3,8 +3,10 @@
 namespace App\Repositories\Order;
 
 use App\DTO\Api\V1\Order\CreateOrderDto;
+use App\DTO\Api\V1\Order\OrderDto;
 use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Exceptions\Order\OrderNotCreateException;
+use App\Exceptions\Order\OrderNotFoundException;
 
 interface OrderRepositoryInterface
 {
@@ -17,6 +19,17 @@ interface OrderRepositoryInterface
      * @return PaginatedOrderListDto
      */
     public function getPaginatedOrderListByUserId(int $userId, ?int $page): PaginatedOrderListDto;
+
+    /**
+     * Возвращает данные заказа пользователя по его ID.
+     *
+     * @param int $userId
+     * @param int $orderId
+     *
+     * @return OrderDto
+     * @throws OrderNotFoundException
+     */
+    public function getUserOrderById(int $userId, int $orderId): OrderDto;
 
     /**
      * Создает заказ и очищает корзину.

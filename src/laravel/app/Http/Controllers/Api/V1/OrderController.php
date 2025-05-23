@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Exceptions\Cart\CartIsEmptyException;
 use App\Exceptions\Order\InvalidDeliveryTimeException;
 use App\Exceptions\Order\OrderNotCreateException;
+use App\Exceptions\Order\OrderNotFoundException;
 use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Http\Requests\Api\V1\Order\IndexOrderRequest;
 use App\Http\Requests\Api\V1\Order\StoreOrderRequest;
@@ -35,6 +36,24 @@ class OrderController
             data: $paginatedOrders->data,
             meta: $paginatedOrders->meta,
         );
+    }
+
+    /**
+     * Возвращает данные заказа для авторизованного пользователя.
+     *
+     * @param int $id ID заказа.
+     *
+     * @return JsonResponse JSON-ответ с данными заказа.
+     */
+    public function show(int $id): JsonResponse
+    {
+        try {
+            $order = $this->orderService->getUserOrder($id);
+        } catch (OrderNotFoundException $e) {
+            return ApiResponse::fail($e->getMessage(), 404);
+        }
+
+        return ApiResponse::success(data: $order);
     }
 
     /**
