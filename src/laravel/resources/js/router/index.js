@@ -27,6 +27,11 @@ const routes = [
         name: 'user.register'
     },
     {
+        path: '/show',
+        component: () => import('../components/User/Show.vue'),
+        name: 'user.show'
+    },
+    {
         path: '/cart',
         component: () => import('../components/Cart/Index.vue'),
         name: 'cart.index'

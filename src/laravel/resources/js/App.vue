@@ -45,7 +45,7 @@ export default {
         },
         getUserPreview() {
             if (this.token) {
-                axios.get('/api/v1/user/preview')
+                axios.get('/api/v1/profile/preview')
                     .then(res => {
                         this.userName = res.data.data.name
                     })
@@ -72,6 +72,7 @@ export default {
                     <span class="username" v-if="userName">{{ userName }}</span>
 
                     <div class="dropdown" v-if="showDropdown">
+                        <router-link :to="{ name: 'user.show' }">Профиль</router-link>
                         <router-link :to="{ name: 'order.index' }">Мои заказы</router-link>
                         <router-link :to="{ name: 'address.index' }">Адреса доставки</router-link>
                     </div>
