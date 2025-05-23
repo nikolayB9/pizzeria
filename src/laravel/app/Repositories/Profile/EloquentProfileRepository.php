@@ -4,11 +4,12 @@ namespace App\Repositories\Profile;
 
 use App\DTO\Api\V1\Checkout\CheckoutUserDataDto;
 use App\DTO\Api\V1\Profile\ProfileDto;
+use App\DTO\Api\V1\Profile\ProfilePreviewDto;
 use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Exceptions\User\MissingUserException;
-use App\Exceptions\User\UserNotFoundException;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Log;
 
 class EloquentProfileRepository implements ProfileRepositoryInterface
 {
@@ -18,7 +19,7 @@ class EloquentProfileRepository implements ProfileRepositoryInterface
      * @param int $userId ID пользователя.
      *
      * @return ProfileDto Данные профиля пользователя.
-     * @throws UserNotFoundException Если пользователь не найден.
+     * @throws MissingUserException Если пользователь не найден (Runtime: ожидается существующий $userId).
      */
     public function getProfileById(int $userId): ProfileDto
     {
@@ -27,24 +28,32 @@ class EloquentProfileRepository implements ProfileRepositoryInterface
                 User::where('id', $userId)->firstOrFail()
             );
         } catch (ModelNotFoundException $e) {
-            throw new UserNotFoundException('Профиль не найден.');
+            Log::error('Не найден пользователь при запросе своего профиля', [
+                'user_id' => $userId,
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
+            throw new MissingUserException("Пользователь с ID [$userId] не найден.");
         }
     }
 
     /**
-     * Получает модель пользователя по ID с минимальным набором полей для формирования превью.
+     * Получает данные пользователя по его ID с минимальным набором полей для формирования превью.
      *
      * @param int $userId ID пользователя.
      *
-     * @return User Модель пользователя с ограниченным набором данных (для предпросмотра).
+     * @return ProfilePreviewDto Данные пользователя с ограниченным набором данных (для предпросмотра).
      * @throws MissingUserException Если пользователь не найден (Runtime: ожидается существующий $userId).
      */
-    public function getPreviewModelById(int $userId): User
+    public function getPreviewModelById(int $userId): ProfilePreviewDto
     {
         try {
-            return User::where('id', $userId)
-                ->select('id', 'name')
-                ->firstOrFail();
+            return ProfilePreviewDto::fromModel(
+                User::where('id', $userId)
+                    ->select('id', 'name')
+                    ->firstOrFail()
+            );
         } catch (ModelNotFoundException) {
             throw new MissingUserException("Пользователь с ID [$userId] не найден.");
         }

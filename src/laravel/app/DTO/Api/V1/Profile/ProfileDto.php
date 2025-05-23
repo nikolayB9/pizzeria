@@ -7,11 +7,11 @@ use App\Models\User;
 class ProfileDto
 {
     public function __construct(
-        public string $id,
-        public string $name,
-        public string $phone_number,
-        public string $email,
-        public string $birth_date,
+        public int     $id,
+        public string  $name,
+        public string  $phone_number,
+        public string  $email,
+        public ?string $birth_date,
     )
     {
     }

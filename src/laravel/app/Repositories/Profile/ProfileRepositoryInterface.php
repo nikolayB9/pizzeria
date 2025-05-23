@@ -4,10 +4,9 @@ namespace App\Repositories\Profile;
 
 use App\DTO\Api\V1\Checkout\CheckoutUserDataDto;
 use App\DTO\Api\V1\Profile\ProfileDto;
+use App\DTO\Api\V1\Profile\ProfilePreviewDto;
 use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Exceptions\User\MissingUserException;
-use App\Exceptions\User\UserNotFoundException;
-use App\Models\User;
 
 interface ProfileRepositoryInterface
 {
@@ -17,19 +16,19 @@ interface ProfileRepositoryInterface
      * @param int $userId
      *
      * @return ProfileDto
-     * @throws UserNotFoundException
+     * @throws MissingUserException
      */
     public function getProfileById(int $userId): ProfileDto;
 
     /**
-     * Получает модель пользователя по ID с минимальным набором полей для дальнейшего формирования превью.
+     * Получает данные пользователя по его ID с минимальным набором полей для формирования превью.
      *
      * @param int $userId
      *
-     * @return User
+     * @return ProfilePreviewDto
      * @throws MissingUserException
      */
-    public function getPreviewModelById(int $userId): User;
+    public function getPreviewModelById(int $userId): ProfilePreviewDto;
 
     /**
      * Возвращает DTO с минимальным набором данных для оформления заказа, включая дефолтный адрес.

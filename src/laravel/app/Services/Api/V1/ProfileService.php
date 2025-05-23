@@ -4,7 +4,6 @@ namespace App\Services\Api\V1;
 
 use App\DTO\Api\V1\Profile\ProfileDto;
 use App\DTO\Api\V1\Profile\ProfilePreviewDto;
-use App\Exceptions\User\UserNotFoundException;
 use App\Repositories\Profile\ProfileRepositoryInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 
@@ -20,7 +19,6 @@ class ProfileService
      * Возвращает профиль авторизованного пользователя.
      *
      * @return ProfileDto Данные профиля пользователя.
-     * @throws UserNotFoundException Если пользователь не найден.
      */
     public function getProfileData(): ProfileDto
     {
@@ -30,15 +28,14 @@ class ProfileService
     }
 
     /**
-     * Получает DTO с минимальным набором данных для отображения информации о пользователе.
+     * Возвращает DTO с минимальным набором данных для отображения информации о пользователе.
      *
-     * @return ProfilePreviewDto Объект DTO с данными пользователя.
+     * @return ProfilePreviewDto Данные профиля пользователя для превью.
      */
     public function getPreviewData(): ProfilePreviewDto
     {
         $userId = $this->userIdOrFail();
-        $user = $this->profileRepository->getPreviewModelById($userId);
 
-        return ProfilePreviewDto::fromModel($user);
+        return $this->profileRepository->getPreviewModelById($userId);
     }
 }
