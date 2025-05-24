@@ -28,7 +28,7 @@ class GetProductBySlugTest extends AbstractApiTestCase
         return 'get';
     }
 
-    protected function getResponse(?string $productSlug = null): TestResponse
+    protected function getResponse(mixed $productSlug = null): TestResponse
     {
         if ($productSlug === null) {
             $productSlug = $this->product->slug;
@@ -37,7 +37,7 @@ class GetProductBySlugTest extends AbstractApiTestCase
         $route = $this->getRoute($productSlug);
         $method = $this->getMethod();
 
-        return $this->$method($route);
+        return $this->$method($route, ['Accept' => 'application/json']);
     }
 
     public function testReturnsSuccessfulResponse(): void

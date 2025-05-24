@@ -45,7 +45,7 @@ class GetProductsByCategoryTest extends AbstractApiTestCase
         $route = $this->getRoute($categorySlug);
         $method = $this->getMethod();
 
-        return $this->$method($route);
+        return $this->$method($route, ['Accept' => 'application/json']);
     }
 
     public function testReturnsSuccessfulResponse(): void

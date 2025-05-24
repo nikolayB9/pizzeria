@@ -39,7 +39,7 @@ class EloquentCityRepository implements CityRepositoryInterface
                 'method' => __METHOD__
             ]);
 
-            throw new CityNotFoundException('Город не найден');
+            throw new CityNotFoundException('Город не найден.');
         }
 
         return $city->streets;

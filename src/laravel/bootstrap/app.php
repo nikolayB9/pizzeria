@@ -5,6 +5,8 @@ use App\Http\Responses\ApiResponse;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -28,9 +30,38 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
-        $exceptions->render(function (AuthenticationException $e, $request) {
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->expectsJson()) {
                 return ApiResponse::fail(ErrorMessageEnum::UNAUTHORIZED->value, 401);
+            }
+        });
+
+        $exceptions->render(function (TypeError $e, Request $request) {
+            Log::warning('Type error', ['message' => $e->getMessage()]);
+            if ($request->expectsJson()) {
+                return ApiResponse::fail(ErrorMessageEnum::TYPE_ERROR->value, 422);
+            }
+        });
+
+        $exceptions->render(function (ErrorException $e, Request $request) {
+            if ($request->expectsJson()) {
+                Log::error('PHP error', ['message' => $e->getMessage()]);
+                return ApiResponse::fail(ErrorMessageEnum::ERROR->value, 500);
+            }
+        });
+
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if ($request->expectsJson()) {
+                Log::critical('Unhandled exception', [
+                    'type' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                return ApiResponse::fail(
+                    ErrorMessageEnum::ERROR->value,
+                    500
+                );
             }
         });
     })->create();
