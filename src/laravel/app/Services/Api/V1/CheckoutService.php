@@ -101,11 +101,7 @@ class CheckoutService
     /**
      * Возвращает доступные временные слоты доставки.
      *
-     * @return array Массив слотов формата:
-     * [
-     *   ['from' => '13:00', 'slot' => '13:00 - 13:30'],
-     *   ...
-     * ]
+     * @return array<array{from: string, slot: string}> Массив слотов.
      */
     protected function getDeliverySlots(): array
     {

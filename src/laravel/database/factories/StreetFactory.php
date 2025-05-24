@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class StreetFactory extends Factory
 {
     /**
+     * Данные по умолчанию для создания улицы (без city_id).
      *
      * @return array<string, mixed>
      */
