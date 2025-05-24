@@ -24,13 +24,19 @@ class MergeGuestCartToUserCart
         $userId = $event->user->id;
 
         try {
-            app(CartService::class)->mergeCartFromSessionToUser($oldSession, $userId);
-            session()->flash('cart_merge', true);
+            $merged = app(CartService::class)->mergeCartFromSessionToUser($oldSession, $userId);
+            session()->flash('cart_merge', $merged);
 
-            Log::info("Перенос корзины пользователя [$userId] из сессии [$oldSession].");
-        } catch (CartMergeException) {
+            if ($merged) {
+                Log::info("Перенос корзины пользователя [$userId] из сессии [$oldSession].");
+            } else {
+                Log::debug("Корзина по сессии [$oldSession] пуста. Перенос не выполнялся.");
+            }
+        } catch (CartMergeException $e) {
             session()->flash('cart_merge', false);
-            Log::warning("Не удалось перенести корзину пользователя [$userId] из сессии [$oldSession].");
+            Log::warning("Не удалось перенести корзину пользователя [$userId] из сессии [$oldSession].", [
+                'exception' => $e->getMessage(),
+            ]);
         }
     }
 }

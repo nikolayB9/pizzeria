@@ -219,10 +219,10 @@ class CartService
      * @param string $oldSessionId ID сессии неавторизованного пользователя.
      * @param int $userId ID авторизованного пользователя.
      *
-     * @return void
+     * @return bool True, если перенос выполнился. False, если корзина до авторизации была пуста.
      * @throws CartMergeException В случае ошибки при обновлении данных корзины.
      */
-    public function mergeCartFromSessionToUser(string $oldSessionId, int $userId): void
+    public function mergeCartFromSessionToUser(string $oldSessionId, int $userId): bool
     {
         $existItemsForSessionId = $this->cartRepository->hasItemsByIdentifier(
             'session_id',
@@ -230,9 +230,11 @@ class CartService
         );
 
         if (!$existItemsForSessionId) {
-            return;
+            return false;
         }
 
         $this->cartRepository->transferCartFromSessionToUser($oldSessionId, $userId);
+
+        return true;
     }
 }

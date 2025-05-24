@@ -15,11 +15,11 @@ class UserHelper
      *
      * @return User|Collection Модель или коллекция созданных пользователей.
      */
-    public static function createUser(int $count = 1): User|Collection
+    public static function createUser(int $count = 1, array $data = []): User|Collection
     {
         (new UserRoleSeeder())->run();
 
-        $users = User::factory($count)->create();
+        $users = User::factory($count)->create($data);
 
         return $count === 1 ? $users->first() : $users;
     }

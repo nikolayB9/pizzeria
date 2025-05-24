@@ -27,7 +27,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         return ApiResponse::success(
-            meta: ['cart_merge' => session()->pull('cart_merge')],
+            meta: ['cart_merge' => session()->pull('cart_merge', false)],
         );
     }
 

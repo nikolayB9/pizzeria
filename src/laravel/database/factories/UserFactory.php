@@ -23,7 +23,7 @@ class UserFactory extends Factory
             'phone_number' => fake()->unique()->regexify('(\+7)9[0-9]{9}'),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => Hash::make('password'),
+            'password' => Hash::make(Str::random(12)),
             'role' => UserRoleEnum::User->value,
             'birth_date' => fake()->randomElement([null, fake()->dateTimeBetween('-70 years', '-16 years')->format('Y-m-d')]),
             'remember_token' => Str::random(10),
