@@ -17,8 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
         $middleware->alias([
-                'remember.old.session.id' => \App\Http\Middleware\RememberOldSessionId::class]
-        );
+            'remember.old.session.id' => \App\Http\Middleware\RememberOldSessionId::class,
+            'guest.only.api' => \App\Http\Middleware\GuestOnlyApi::class,
+        ]);
     })
     ->withExceptions(function (Illuminate\Foundation\Configuration\Exceptions $exceptions) {
         $exceptions->render(function (ValidationException $e, $request) {

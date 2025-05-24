@@ -77,6 +77,7 @@ class RegisterTest extends AbstractApiTestCase
         $user = UserHelper::getUserByData(['email' => self::EMAIL]);
 
         $this->assertEquals(auth()->id(), $user->id);
+        $this->assertAuthenticated();
     }
 
     public function testUserIsNotAuthenticatedAfterFailRegister(): void
@@ -87,6 +88,7 @@ class RegisterTest extends AbstractApiTestCase
         $this->getResponse($data);
 
         $this->assertFalse(auth()->check());
+        $this->assertGuest();
     }
 
     public function testRegisterReturnsExpectedJsonStructure(): void
@@ -256,6 +258,20 @@ class RegisterTest extends AbstractApiTestCase
             422,
             'Ошибка валидации.',
             ["email" => [0 => "The email field must be a valid email address."]],
+        );
+    }
+
+    public function testRegisterFailsWhenUserIsAuthenticated(): void
+    {
+        $user = UserHelper::createUser();
+
+        $this->actingAs($user);
+
+        $response = $this->getResponse($this->regData);
+
+        $this->checkError($response,
+            403,
+            'Доступ только для неавторизованных пользователей.',
         );
     }
 }

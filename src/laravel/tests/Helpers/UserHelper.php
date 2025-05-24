@@ -35,4 +35,6 @@ class UserHelper
     {
         return User::where($data)->first();
     }
+
+
 }

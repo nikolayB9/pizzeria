@@ -73,6 +73,7 @@ class LoginTest extends AbstractApiTestCase
         $this->getResponse(['email' => $this->user->email, 'password' => self::PASSWORD]);
 
         $this->assertEquals(auth()->id(), $this->user->id);
+        $this->assertAuthenticated();
     }
 
     public function testUserIsNotAuthenticatedAfterFailLogin(): void
@@ -80,6 +81,7 @@ class LoginTest extends AbstractApiTestCase
         $this->getResponse(['email' => $this->user->email, 'password' => self::PASSWORD . 'wrong']);
 
         $this->assertFalse(auth()->check());
+        $this->assertGuest();
     }
 
     public function testLoginReturnsExpectedJsonStructure(): void
@@ -186,6 +188,18 @@ class LoginTest extends AbstractApiTestCase
             422,
             'Ошибка валидации.',
             ["email" => [0 => "The email field must be a valid email address."]],
+        );
+    }
+
+    public function testLoginFailsWhenUserIsAuthenticated(): void
+    {
+        $this->actingAs($this->user);
+
+        $response = $this->getResponse(['email' => $this->user->email, 'password' => self::PASSWORD]);
+
+        $this->checkError($response,
+            403,
+            'Доступ только для неавторизованных пользователей.',
         );
     }
 }
