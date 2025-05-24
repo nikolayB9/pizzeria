@@ -25,6 +25,9 @@ Route::middleware([
     // Публичные маршруты
     Route::get('/categories', [CategoryController::class, 'index']);
 
+    Route::get('/cities', [CityController::class, 'index']);
+    Route::get('/cities/{id}/streets', [CityController::class, 'streets']);
+
     Route::get('/products/category/{slug}', [ProductController::class, 'indexByCategory']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
 
@@ -46,9 +49,6 @@ Route::middleware([
         Route::patch('/addresses/{id}', [AddressController::class, 'update']);
         Route::patch('/addresses/{id}/default', [AddressController::class, 'setDefault']);
         Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
-
-        Route::get('/cities', [CityController::class, 'index']);
-        Route::get('/cities/{id}/streets', [CityController::class, 'streets']);
 
         Route::get('/checkout', [CheckoutController::class, 'show']);
 

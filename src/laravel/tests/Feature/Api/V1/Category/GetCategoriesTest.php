@@ -8,7 +8,7 @@ use Illuminate\Testing\TestResponse;
 use Tests\Feature\Api\AbstractApiTestCase;
 use Tests\Helpers\CategoryHelper;
 
-class GetAllCategoriesTest extends AbstractApiTestCase
+class GetCategoriesTest extends AbstractApiTestCase
 {
     protected const COUNT_PRODUCT_CATEGORIES = 2;
     protected const COUNT_MARKETING_CATEGORIES = 2;
