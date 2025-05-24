@@ -23,4 +23,16 @@ class UserHelper
 
         return $count === 1 ? $users->first() : $users;
     }
+
+    /**
+     * Получает пользователя из базы данных по переданному массиву для поиска.
+     *
+     * @param array<string, mixed> $data Массив с полями и значениями для поиска пользователя.
+     *
+     * @return User|null Модель пользователя или null, если не найден
+     */
+    public static function getUserByData(array $data): ?User
+    {
+        return User::where($data)->first();
+    }
 }

@@ -75,6 +75,13 @@ class LoginTest extends AbstractApiTestCase
         $this->assertEquals(auth()->id(), $this->user->id);
     }
 
+    public function testUserIsNotAuthenticatedAfterFailLogin(): void
+    {
+        $this->getResponse(['email' => $this->user->email, 'password' => self::PASSWORD . 'wrong']);
+
+        $this->assertFalse(auth()->check());
+    }
+
     public function testLoginReturnsExpectedJsonStructure(): void
     {
         $response = $this->getResponse(['email' => $this->user->email, 'password' => self::PASSWORD]);

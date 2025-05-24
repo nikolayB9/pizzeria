@@ -40,7 +40,7 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         return ApiResponse::success(
-            meta: ['cart_merge' => session()->pull('cart_merge')],
+            meta: ['cart_merge' => session()->pull('cart_merge', false)],
         );
     }
 }
