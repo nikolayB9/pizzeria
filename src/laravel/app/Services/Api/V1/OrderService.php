@@ -10,6 +10,7 @@ use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Enums\Order\OrderStatusEnum;
 use App\Exceptions\Cart\CartIsEmptyException;
 use App\Exceptions\Order\InvalidDeliveryTimeException;
+use App\Exceptions\Order\MinDeliveryLeadTimeNotSetInConfigException;
 use App\Exceptions\Order\OrderNotCreateException;
 use App\Exceptions\Order\OrderNotFoundException;
 use App\Exceptions\User\MissingDefaultUserAddressException;
@@ -136,7 +137,8 @@ class OrderService
      * @param string $deliveryTime Время доставки в формате 'H:i' (например, '13:45').
      *
      * @return DateTimeImmutable Объект с полной датой и временем доставки.
-     * @throws InvalidDeliveryTimeException Если время доставки менее чем через 40 минут.
+     * @throws MinDeliveryLeadTimeNotSetInConfigException Если минимальное время до доставки не задано в конфиге.
+     * @throws InvalidDeliveryTimeException Если неверное время доставки.
      */
     protected function parseAndValidateDeliveryTime(string $deliveryTime): DateTimeImmutable
     {
@@ -152,9 +154,18 @@ class OrderService
             $candidate = $candidate->addDay();
         }
 
-        // Проверка: не менее 40 минут от текущего времени
-        if ($now->diffInMinutes($candidate, false) < 40) {
-            throw new InvalidDeliveryTimeException("Время доставки должно быть не менее чем через 40 минут.");
+        $minDeliveryLeadTime = config('order.min_delivery_lead_time');
+
+        if (is_null($minDeliveryLeadTime)) {
+            throw new MinDeliveryLeadTimeNotSetInConfigException(
+                'Не задано время минимальное время от оформления заказа до доставки.'
+            );
+        }
+
+        if ($now->diffInMinutes($candidate, false) < $minDeliveryLeadTime) {
+            throw new InvalidDeliveryTimeException(
+                "Время доставки должно быть не менее чем через $minDeliveryLeadTime минут."
+            );
         }
 
         return DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $candidate->format('Y-m-d H:i:s'));

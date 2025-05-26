@@ -17,6 +17,7 @@ class ProductHelper
      * @param int $countProducts Количество создаваемых продуктов для каждой категории.
      * @param int $countVariants Количество создаваемых вариантов для каждого продукта.
      * @param bool $productsIsPublished Определяет, будут ли создаваемые продукты помечены как опубликованные.
+     *
      * @return Product|Collection Продукт или коллекция созданных продуктов.
      */
     public static function createProductsWithVariantsForCategories(Category|Collection $categories,
@@ -41,7 +42,7 @@ class ProductHelper
             );
         }
 
-        return $countProducts === 1 ? $products->first() : $products;
+        return $products->count() === 1 ? $products->first() : $products;
     }
 
     /**
@@ -49,6 +50,7 @@ class ProductHelper
      *
      * @param int $countProducts Количество создаваемых продуктов.
      * @param bool $withParameters Добавить параметры к вариантам.
+     *
      * @return Product|Collection Один продукт или коллекция продуктов.
      */
     public static function createProduct(int $countProducts = 1, bool $withParameters = false): Product|Collection
