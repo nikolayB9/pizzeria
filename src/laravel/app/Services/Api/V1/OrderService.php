@@ -13,6 +13,7 @@ use App\Exceptions\Order\InvalidDeliveryTimeException;
 use App\Exceptions\Order\OrderNotCreateException;
 use App\Exceptions\Order\OrderNotFoundException;
 use App\Exceptions\User\MissingDefaultUserAddressException;
+use App\Exceptions\User\OrdersPerPageNotSetInConfigException;
 use App\Repositories\Cart\CartRepositoryInterface;
 use App\Repositories\Order\OrderRepositoryInterface;
 use App\Repositories\Profile\ProfileRepositoryInterface;
@@ -38,12 +39,19 @@ class OrderService
      * @param int|null $page Номер страницы для пагинации (null — первая страница).
      *
      * @return PaginatedOrderListDto Список заказов и информация о пагинации.
+     * @throws OrdersPerPageNotSetInConfigException Если не задан параметр orders_per_page в конфиге.
      */
     public function getUserOrders(?int $page): PaginatedOrderListDto
     {
         $userId = $this->userIdOrFail();
+        $ordersPerPage = config('user.orders_per_page');
 
-        return $this->orderRepository->getPaginatedOrderListByUserId($userId, $page);
+        if (is_null($ordersPerPage)) {
+            throw new OrdersPerPageNotSetInConfigException(
+                'Не задан параметр конфига [orders_per_page] в файле [user].');
+        }
+
+        return $this->orderRepository->getPaginatedOrderListByUserId($userId, $page, $ordersPerPage);
     }
 
     /**

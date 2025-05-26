@@ -67,7 +67,7 @@ class GetCheckoutDataTest extends AbstractApiTestCase
         }
 
         if ($withDefaultAddress && $isAuth) {
-            AddressHelper::createAddresses($this->userId, 1, 1, 1);
+            AddressHelper::createAddresses($this->userId);
         }
 
         $route = $this->getRoute();

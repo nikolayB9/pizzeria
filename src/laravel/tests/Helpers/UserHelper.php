@@ -27,14 +27,15 @@ class UserHelper
     /**
      * Получает пользователя из базы данных по переданному массиву для поиска.
      *
-     * @param array<string, mixed> $data Массив с полями и значениями для поиска пользователя.
+     * @param array<string, mixed> $searchData Массив с полями и значениями для поиска пользователя.
+     * @param array<string> $with Массив с нужными отношениями модели User.
      *
      * @return User|null Модель пользователя или null, если не найден
      */
-    public static function getUserByData(array $data): ?User
+    public static function getUserByData(array $searchData, array $with = []): ?User
     {
-        return User::where($data)->first();
+        return User::where($searchData)
+            ->with($with)
+            ->first();
     }
-
-
 }

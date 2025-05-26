@@ -26,10 +26,11 @@ class EloquentOrderRepository implements OrderRepositoryInterface
      *
      * @param int $userId ID пользователя.
      * @param int|null $page Номер страницы для пагинации (null — первая страница).
+     * @param int $countPerPage Количество отображаемых заказов на одной странице.
      *
      * @return PaginatedOrderListDto Список заказов и информация о пагинации.
      */
-    public function getPaginatedOrderListByUserId(int $userId, ?int $page): PaginatedOrderListDto
+    public function getPaginatedOrderListByUserId(int $userId, ?int $page, int $countPerPage): PaginatedOrderListDto
     {
         return PaginatedOrderListDto::fromPaginator(
             Order::where('user_id', $userId)
@@ -41,7 +42,7 @@ class EloquentOrderRepository implements OrderRepositoryInterface
                     'products.product:id',
                     'products.product.previewImage',
                 ])
-                ->paginate(10, ['*'], 'page', $page)
+                ->paginate($countPerPage, ['*'], 'page', $page)
         );
     }
 

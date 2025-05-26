@@ -15,10 +15,11 @@ interface OrderRepositoryInterface
      *
      * @param int $userId
      * @param int|null $page
+     * @param int $countPerPage
      *
      * @return PaginatedOrderListDto
      */
-    public function getPaginatedOrderListByUserId(int $userId, ?int $page): PaginatedOrderListDto;
+    public function getPaginatedOrderListByUserId(int $userId, ?int $page, int $countPerPage): PaginatedOrderListDto;
 
     /**
      * Возвращает данные заказа пользователя по его ID.

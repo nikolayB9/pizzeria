@@ -7,11 +7,23 @@ use Illuminate\Support\Collection;
 
 class AddressHelper
 {
-
+    /**
+     * Создаёт один или несколько адресов для заданного пользователя.
+     *
+     * @param int $userId ID пользователя.
+     * @param int $count Количество создаваемых адресов.
+     * @param int $countCities Количество создаваемых городов.
+     *                         Один случайно выбранный город используется для всех адресов.
+     * @param int $countStreets Количество улиц, создаваемых для каждого города.
+     *                          Для каждого адреса выбирается случайная улица этого города.
+     * @param bool $isDefault Если true — один случайный адрес будет отмечен как дефолтный.
+     *
+     * @return Address|Collection<Address> Один адрес или коллекция адресов.
+     */
     public static function createAddresses(int  $userId,
                                            int  $count = 1,
                                            int  $countCities = 1,
-                                           int  $countStreets = 3,
+                                           int  $countStreets = 1,
                                            bool $isDefault = true): Address|Collection
     {
         $cities = CityHelper::createCities($countCities);
