@@ -181,7 +181,7 @@ class GetUserOrdersTest extends AbstractApiTestCase
         $page = 2;
 
         $response = $this->getResponse(true, $countOrders, true, true, $page);
-        $response->dump();
+
         $data = $response->json('data');
         $returnedIds = collect($data)->pluck('id')->values();
 

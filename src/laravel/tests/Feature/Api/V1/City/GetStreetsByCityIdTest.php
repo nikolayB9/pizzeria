@@ -111,7 +111,7 @@ class GetStreetsByCityIdTest extends AbstractApiTestCase
 
     public function testFailsWhenCityIdIsNotAnInteger(): void
     {
-        $response = $this->getResponse('stringInsteadofInt');
+        $response = $this->getResponse('stringInsteadOfInt');
 
         $this->checkError($response, 422, 'Неверный тип параметра.');
     }
