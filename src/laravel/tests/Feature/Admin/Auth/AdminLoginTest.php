@@ -3,7 +3,6 @@
 namespace Admin\Auth;
 
 use App\Enums\User\UserRoleEnum;
-use App\Models\User;
 use Illuminate\Testing\TestResponse;
 use Tests\Feature\Admin\AbstractAdminTestCase;
 use Tests\Helpers\UserHelper;
@@ -15,18 +14,15 @@ class AdminLoginTest extends AbstractAdminTestCase
     protected const USER_PASSWORD = 'user_password';
     protected const USER_EMAIL = 'user@example.com';
 
-    protected User $admin;
-    protected User $user;
-
     protected function setUpTestContext(): void
     {
-        $this->admin = UserHelper::createUser(1, [
+        UserHelper::createUser(1, [
             'email' => self::ADMIN_EMAIL,
             'password' => self::ADMIN_PASSWORD,
             'role' => UserRoleEnum::Admin,
         ]);
 
-        $this->user = UserHelper::createUser(1, [
+        UserHelper::createUser(1, [
             'email' => self::USER_EMAIL,
             'password' => self::USER_PASSWORD,
         ]);
@@ -97,6 +93,16 @@ class AdminLoginTest extends AbstractAdminTestCase
     public function testLoginFailsWhenEmailIsMissing(): void
     {
         $response = $this->getResponse(['password' => self::ADMIN_PASSWORD]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors('email');
+        $response->assertRedirect(route('login.create'));
+        $this->assertGuest();
+    }
+
+    public function testNonAdminUserCannotLogInWithValidCredentials()
+    {
+        $response = $this->getResponse(['email' => self::USER_EMAIL, 'password' => self::USER_PASSWORD]);
 
         $response->assertStatus(302);
         $response->assertSessionHasErrors('email');
