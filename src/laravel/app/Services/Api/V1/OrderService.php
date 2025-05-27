@@ -15,9 +15,9 @@ use App\Exceptions\Order\OrderNotCreateException;
 use App\Exceptions\Order\OrderNotFoundException;
 use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Exceptions\User\OrdersPerPageNotSetInConfigException;
-use App\Repositories\Cart\CartRepositoryInterface;
-use App\Repositories\Order\OrderRepositoryInterface;
-use App\Repositories\Profile\ProfileRepositoryInterface;
+use App\Repositories\Api\V1\Cart\CartRepositoryInterface;
+use App\Repositories\Api\V1\Order\OrderRepositoryInterface;
+use App\Repositories\Api\V1\Profile\ProfileRepositoryInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
@@ -140,7 +140,7 @@ class OrderService
      * @throws MinDeliveryLeadTimeNotSetInConfigException Если минимальное время до доставки не задано в конфиге.
      * @throws InvalidDeliveryTimeException Если неверное время доставки.
      */
-    protected function parseAndValidateDeliveryTime(string $deliveryTime): DateTimeImmutable
+    public function parseAndValidateDeliveryTime(string $deliveryTime): DateTimeImmutable
     {
         // Парсим время доставки (часы и минуты)
         [$hour, $minute] = explode(':', $deliveryTime);
@@ -158,7 +158,7 @@ class OrderService
 
         if (is_null($minDeliveryLeadTime)) {
             throw new MinDeliveryLeadTimeNotSetInConfigException(
-                'Не задано время минимальное время от оформления заказа до доставки.'
+                'Не задано минимальное время от оформления заказа до доставки.'
             );
         }
 

@@ -11,7 +11,7 @@ use App\Exceptions\Address\UserAddressNotAddException;
 use App\Exceptions\Address\UserAddressNotDeletedException;
 use App\Exceptions\Address\UserAddressNotFoundException;
 use App\Exceptions\Address\UserAddressNotUpdatedException;
-use App\Repositories\Address\AddressRepositoryInterface;
+use App\Repositories\Api\V1\Address\AddressRepositoryInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 
 class AddressService

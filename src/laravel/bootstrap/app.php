@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'remember.old.session.id' => \App\Http\Middleware\RememberOldSessionId::class,
             'guest.only.api' => \App\Http\Middleware\GuestOnlyApi::class,
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
     })
     ->withExceptions(function (Illuminate\Foundation\Configuration\Exceptions $exceptions) {

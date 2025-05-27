@@ -5,8 +5,10 @@ namespace App\Services\Api\V1;
 use App\DTO\Api\V1\Cart\CartDetailedItemDto;
 use App\DTO\Api\V1\Checkout\CheckoutSummaryDto;
 use App\Exceptions\Cart\CartIsEmptyException;
-use App\Repositories\Cart\CartRepositoryInterface;
-use App\Repositories\Profile\ProfileRepositoryInterface;
+use App\Exceptions\Order\MinDeliveryLeadTimeNotSetInConfigException;
+use App\Exceptions\Order\MissingRequiredParameterInConfigException;
+use App\Repositories\Api\V1\Cart\CartRepositoryInterface;
+use App\Repositories\Api\V1\Profile\ProfileRepositoryInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 use Illuminate\Support\Facades\Log;
 
@@ -102,38 +104,59 @@ class CheckoutService
      * Возвращает доступные временные слоты доставки.
      *
      * @return array<array{from: string, slot: string}> Массив слотов.
+     * @throws MinDeliveryLeadTimeNotSetInConfigException Если в конфиге не указано минимальное время до доставки.
      */
-    protected function getDeliverySlots(): array
+    public function getDeliverySlots(): array
     {
         $now = now();
+
+        // Временные границы дня для формирования слотов
+        // минимально возможное время доставки сегодня
         $minTime = $now->copy()->setTime(10, 0);
-        $maxTime = $now->copy()->setTime(22, 0);
+
+        // после этого времени доставка уже не начнется сегодня
         $latestAvailableStart = $now->copy()->setTime(20, 30);
 
-        // Время, начиная с которого можно формировать слоты (текущее + 45 мин)
-        $candidateTime = $now->copy()->addMinutes(45);
+        $minDeliveryLeadTime = config('order.min_delivery_lead_time');
+        $reserveTime = config('order.slot_reserve_time');
+        $slotDuration = config('order.slot_duration');
+        $slotInterval = config('order.slot_interval');
 
-        // Если текущее время вне допустимого диапазона или слишком поздно — начинать с 10:00 следующего дня
-        if ($now->lt($minTime) || $now->gte($maxTime) || $candidateTime->gt($latestAvailableStart)) {
-            $start = $now->copy()->addDay()->setTime(10, 0);
-        } else {
-            // Округление candidateTime до ближайших 15 минут вверх
-            $minutes = $candidateTime->minute;
-            $roundedMinutes = ceil($minutes / 15) * 15;
+        $configValues = [
+            'min_delivery_lead_time' => $minDeliveryLeadTime,
+            'slot_reserve_time' => $reserveTime,
+            'slot_duration' => $slotDuration,
+            'slot_interval' => $slotInterval,
+        ];
 
-            // Установка округленного времени
-            $start = $candidateTime->copy()->minute(0)->addMinutes($roundedMinutes);
-            if ($roundedMinutes >= 60) {
-                $start->addHour()->minute(0);
+        foreach ($configValues as $key => $value) {
+            if (is_null($value)) {
+                throw new MissingRequiredParameterInConfigException(
+                    "Не задан параметр конфигурации: order.{$key}"
+                );
             }
         }
 
-        // Генерация 5 слотов по 30 минут
+        // Время, начиная с которого потенциально возможна доставка (оформление + буфер)
+        $candidateTime = now()->addMinutes($minDeliveryLeadTime + $reserveTime);
+
+        // Если доставка сегодня невозможна (слишком рано или слишком поздно) — стартуем с 10:00 следующего дня
+        if (
+            $candidateTime->lt($minTime) ||
+            $candidateTime->gt($latestAvailableStart)
+        ) {
+            $start = now()->copy()->addDay()->setTime(10, 0);
+        } else {
+            // Округление candidateTime вверх до ближайшего 15-минутного интервала
+            $start = $candidateTime->copy()->addMinutes((15 - $candidateTime->minute % 15) % 15);
+        }
+
+        // Формируем 5 слотов по 30 минут, старт каждого через 15 минут от предыдущего
         $slots = [];
 
         for ($i = 0; $i < 5; $i++) {
-            $from = $start->copy()->addMinutes($i * 15);
-            $to = $from->copy()->addMinutes(30);
+            $from = $start->copy()->addMinutes($i * $slotInterval);
+            $to = $from->copy()->addMinutes($slotDuration);
 
             $slots[] = [
                 'from' => $from->format('H:i'),
@@ -143,4 +166,6 @@ class CheckoutService
 
         return $slots;
     }
+
+
 }

@@ -27,7 +27,6 @@ class DatabaseSeeder extends Seeder
             AddressSeeder::class,
             OrderStatusSeeder::class,
             OrderSeeder::class,
-            OrderProductSeeder::class,
         ]);
     }
 }

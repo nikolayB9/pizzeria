@@ -6,8 +6,8 @@ use App\DTO\Api\V1\Product\ProductDto;
 use App\DTO\Api\V1\Product\ProductListItemDto;
 use App\Exceptions\Category\CategoryNotFoundException;
 use App\Exceptions\Product\ProductNotFoundException;
-use App\Repositories\Category\CategoryRepositoryInterface;
-use App\Repositories\Product\ProductRepositoryInterface;
+use App\Repositories\Api\V1\Category\CategoryRepositoryInterface;
+use App\Repositories\Api\V1\Product\ProductRepositoryInterface;
 
 class ProductService
 {
@@ -19,6 +19,7 @@ class ProductService
      * Возвращает опубликованные продукты категории по её slug.
      *
      * @param string $slug Slug категории.
+     *
      * @return array Массив DTO продуктов, либо пустой массив, если таких нет.
      * @throws CategoryNotFoundException Если категория не найдена.
      */
@@ -38,6 +39,7 @@ class ProductService
      * Возвращает DTO опубликованного продукта по его slug.
      *
      * @param string $slug Slug продукта.
+     *
      * @return ProductDto DTO продукта.
      * @throws ProductNotFoundException Если продукт не найден.
      */

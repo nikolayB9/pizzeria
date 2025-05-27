@@ -5,7 +5,7 @@ namespace App\Services\Api\V1;
 use App\DTO\Api\V1\City\CityDto;
 use App\DTO\Api\V1\City\StreetDto;
 use App\Exceptions\City\CityNotFoundException;
-use App\Repositories\City\CityRepositoryInterface;
+use App\Repositories\Api\V1\City\CityRepositoryInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 
 class CityService

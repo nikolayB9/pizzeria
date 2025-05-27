@@ -77,4 +77,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(Order::class)->latestOfMany();
     }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRoleEnum::Admin;
+    }
 }

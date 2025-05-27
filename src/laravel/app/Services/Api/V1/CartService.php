@@ -14,9 +14,9 @@ use App\Exceptions\Cart\InvalidCartProductDataException;
 use App\Exceptions\Cart\ProductVariantNotFoundInCartException;
 use App\Exceptions\Category\CategoryNotFoundException;
 use App\Exceptions\Product\ProductNotPublishedException;
-use App\Repositories\Cart\CartRepositoryInterface;
-use App\Repositories\Category\CategoryRepositoryInterface;
-use App\Repositories\Product\ProductRepositoryInterface;
+use App\Repositories\Api\V1\Cart\CartRepositoryInterface;
+use App\Repositories\Api\V1\Category\CategoryRepositoryInterface;
+use App\Repositories\Api\V1\Product\ProductRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 
 class CartService

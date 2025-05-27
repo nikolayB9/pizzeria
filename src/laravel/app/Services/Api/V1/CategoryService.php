@@ -3,7 +3,7 @@
 namespace App\Services\Api\V1;
 
 use App\DTO\Api\V1\Category\CategoryListItemDto;
-use App\Repositories\Category\CategoryRepositoryInterface;
+use App\Repositories\Api\V1\Category\CategoryRepositoryInterface;
 
 class CategoryService
 {

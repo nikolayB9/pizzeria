@@ -28,6 +28,7 @@ class AddressFactory extends Factory
             'floor' => $floor,
             'flat' => $flat,
             'intercom_code' => $intercomCode,
+            'is_default' => false,
         ];
     }
 }

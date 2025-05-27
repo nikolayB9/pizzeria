@@ -38,12 +38,12 @@
         <!-- Right navbar links -->
         <ul class="navbar-nav ml-auto">
             <li class="nav-item">
-                {{--<form action="{{ route('logout') }}" method="POST">
+                <form action="{{ route('logout') }}" method="POST">
                     @csrf
                     <button type="submit" class="nav-link bg-transparent border-0 hover" title="Выйти из аккаунта">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
-                </form>--}}
+                </form>
             </li>
         </ul>
     </nav>
@@ -52,7 +52,7 @@
     <!-- Main Sidebar Container -->
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
         <!-- Brand Logo -->
-        <a href="/" class="brand-link">
+        <a href="{{ route('main') }}" class="brand-link">
             <span class="brand-text font-weight-light">Pizzeria</span>
         </a>
 
@@ -70,35 +70,35 @@
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
                     data-accordion="false">
                     <li class="nav-item">
-                        {{--<a href="{{ route('orders.index') }}" class="nav-link">
+                        <a href="{{ route('order.index') }}" class="nav-link">
                             <i class="nav-icon fas fa-shopping-cart"></i>
                             <p>Заказы</p>
-                        </a>--}}
+                        </a>
                     </li>
-                    <li class="nav-item">
+                    <!--                    <li class="nav-item">
                         <a href="#" class="nav-link">
                             <i class="nav-icon fas fa-users"></i>
                             <p>Пользователи</p>
                         </a>
                     </li>
                     <li class="nav-item">
-                        {{--<a href="{{ route('products.index') }}" class="nav-link">
+                        <a href="" class="nav-link">
                             <i class="nav-icon fas fa-plug"></i>
                             <p>Продукты</p>
-                        </a>--}}
+                        </a>
                     </li>
                     <li class="nav-item">
-                        {{--<a href="{{ route('categories.index') }}" class="nav-link">
+                        <a href="" class="nav-link">
                             <i class="nav-icon fas fa-list"></i>
                             <p>Категории</p>
-                        </a>--}}
+                        </a>
                     </li>
                     <li class="nav-item">
-                        {{--<a href="{{ route('attributes.index') }}" class="nav-link">
+                        <a href="" class="nav-link">
                             <i class="nav-icon fas fa-tags"></i>
                             <p>Атрибуты</p>
-                        </a>--}}
-                    </li>
+                        </a>
+                    </li>-->
                 </ul>
             </nav>
             <!-- /.sidebar-menu -->
