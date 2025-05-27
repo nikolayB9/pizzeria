@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 // Роуты админ - панели
 Route::prefix('/admin')->group(function () {
-    Route::middleware('guest')->group(function () {
+    Route::middleware('guest.only.web')->group(function () {
         Route::get('/login', [AdminLoginController::class, 'create'])->name('login.create');
         Route::post('/login', [AdminLoginController::class, 'store'])->name('login.store');
     });

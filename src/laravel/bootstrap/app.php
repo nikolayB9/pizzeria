@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'remember.old.session.id' => \App\Http\Middleware\RememberOldSessionId::class,
             'guest.only.api' => \App\Http\Middleware\GuestOnlyApi::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'guest.only.web' => \App\Http\Middleware\GuestOnlyWeb::class,
         ]);
     })
     ->withExceptions(function (Illuminate\Foundation\Configuration\Exceptions $exceptions) {

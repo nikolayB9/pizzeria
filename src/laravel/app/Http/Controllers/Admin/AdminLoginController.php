@@ -22,7 +22,7 @@ class AdminLoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('main', absolute: false));
+        return redirect()->route('main');
     }
 
     public function destroy(Request $request): RedirectResponse

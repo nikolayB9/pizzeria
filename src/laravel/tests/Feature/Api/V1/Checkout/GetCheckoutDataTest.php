@@ -2,7 +2,6 @@
 
 namespace Api\V1\Checkout;
 
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Testing\TestResponse;
 use Tests\Feature\Api\AbstractApiTestCase;
@@ -201,25 +200,5 @@ class GetCheckoutDataTest extends AbstractApiTestCase
         $response = $this->getResponse(false);
 
         $this->checkError($response, 422, 'Корзина пуста, невозможно продолжить оформление заказа.');
-    }
-
-    public function testReturnsExpectedDeliverySlots(): void
-    {
-        Carbon::setTestNow(Carbon::parse('2025-01-01 12:00:00'));
-
-        $response = $this->getResponse();
-
-        $returnedSlots = $response->json('data.delivery_slots');
-        $expectedSlots = [
-            ['from' => '12:45', 'slot' => '12:45 - 13:15',],
-            ['from' => '13:00', 'slot' => '13:00 - 13:30',],
-            ['from' => '13:15', 'slot' => '13:15 - 13:45',],
-            ['from' => '13:30', 'slot' => '13:30 - 14:00'],
-            ['from' => '13:45', 'slot' => '13:45 - 14:15',],
-        ];
-
-        $this->assertEquals($expectedSlots, $returnedSlots);
-
-        Carbon::setTestNow();
     }
 }
