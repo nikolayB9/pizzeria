@@ -4,6 +4,7 @@ namespace Tests\Helpers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Database\Seeders\ParameterGroupSeeder;
 use Database\Seeders\ProductImageTypeSeeder;
 use Illuminate\Support\Collection;
@@ -20,10 +21,12 @@ class ProductHelper
      *
      * @return Product|Collection Продукт или коллекция созданных продуктов.
      */
-    public static function createProductsWithVariantsForCategories(Category|Collection $categories,
-                                                                   int                 $countProducts = 3,
-                                                                   int                 $countVariants = 3,
-                                                                   bool                $productsIsPublished = true): Product|Collection
+    public static function createProductsWithVariantsForCategories(
+        Category|Collection $categories,
+        int                 $countProducts = 3,
+        int                 $countVariants = 3,
+        bool                $productsIsPublished = true,
+    ): Product|Collection
     {
         (new ProductImageTypeSeeder())->run();
 
@@ -43,6 +46,31 @@ class ProductHelper
         }
 
         return $products->count() === 1 ? $products->first() : $products;
+    }
+
+    /**
+     * Создает один или несколько вариантов продуктов, предварительно создавая продукты и категории.
+     *
+     * @param int $countProducts Количество создаваемых продуктов для каждой категории.
+     * @param int $countProductVariants Количество создаваемых вариантов для каждого продукта.
+     * @param int $countCategories Количество категорий.
+     *
+     * @return ProductVariant|Collection Вариант продукта или коллекция вариантов продуктов.
+     */
+    public static function createProductVariantsAndCategories(int $countProducts = 1,
+                                                              int $countProductVariants = 1,
+                                                              int $countCategories = 1): ProductVariant|Collection
+    {
+        $categories = CategoryHelper::createCategoryOfType($countCategories);
+        $products = self::createProductsWithVariantsForCategories(
+            $categories,
+            $countProducts,
+            $countProductVariants);
+
+        $collectionProducts = collect()->wrap($products);
+        $variants = $collectionProducts->flatMap(fn($product) => $product->variants);
+
+        return $variants->count() === 1 ? $variants->first() : $variants;
     }
 
     /**

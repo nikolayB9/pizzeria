@@ -29,24 +29,22 @@ class OrderHelper
                                         int $countCategories = 1): Order|Collection
     {
         $users = UserHelper::createUser($countUsers);
-        $categories = CategoryHelper::createCategoryOfType($countCategories);
-        $products = ProductHelper::createProductsWithVariantsForCategories(
-            $categories,
-            $countProducts,
-            $countProductVariants);
-
         $collectionUsers = collect()->wrap($users);
-        $collectionProducts = collect()->wrap($products);
-        $collectionVariants = $collectionProducts->flatMap(fn($product) => $product->variants);
+
+        $variants = ProductHelper::createProductVariantsAndCategories(
+            $countProducts,
+            $countProductVariants,
+            $countCategories,
+        );
 
         $orders = collect();
 
         while ($count > 1) {
             $user = $collectionUsers->random();
-            $variants = $collectionVariants->random(rand(1, $countProductVariants));
+            $randVariants = $variants->random(rand(1, $countProductVariants));
 
             $orders->push(
-                self::createOrdersForUsers($user, $variants)
+                self::createOrdersForUsers($user, $randVariants)
             );
 
             $count--;
@@ -60,16 +58,18 @@ class OrderHelper
      * Создает заказы для указанных пользователей.
      *
      * @param User|Collection $users Пользователь или коллекция пользователей.
-     * @param Collection $productVariants Варианты продуктов для создания заказов.
+     * @param Collection|null $productVariants Варианты продуктов для создания заказов.
      * @param int $countOrders Количество создаваемых заказов.
      * @param bool $randomCountVariants True, если из переданных вариантов продуктов надо выбрать случайное количество.
+     * @param bool $createDefaultAddress True, если необходимо создать для пользователей дефолтный адрес.
      *
      * @return Order|Collection Заказ или коллекция созданных заказов.
      */
     public static function createOrdersForUsers(User|Collection $users,
-                                                Collection      $productVariants,
+                                                ?Collection     $productVariants = null,
                                                 int             $countOrders = 1,
-                                                bool            $randomCountVariants = false): Order|Collection
+                                                bool            $randomCountVariants = false,
+                                                bool            $createDefaultAddress = true): Order|Collection
 
     {
         (new OrderStatusSeeder())->run();
@@ -77,8 +77,19 @@ class OrderHelper
         $collection = collect()->wrap($users);
         $orders = collect();
 
+        if (is_null($productVariants)) {
+            $productVariants = ProductHelper::createProductVariantsAndCategories(
+                3,
+                3,
+                3,
+            );
+        }
+
         foreach ($collection as $user) {
-            $address = AddressHelper::createAddresses($user->id);
+
+            $address = $createDefaultAddress
+                ? AddressHelper::createAddresses($user->id)
+                : $user->defaultAddress;
 
             for ($i = 0; $i < $countOrders; $i++) {
                 if ($randomCountVariants) {
