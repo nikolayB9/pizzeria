@@ -11,11 +11,22 @@ use Illuminate\Support\Collection;
 
 class OrderHelper
 {
+    /**
+     * Создает один или несколько заказов, предварительно создавая все необходимые для заказа сущности.
+     *
+     * @param int $count Количество заказов.
+     * @param int $countUsers Количество пользователей (для каждого заказа выбирается случайный пользователь).
+     * @param int $countProducts Количество продуктов для каждой категории.
+     * @param int $countProductVariants Количество вариантов (для каждого заказа выбираются случайные варианты).
+     * @param int $countCategories Количество категорий.
+     *
+     * @return Order|Collection Один заказ или коллекция заказов.
+     */
     public static function createOrders(int $count = 1,
-                                            $countUsers = 1,
-                                            $countProducts = 1,
-                                            $countProductVariants = 1,
-                                            $countCategories = 1): Order|Collection
+                                        int $countUsers = 1,
+                                        int $countProducts = 1,
+                                        int $countProductVariants = 1,
+                                        int $countCategories = 1): Order|Collection
     {
         $users = UserHelper::createUser($countUsers);
         $categories = CategoryHelper::createCategoryOfType($countCategories);
