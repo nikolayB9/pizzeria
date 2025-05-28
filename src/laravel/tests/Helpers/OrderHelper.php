@@ -3,6 +3,7 @@
 namespace Tests\Helpers;
 
 use App\Models\Order;
+use App\Models\ProductVariant;
 use App\Models\User;
 use App\Services\Api\V1\CheckoutService;
 use Database\Seeders\OrderStatusSeeder;
@@ -41,10 +42,13 @@ class OrderHelper
 
         while ($count > 1) {
             $user = $collectionUsers->random();
-            $randVariants = $variants->random(rand(1, $countProductVariants));
+
+            if ($variants instanceof ProductVariant) {
+                $variants = collect()->wrap($variants);
+            }
 
             $orders->push(
-                self::createOrdersForUsers($user, $randVariants)
+                self::createOrdersForUsers($user, $variants)
             );
 
             $count--;

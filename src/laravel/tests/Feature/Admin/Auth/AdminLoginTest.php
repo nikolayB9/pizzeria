@@ -3,6 +3,7 @@
 namespace Admin\Auth;
 
 use App\Enums\User\UserRoleEnum;
+use App\Models\User;
 use Illuminate\Testing\TestResponse;
 use Tests\Feature\Admin\AbstractAdminTestCase;
 use Tests\Helpers\UserHelper;
@@ -14,9 +15,11 @@ class AdminLoginTest extends AbstractAdminTestCase
     protected const USER_PASSWORD = 'user_password';
     protected const USER_EMAIL = 'user@example.com';
 
+    protected User $admin;
+
     protected function setUpTestContext(): void
     {
-        UserHelper::createUser(1, [
+        $this->admin = UserHelper::createUser(1, [
             'email' => self::ADMIN_EMAIL,
             'password' => self::ADMIN_PASSWORD,
             'role' => UserRoleEnum::Admin,
