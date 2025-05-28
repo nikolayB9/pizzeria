@@ -11,6 +11,40 @@ use Illuminate\Support\Collection;
 
 class OrderHelper
 {
+    public static function createOrders(int $count = 1,
+                                            $countUsers = 1,
+                                            $countProducts = 1,
+                                            $countProductVariants = 1,
+                                            $countCategories = 1): Order|Collection
+    {
+        $users = UserHelper::createUser($countUsers);
+        $categories = CategoryHelper::createCategoryOfType($countCategories);
+        $products = ProductHelper::createProductsWithVariantsForCategories(
+            $categories,
+            $countProducts,
+            $countProductVariants);
+
+        $collectionUsers = collect()->wrap($users);
+        $collectionProducts = collect()->wrap($products);
+        $collectionVariants = $collectionProducts->flatMap(fn($product) => $product->variants);
+
+        $orders = collect();
+
+        while ($count > 1) {
+            $user = $collectionUsers->random();
+            $variants = $collectionVariants->random(rand(1, $countProductVariants));
+
+            $orders->push(
+                self::createOrdersForUsers($user, $variants)
+            );
+
+            $count--;
+        }
+
+        return $orders->count() === 1 ? $orders->first() : $orders;
+    }
+
+
     /**
      * Создает заказы для указанных пользователей.
      *
