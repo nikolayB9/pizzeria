@@ -39,8 +39,8 @@ class GetUserAddressesTest extends AbstractApiTestCase
         return 'get';
     }
 
-    protected function getResponse(bool $createUserOrders = true,
-                                   int  $countOrders = 1,
+    protected function getResponse(bool $createUserAddresses = true,
+                                   int  $countAddresses = 1,
                                    bool $existIsDefault = true,
                                    bool $isAuth = true): TestResponse
     {
@@ -48,13 +48,13 @@ class GetUserAddressesTest extends AbstractApiTestCase
             $this->actingAs($this->user);
         }
 
-        if ($createUserOrders && $countOrders) {
+        if ($createUserAddresses && $countAddresses) {
             if ($existIsDefault) {
-                $this->userAddresses = AddressHelper::createAddresses($this->user->id, $countOrders);
+                $this->userAddresses = AddressHelper::createAddresses($this->user->id, $countAddresses);
             } else {
                 $this->userAddresses = AddressHelper::createAddresses(
                     $this->user->id,
-                    $countOrders,
+                    $countAddresses,
                     1,
                     1,
                     false,
