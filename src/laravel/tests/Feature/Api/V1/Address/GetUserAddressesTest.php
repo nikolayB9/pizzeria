@@ -23,7 +23,7 @@ class GetUserAddressesTest extends AbstractApiTestCase
         $users = UserHelper::createUser(self::COUNT_USERS);
 
         foreach ($users as $user) {
-            AddressHelper::createAddresses($user->id);
+            AddressHelper::createAddresses($user->id, self::COUNT_ADDRESSES_FOR_EACH_USER);
         }
 
         $this->user = UserHelper::createUser();
