@@ -56,6 +56,11 @@ services:
       - dbdata:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
+  redis:
+    image: redis:alpine
+    ports:
+      - "${REDIS_PORT_HOST}:${REDIS_PORT}"
+
 volumes:
   dbdata:
   node_modules:
