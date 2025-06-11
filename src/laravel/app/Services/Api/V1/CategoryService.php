@@ -4,6 +4,7 @@ namespace App\Services\Api\V1;
 
 use App\DTO\Api\V1\Category\CategoryListItemDto;
 use App\Repositories\Api\V1\Category\CategoryRepositoryInterface;
+use Illuminate\Support\Facades\Cache;
 
 class CategoryService
 {
@@ -18,8 +19,9 @@ class CategoryService
      */
     public function getAllCategories(): array
     {
-        $categories = $this->categoryRepository->getAll();
-
-        return CategoryListItemDto::collection($categories);
+        return Cache::remember('categories_list', 3600, function () {
+            $categories = $this->categoryRepository->getAll();
+            return CategoryListItemDto::collection($categories);
+        });
     }
 }
