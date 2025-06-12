@@ -60,7 +60,7 @@ class EloquentAdminOrderRepository implements AdminOrderRepositoryInterface
                 'method' => __METHOD__,
                 'message' => $e->getMessage(),
             ]);
-            throw new OrderStatusNotUpdatedException('Не удалось изменить статус заказа.');
+            throw new OrderStatusNotUpdatedException();
         }
     }
 }

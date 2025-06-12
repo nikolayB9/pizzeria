@@ -4,9 +4,12 @@ namespace App\Repositories\Api\V1\Order;
 
 use App\DTO\Api\V1\Order\CreateOrderDto;
 use App\DTO\Api\V1\Order\OrderDto;
+use App\DTO\Api\V1\Order\OrderPaymentDataDto;
 use App\DTO\Api\V1\Order\PaginatedOrderListDto;
+use App\Enums\Order\OrderStatusEnum;
 use App\Exceptions\Order\OrderNotCreateException;
 use App\Exceptions\Order\OrderNotFoundException;
+use App\Exceptions\Order\OrderStatusNotUpdatedException;
 
 interface OrderRepositoryInterface
 {
@@ -38,8 +41,21 @@ interface OrderRepositoryInterface
      * @param int $userId
      * @param CreateOrderDto $data
      *
-     * @return void
+     * @return OrderPaymentDataDto
      * @throws OrderNotCreateException
      */
-    public function createOrder(int $userId, CreateOrderDto $data): void;
+    public function createOrder(int $userId, CreateOrderDto $data): OrderPaymentDataDto;
+
+    /**
+     * Изменяет статус заказа пользователя.
+     *
+     * @param int $userId
+     * @param int $orderId
+     * @param OrderStatusEnum $newStatus
+     *
+     * @return void
+     * @throws OrderNotFoundException
+     * @throws OrderStatusNotUpdatedException
+     */
+    public function changeOrderStatus(int $userId, int $orderId, OrderStatusEnum $newStatus): void;
 }

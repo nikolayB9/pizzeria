@@ -12,6 +12,7 @@ class ApiResponse
      * @param mixed $data Основные данные ответа (массив, объект, строка и т.п.).
      * @param int $status HTTP-статус ответа (по умолчанию 200).
      * @param array $meta Дополнительные метаданные (например, пагинация).
+     *
      * @return JsonResponse
      */
     public static function success(mixed $data = [], int $status = 200, array $meta = []): JsonResponse
@@ -29,14 +30,17 @@ class ApiResponse
      * @param string $message Сообщение об ошибке.
      * @param int $status HTTP-статус ошибки.
      * @param array $errors Дополнительные детали ошибки (например, ошибки валидации).
+     * @param array $meta Дополнительные метаданные.
+     *
      * @return JsonResponse
      */
-    public static function fail(string $message, int $status, array $errors = []): JsonResponse
+    public static function fail(string $message, int $status, array $errors = [], array $meta = []): JsonResponse
     {
         return response()->json([
             'success' => false,
             'message' => $message,
             'errors' => $errors,
+            'meta' => $meta,
         ], $status);
     }
 }

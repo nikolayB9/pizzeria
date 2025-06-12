@@ -13,11 +13,15 @@ use App\Exceptions\Order\InvalidDeliveryTimeException;
 use App\Exceptions\Order\MinDeliveryLeadTimeNotSetInConfigException;
 use App\Exceptions\Order\OrderNotCreateException;
 use App\Exceptions\Order\OrderNotFoundException;
+use App\Exceptions\Order\OrderNotReadyForPaymentException;
+use App\Exceptions\Order\OrderStatusNotUpdatedException;
+use App\Exceptions\Payment\PaymentNotCreateException;
 use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Exceptions\User\OrdersPerPageNotSetInConfigException;
 use App\Repositories\Api\V1\Cart\CartRepositoryInterface;
 use App\Repositories\Api\V1\Order\OrderRepositoryInterface;
 use App\Repositories\Api\V1\Profile\ProfileRepositoryInterface;
+use App\Services\Api\V1\Payment\PaymentInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
@@ -30,7 +34,8 @@ class OrderService
                                 private readonly ProfileRepositoryInterface $userRepository,
                                 private readonly CartRepositoryInterface    $cartRepository,
                                 private readonly CartService                $cartService,
-                                private readonly CheckoutService            $checkoutService)
+                                private readonly CheckoutService            $checkoutService,
+                                private readonly PaymentInterface           $payment)
     {
     }
 
@@ -71,17 +76,19 @@ class OrderService
     }
 
     /**
-     * Создает заказ для текущего пользователя.
+     * Создает заказ для текущего пользователя и возвращает ссылку на оплату.
      *
      * @param CreateOrderInputDto $requestDto Валидированные данные от пользователя для оформления заказа.
      *
-     * @return void
-     * @throws MissingDefaultUserAddressException Если дефолтный адрес доставки не найден.
-     * @throws InvalidDeliveryTimeException Если до выбранного времени доставки осталось меньше 40 минут.
+     * @return string
      * @throws CartIsEmptyException Если корзина пуста.
+     * @throws InvalidDeliveryTimeException Если до выбранного времени доставки осталось меньше 40 минут.
+     * @throws MissingDefaultUserAddressException Если дефолтный адрес доставки не найден.
      * @throws OrderNotCreateException Если произошла ошибка при создании заказа.
+     * @throws OrderNotReadyForPaymentException Если произошла ошибка при изменении статуса заказа.
+     * @throws PaymentNotCreateException Если произошла ошибка при создании платежа.
      */
-    public function storeOrder(CreateOrderInputDto $requestDto): void
+    public function storeOrder(CreateOrderInputDto $requestDto): string
     {
         $userId = $this->userIdOrFail();
 
@@ -104,7 +111,27 @@ class OrderService
             cart: $cart,
         );
 
-        $this->orderRepository->createOrder($userId, $orderData);
+        $orderData = $this->orderRepository->createOrder($userId, $orderData);
+
+        try {
+            $this->orderRepository->changeOrderStatus(
+                $userId,
+                $orderData->id,
+                OrderStatusEnum::WAITING_PAYMENT,
+            );
+        } catch (OrderNotFoundException|OrderStatusNotUpdatedException $e) {
+            Log::error('Ошибка при изменении статуса созданного заказа', [
+                'order_id' => $orderData->id,
+                'user_id' => $userId,
+                'new_status' => OrderStatusEnum::WAITING_PAYMENT,
+                'method' => __METHOD__,
+                'error_message' => $e->getMessage(),
+            ]);
+
+            throw new OrderNotReadyForPaymentException();
+        }
+
+        return $this->payment->createPaymentForOrder($orderData);
     }
 
     /**

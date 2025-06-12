@@ -61,6 +61,11 @@ const routes = [
         component: () => import('../components/Address/Index.vue'),
         name: 'address.index'
     },
+    {
+        path: '/payment/success',
+        component: () => import('../components/Payment/Success.vue'),
+        name: 'payment.success'
+    },
 ]
 
 const router = createRouter({

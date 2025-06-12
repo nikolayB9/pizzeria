@@ -6,6 +6,8 @@ use App\Exceptions\Cart\CartIsEmptyException;
 use App\Exceptions\Order\InvalidDeliveryTimeException;
 use App\Exceptions\Order\OrderNotCreateException;
 use App\Exceptions\Order\OrderNotFoundException;
+use App\Exceptions\Order\OrderNotReadyForPaymentException;
+use App\Exceptions\Payment\PaymentNotCreateException;
 use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Http\Requests\Api\V1\Order\IndexOrderRequest;
 use App\Http\Requests\Api\V1\Order\StoreOrderRequest;
@@ -57,33 +59,42 @@ class OrderController
     }
 
     /**
-     * Создает заказ.
+     * Создает заказ и возвращает ссылку на оплату.
      *
      * @param StoreOrderRequest $request Валидированные данные запроса для создания заказа.
      *
-     * @return JsonResponse JSON-ответ: success = true в случае успеха.
+     * @return JsonResponse JSON-ответ со ссылкой на оплату.
      */
     public function store(StoreOrderRequest $request): JsonResponse
     {
         try {
-            $this->orderService->storeOrder($request->toDto());
+            $paymentUrl = $this->orderService->storeOrder($request->toDto());
         } catch (MissingDefaultUserAddressException $e) {
             return ApiResponse::fail(
-                $e->getMessage(),
-                404,
+                message: $e->getMessage(),
+                status: 404,
+                meta: ['order_created' => false],
             );
         } catch (InvalidDeliveryTimeException|CartIsEmptyException $e) {
             return ApiResponse::fail(
-                $e->getMessage(),
-                422,
+                message: $e->getMessage(),
+                status: 422,
+                meta: ['order_created' => false],
             );
         } catch (OrderNotCreateException $e) {
             return ApiResponse::fail(
-                $e->getMessage(),
-                500,
+                message: $e->getMessage(),
+                status: 500,
+                meta: ['order_created' => false],
+            );
+        } catch (OrderNotReadyForPaymentException|PaymentNotCreateException $e) {
+            return ApiResponse::fail(
+                message: $e->getMessage(),
+                status: 500,
+                meta: ['order_created' => true],
             );
         }
 
-        return ApiResponse::success(status: 201);
+        return ApiResponse::success(['payment_url' => $paymentUrl]);
     }
 }

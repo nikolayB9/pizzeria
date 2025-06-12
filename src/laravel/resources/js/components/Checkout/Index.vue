@@ -50,7 +50,7 @@ export default {
             }
             axios.post('/api/v1/orders', this.orderData)
                 .then(res => {
-                    this.$router.push({name: 'order.success'});
+                    window.location.href = res.data.data.payment_url;
                 })
                 .catch(error => {
                     alert(error.response?.data?.message ?? 'Ошибка при оформлении заказа')

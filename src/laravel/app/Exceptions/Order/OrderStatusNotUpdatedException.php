@@ -2,7 +2,7 @@
 
 namespace App\Exceptions\Order;
 
-class OrderStatusNotUpdatedException extends \Exception
+class OrderStatusNotUpdatedException extends \RuntimeException
 {
     //
 }

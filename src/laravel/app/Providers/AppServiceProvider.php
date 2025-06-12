@@ -18,6 +18,8 @@ use App\Repositories\Api\V1\Product\EloquentProductRepository;
 use App\Repositories\Api\V1\Product\ProductRepositoryInterface;
 use App\Repositories\Api\V1\Profile\EloquentProfileRepository;
 use App\Repositories\Api\V1\Profile\ProfileRepositoryInterface;
+use App\Services\Api\V1\Payment\PaymentInterface;
+use App\Services\Api\V1\Payment\YooKassaService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -36,6 +38,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(OrderRepositoryInterface::class, EloquentOrderRepository::class);
 
         $this->app->bind(AdminOrderRepositoryInterface::class, EloquentAdminOrderRepository::class);
+
+        $this->app->bind(PaymentInterface::class, YooKassaService::class);
     }
 
     /**
