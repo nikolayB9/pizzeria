@@ -6,16 +6,18 @@ use App\Exceptions\YooKassa\InvalidYooKassaStatusException;
 
 enum PaymentStatusEnum: int
 {
-    case PENDING = 1;
-    case WAITING_CAPTURE = 2;
-    case SUCCEEDED = 3;
-    case FAILED = 4;
-    case CANCELLED = 5;
-    case REFUNDED = 6;
+    case CREATED = 1;
+    case PENDING = 2;
+    case WAITING_CAPTURE = 3;
+    case SUCCEEDED = 4;
+    case FAILED = 5;
+    case CANCELLED = 6;
+    case REFUNDED = 7;
 
     public function slug(): string
     {
         return match ($this) {
+            self::CREATED => 'created',
             self::PENDING => 'pending',
             self::WAITING_CAPTURE => 'waiting_capture',
             self::SUCCEEDED => 'succeeded',
@@ -28,6 +30,7 @@ enum PaymentStatusEnum: int
     public function label(): string
     {
         return match ($this) {
+            self::CREATED => 'Создан',
             self::PENDING => 'Платёж ожидает завершения',
             self::WAITING_CAPTURE => 'Ожидает подтверждения',
             self::SUCCEEDED => 'Успешно оплачен',

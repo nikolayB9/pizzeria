@@ -5,8 +5,8 @@ namespace App\Repositories\Api\V1\Profile;
 use App\DTO\Api\V1\Checkout\CheckoutUserDataDto;
 use App\DTO\Api\V1\Profile\ProfileDto;
 use App\DTO\Api\V1\Profile\ProfilePreviewDto;
-use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Exceptions\User\MissingUserException;
+use App\Models\Address;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
@@ -85,29 +85,16 @@ class EloquentProfileRepository implements ProfileRepositoryInterface
 
 
     /**
-     * Возвращает ID дефолтного адреса доставки для пользователя или выбрасывает исключение, если адрес не найден.
+     * Возвращает ID дефолтного адреса доставки для пользователя или null, если адрес не найден.
      *
      * @param int $userId ID пользователя.
      *
-     * @return int ID адреса пользователя, используемого по умолчанию для доставки заказов.
-     * @throws MissingUserException Если пользователь не найден (Runtime: ожидается существующий $userId).
-     * @throws MissingDefaultUserAddressException Если дефолтный адрес не найден.
+     * @return int|null ID адреса пользователя, используемого по умолчанию для доставки заказов.
      */
-    public function getDefaultAddressIdOrThrow(int $userId): int
+    public function getDefaultAddressId(int $userId): ?int
     {
-        try {
-            $user = User::where('id', $userId)
-                ->select('id')
-                ->with('defaultAddress:id,user_id')
-                ->firstOrFail();
-        } catch (ModelNotFoundException) {
-            throw new MissingUserException("Пользователь с ID [$userId] не найден.");
-        }
-
-        if (!$user->defaultAddress) {
-            throw new MissingDefaultUserAddressException('Не найден дефолтный адрес пользователя.');
-        }
-
-        return $user->defaultAddress->id;
+        return Address::where('user_id', $userId)
+            ->where('is_default', true)
+            ->value('id');
     }
 }

@@ -3,12 +3,12 @@
 namespace App\Repositories\Api\V1\Order;
 
 use App\DTO\Api\V1\Order\CreateOrderDto;
+use App\DTO\Api\V1\Order\MinifiedOrderDataDto;
 use App\DTO\Api\V1\Order\OrderDto;
-use App\DTO\Api\V1\Order\OrderPaymentDataDto;
 use App\DTO\Api\V1\Order\OrderWithPaymentDto;
 use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Enums\Order\OrderStatusEnum;
-use App\Exceptions\Order\OrderNotCreateException;
+use App\Exceptions\Domain\Order\OrderCreationFailedException;
 use App\Exceptions\Order\OrderNotFoundException;
 use App\Exceptions\Order\OrderStatusNotUpdatedException;
 
@@ -39,13 +39,12 @@ interface OrderRepositoryInterface
     /**
      * Создает заказ и очищает корзину.
      *
-     * @param int $userId
      * @param CreateOrderDto $data
      *
-     * @return OrderPaymentDataDto
-     * @throws OrderNotCreateException
+     * @return MinifiedOrderDataDto
+     * @throws OrderCreationFailedException
      */
-    public function createOrder(int $userId, CreateOrderDto $data): OrderPaymentDataDto;
+    public function createOrder(CreateOrderDto $data): MinifiedOrderDataDto;
 
     /**
      * Изменяет статус заказа пользователя.
@@ -57,7 +56,7 @@ interface OrderRepositoryInterface
      * @throws OrderNotFoundException
      * @throws OrderStatusNotUpdatedException
      */
-    public function changeOrderStatus(int $orderId, OrderStatusEnum $newStatus): void;
+    public function updateStatus(int $orderId, OrderStatusEnum $newStatus): void;
 
     /**
      * Проверяет существование заказа с заданными параметрами.

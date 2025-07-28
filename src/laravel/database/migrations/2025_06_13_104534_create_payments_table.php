@@ -13,14 +13,13 @@ return new class extends Migration {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders');
-            $table->foreignId('user_id')->constrained('users');
-            $table->string('gateway_payment_id');
+            $table->string('gateway_payment_id')->nullable();
             $table->foreignId('status')->constrained('payment_statuses', 'id');
-            $table->foreignId('gateway')->constrained('payment_gateways', 'id');
+            $table->foreignId('gateway')->nullable()->constrained('payment_gateways', 'id');
             $table->decimal('amount', 10, 2);
             $table->string('idempotence_key');
-            $table->json('metadata');
-            $table->json('raw_response');
+            $table->json('metadata')->nullable();
+            $table->json('raw_response')->nullable();
             $table->timestamp('confirmed_at')->nullable();
             $table->timestamps();
 

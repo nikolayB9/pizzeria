@@ -2,41 +2,46 @@
 
 namespace App\Services\Api\V1;
 
-use App\DTO\Api\V1\Cart\CartRawItemDto;
 use App\DTO\Api\V1\Order\CreateOrderDto;
 use App\DTO\Api\V1\Order\CreateOrderInputDto;
+use App\DTO\Api\V1\Order\MinifiedOrderDataDto;
 use App\DTO\Api\V1\Order\OrderDto;
 use App\DTO\Api\V1\Order\PaginatedOrderListDto;
+use App\DTO\Api\V1\Payment\CreatePaymentDto;
 use App\Enums\Order\OrderStatusEnum;
-use App\Exceptions\Cart\CartIsEmptyException;
+use App\Enums\Payment\PaymentStatusEnum;
+use App\Exceptions\Domain\Order\OrderCreationFailedException;
 use App\Exceptions\Order\InvalidDeliveryTimeException;
 use App\Exceptions\Order\MinDeliveryLeadTimeNotSetInConfigException;
-use App\Exceptions\Order\OrderNotCreateException;
 use App\Exceptions\Order\OrderNotFoundException;
 use App\Exceptions\Order\OrderNotReadyForPaymentException;
-use App\Exceptions\Order\OrderStatusNotUpdatedException;
 use App\Exceptions\Payment\PaymentNotCreateException;
-use App\Exceptions\User\MissingDefaultUserAddressException;
+use App\Exceptions\Payment\PaymentNotFoundException;
+use App\Exceptions\Payment\PaymentNotUpdatedException;
 use App\Exceptions\User\OrdersPerPageNotSetInConfigException;
 use App\Repositories\Api\V1\Cart\CartRepositoryInterface;
 use App\Repositories\Api\V1\Order\OrderRepositoryInterface;
+use App\Repositories\Api\V1\Payment\PaymentRepositoryInterface;
 use App\Repositories\Api\V1\Profile\ProfileRepositoryInterface;
 use App\Services\Api\V1\Gateway\PaymentGatewayInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class OrderService
 {
     use AuthenticatedUserTrait;
 
-    public function __construct(private readonly OrderRepositoryInterface   $orderRepository,
-                                private readonly ProfileRepositoryInterface $userRepository,
-                                private readonly CartRepositoryInterface    $cartRepository,
-                                private readonly CartService                $cartService,
-                                private readonly CheckoutService            $checkoutService,
-                                private readonly PaymentGatewayInterface    $paymentGateway)
-    {
+    public function __construct(
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly ProfileRepositoryInterface $userRepository,
+        private readonly CartRepositoryInterface $cartRepository,
+        private readonly CartService $cartService,
+        private readonly CheckoutService $checkoutService,
+        private readonly PaymentRepositoryInterface $paymentRepository,
+        private readonly PaymentGatewayInterface $paymentGateway
+    ) {
     }
 
     /**
@@ -54,7 +59,8 @@ class OrderService
 
         if (is_null($ordersPerPage)) {
             throw new OrdersPerPageNotSetInConfigException(
-                'Не задан параметр конфига [orders_per_page] в файле [user].');
+                'Не задан параметр конфига [orders_per_page] в файле [user].'
+            );
         }
 
         return $this->orderRepository->getPaginatedOrderListByUserId($userId, $page, $ordersPerPage);
@@ -76,61 +82,34 @@ class OrderService
     }
 
     /**
-     * Создает заказ для текущего пользователя и возвращает ссылку на оплату.
-     *
-     * @param CreateOrderInputDto $requestDto Валидированные данные от пользователя для оформления заказа.
-     *
-     * @return string
-     * @throws CartIsEmptyException Если корзина пуста.
-     * @throws InvalidDeliveryTimeException Если до выбранного времени доставки осталось меньше 40 минут.
-     * @throws MissingDefaultUserAddressException Если дефолтный адрес доставки не найден.
-     * @throws OrderNotCreateException Если произошла ошибка при создании заказа.
-     * @throws OrderNotReadyForPaymentException Если произошла ошибка при изменении статуса заказа.
-     * @throws PaymentNotCreateException Если произошла ошибка при создании платежа.
+     * @throws PaymentNotUpdatedException
+     * @throws PaymentNotFoundException
+     * @throws PaymentNotCreateException
+     * @throws OrderCreationFailedException
      */
-    public function storeOrder(CreateOrderInputDto $requestDto): string
+    public function createOrderWithPayment(CreateOrderInputDto $dto): string
     {
-        $userId = $this->userIdOrFail();
+        // Создание заказа со статусом CREATED
+        $orderData = $this->buildOrderData($dto);
+        $order = $this->orderRepository->createOrder($orderData);
 
-        $addressId = $this->userRepository->getDefaultAddressIdOrThrow($userId);
-        $deliveryAt = $this->parseAndValidateDeliveryTime($requestDto->delivery_time);
+        // Создание платежа со статусом CREATED
+        // Изменение статуса заказа на WAITING_PAYMENT (в транзакции)
+        $paymentData = $this->buildPaymentData($order);
+        $payment = $this->paymentRepository->createPayment($paymentData);
 
-        $cart = $this->getRawCartItemsOrThrowIfEmpty($userId);
-        $cartTotal = $this->cartService->getTotalPrice($cart);
-        $deliveryCost = $this->checkoutService->calculateDeliveryCostByCartTotal($cartTotal);
-        $total = $this->checkoutService->calculateOrderTotal($cartTotal, $deliveryCost);
+        // Создание платежа в Юкассе
+        $gatewayData = $this->paymentGateway->initiatePayment($payment);
 
-        $orderData = new CreateOrderDto(
-            user_id: $userId,
-            address_id: $addressId,
-            delivery_cost: $deliveryCost,
-            total: $total,
-            status: OrderStatusEnum::CREATED,
-            delivery_at: $deliveryAt,
-            comment: $requestDto->comment,
-            cart: $cart,
+        // Меняем статус платежа на WAITING_CAPTURE
+        $this->paymentRepository->applyGatewayResponse(
+            $payment->payment_id,
+            $gatewayData,
+            PaymentStatusEnum::WAITING_CAPTURE
         );
 
-        $order = $this->orderRepository->createOrder($userId, $orderData);
-
-        try {
-            $this->orderRepository->changeOrderStatus(
-                $order->id,
-                OrderStatusEnum::WAITING_PAYMENT,
-            );
-        } catch (OrderNotFoundException|OrderStatusNotUpdatedException $e) {
-            Log::error('Ошибка при изменении статуса созданного заказа', [
-                'order_id' => $order->id,
-                'user_id' => $userId,
-                'new_status' => OrderStatusEnum::WAITING_PAYMENT,
-                'method' => __METHOD__,
-                'error_message' => $e->getMessage(),
-            ]);
-
-            throw new OrderNotReadyForPaymentException();
-        }
-
-        return $this->paymentGateway->createPaymentForOrder($order);
+        // Возвращаем ссылку на оплату
+        return $gatewayData->confirmation_url;
     }
 
     /**
@@ -174,26 +153,59 @@ class OrderService
     }
 
     /**
-     * Возвращает минимальный набор данных о позициях корзины или выбрасывает исключение, если корзина пуста.
-     *
-     * @param int $userId ID пользователя, оформляющего заказ.
-     *
-     * @return CartRawItemDto[] Массив DTO с данными товаров в корзине.
-     * @throws CartIsEmptyException Если корзина пуста.
+     * @throws OrderCreationFailedException
      */
-    protected function getRawCartItemsOrThrowIfEmpty(int $userId): array
+    private function buildOrderData(CreateOrderInputDto $dto): CreateOrderDto
     {
-        $cartItems = $this->cartRepository->getRawCartItemsByIdentifier('user_id', $userId);
+        $userId = $this->userIdOrFail();
+        $addressId = $this->userRepository->getDefaultAddressId($userId);
 
-        if ($cartItems === []) {
+        if (is_null($addressId)) {
+            throw new OrderCreationFailedException('Для оформления заказа добавьте адрес доставки.', 422);
+        }
+
+        try {
+            $deliveryAt = $this->parseAndValidateDeliveryTime($dto->delivery_time);
+        } catch (InvalidDeliveryTimeException $e) {
+            throw new OrderCreationFailedException($e->getMessage(), 422);
+        }
+
+        $cart = $this->cartRepository->getRawCartItemsByIdentifier('user_id', $userId);
+
+        if (empty($cart)) {
             Log::warning('Не найдены продукты в корзине при попытке создания заказа', [
                 'user_id' => $userId,
                 'method' => __METHOD__,
             ]);
 
-            throw new CartIsEmptyException('Корзина пуста, невозможно создать заказ.');
+            throw new OrderCreationFailedException('Корзина пуста, невозможно создать заказ.', 422);
         }
 
-        return $cartItems;
+        $cartTotal = $this->cartService->getTotalPrice($cart);
+        $deliveryCost = $this->checkoutService->calculateDeliveryCostByCartTotal($cartTotal);
+        $total = $this->checkoutService->calculateOrderTotal($cartTotal, $deliveryCost);
+
+        return new CreateOrderDto(
+            user_id: $userId,
+            address_id: $addressId,
+            delivery_cost: $deliveryCost,
+            total: $total,
+            status: OrderStatusEnum::CREATED,
+            delivery_at: $deliveryAt,
+            comment: $dto->comment,
+            cart: $cart,
+        );
+    }
+
+    private function buildPaymentData(MinifiedOrderDataDto $dto): CreatePaymentDto
+    {
+        $idempotenceKey = (string)Str::uuid();
+
+        return new CreatePaymentDto(
+            order_id: $dto->order_id,
+            status: PaymentStatusEnum::CREATED,
+            amount: $dto->amount,
+            idempotence_key: $idempotenceKey
+        );
     }
 }

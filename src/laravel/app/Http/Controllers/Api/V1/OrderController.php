@@ -68,7 +68,7 @@ class OrderController
     public function store(StoreOrderRequest $request): JsonResponse
     {
         try {
-            $paymentUrl = $this->orderService->storeOrder($request->toDto());
+            $paymentUrl = $this->orderService->createOrderWithPayment($request->toDto());
         } catch (MissingDefaultUserAddressException $e) {
             return ApiResponse::fail(
                 message: $e->getMessage(),

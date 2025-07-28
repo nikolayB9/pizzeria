@@ -3,11 +3,26 @@
 namespace App\Repositories\Api\V1\Payment;
 
 use App\DTO\Api\V1\Payment\CreatePaymentDto;
+use App\DTO\Api\V1\Payment\InitiatePaymentDto;
+use App\DTO\Api\V1\Payment\MinifiedPaymentDataDto;
 use App\Enums\Payment\PaymentStatusEnum;
+use App\Exceptions\Payment\PaymentNotFoundException;
+use App\Exceptions\Payment\PaymentNotUpdatedException;
 
 interface PaymentRepositoryInterface
 {
-    public function createPayment(CreatePaymentDto $dto): void;
+    /**
+     * @param CreatePaymentDto $dto
+     *
+     * @return MinifiedPaymentDataDto
+     */
+    public function createPayment(CreatePaymentDto $dto): MinifiedPaymentDataDto;
+
+    /**
+     * @throws PaymentNotFoundException
+     * @throws PaymentNotUpdatedException
+     */
+    public function applyGatewayResponse(int $paymentId, InitiatePaymentDto $dto, PaymentStatusEnum $status): void;
 
     /**
      * Проверяет существование платежа с заданными параметрами.

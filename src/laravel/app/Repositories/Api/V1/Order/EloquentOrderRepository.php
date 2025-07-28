@@ -4,12 +4,12 @@ namespace App\Repositories\Api\V1\Order;
 
 use App\DTO\Api\V1\Cart\CartRawItemDto;
 use App\DTO\Api\V1\Order\CreateOrderDto;
+use App\DTO\Api\V1\Order\MinifiedOrderDataDto;
 use App\DTO\Api\V1\Order\OrderDto;
-use App\DTO\Api\V1\Order\OrderPaymentDataDto;
 use App\DTO\Api\V1\Order\OrderWithPaymentDto;
 use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Enums\Order\OrderStatusEnum;
-use App\Exceptions\Order\OrderNotCreateException;
+use App\Exceptions\Domain\Order\OrderCreationFailedException;
 use App\Exceptions\Order\OrderNotFoundException;
 use App\Exceptions\Order\OrderStatusNotUpdatedException;
 use App\Models\Order;
@@ -89,38 +89,41 @@ class EloquentOrderRepository implements OrderRepositoryInterface
     /**
      * Создает заказ и очищает корзину.
      *
-     * @param int $userId ID пользователя.
      * @param CreateOrderDto $data Данные, необходимые для создания заказа.
      *
-     * @return OrderPaymentDataDto DTO с данными для создания оплаты заказа.
-     * @throws OrderNotCreateException Если произошла ошибка при создании заказа.
+     * @return MinifiedOrderDataDto DTO с данными для создания оплаты заказа.
+     * @throws OrderCreationFailedException Если произошла ошибка при создании заказа.
      */
-    public function createOrder(int $userId, CreateOrderDto $data): OrderPaymentDataDto
+    public function createOrder(CreateOrderDto $data): MinifiedOrderDataDto
     {
         try {
-            return DB::transaction(function () use ($userId, $data) {
+            return DB::transaction(function () use ($data) {
                 $order = Order::create($data->toInsertArray());
 
                 $products = CartRawItemDto::toOrderProductInsertData($data->cart);
                 $order->products()->attach($products);
 
-                $this->cartRepository->clearCartByIdentifier('user_id', $userId);
+                $this->cartRepository->clearCartByIdentifier('user_id', $order->user_id);
 
-                return new OrderPaymentDataDto(
-                    id: $order->id,
-                    user_id: $userId,
+                return new MinifiedOrderDataDto(
+                    order_id: $order->id,
+                    user_id: $order->user_id,
                     amount: $order->total,
+                    status: $order->status,
                 );
             });
         } catch (\Throwable $e) {
             Log::error('Ошибка при создании заказа', [
-                'user_id' => $userId,
+                'user_id' => $data->user_id,
                 'order_data' => Arr::except($data->toInsertArray(), ['comment']),
                 'method' => __METHOD__,
                 'exception' => $e->getMessage(),
             ]);
 
-            throw new OrderNotCreateException('Не удалось создать заказ. Пожалуйста, попробуйте снова.');
+            throw new OrderCreationFailedException(
+                'Не удалось создать заказ. Пожалуйста, попробуйте снова.',
+                500
+            );
         }
     }
 
@@ -134,7 +137,7 @@ class EloquentOrderRepository implements OrderRepositoryInterface
      * @throws OrderNotFoundException Если заказ не найден или он не принадлежит пользователю.
      * @throws OrderStatusNotUpdatedException Если произошла ошибка при изменении статуса.
      */
-    public function changeOrderStatus(int $orderId, OrderStatusEnum $newStatus): void
+    public function updateStatus(int $orderId, OrderStatusEnum $newStatus): void
     {
         try {
             $order = Order::where('id', $orderId)

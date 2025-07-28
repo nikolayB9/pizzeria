@@ -5,7 +5,6 @@ namespace App\Repositories\Api\V1\Profile;
 use App\DTO\Api\V1\Checkout\CheckoutUserDataDto;
 use App\DTO\Api\V1\Profile\ProfileDto;
 use App\DTO\Api\V1\Profile\ProfilePreviewDto;
-use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Exceptions\User\MissingUserException;
 
 interface ProfileRepositoryInterface
@@ -45,9 +44,7 @@ interface ProfileRepositoryInterface
      *
      * @param int $userId
      *
-     * @return int
-     * @throws MissingUserException
-     * @throws MissingDefaultUserAddressException
+     * @return int|null
      */
-    public function getDefaultAddressIdOrThrow(int $userId): int;
+    public function getDefaultAddressId(int $userId): int|null;
 }

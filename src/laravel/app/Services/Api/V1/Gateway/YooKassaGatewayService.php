@@ -2,14 +2,13 @@
 
 namespace App\Services\Api\V1\Gateway;
 
-use App\DTO\Api\V1\Order\OrderPaymentDataDto;
-use App\DTO\Api\V1\Payment\CreatePaymentDto;
-use App\DTO\Api\V1\Payment\CreatePaymentResponseDto;
+use App\DTO\Api\V1\Payment\InitiatePaymentDto;
+use App\DTO\Api\V1\Payment\MinifiedPaymentDataDto;
 use App\DTO\Api\V1\Payment\PaymentDto;
 use App\Enums\Payment\PaymentGatewayEnum;
 use App\Enums\Payment\PaymentStatusEnum;
 use App\Exceptions\Payment\FailedGetPaymentException;
-use App\Exceptions\Payment\PaymentNotCreateException;
+use App\Exceptions\Payment\InitiatePaymentFailedException;
 use App\Exceptions\YooKassa\FailedGetPaymentFromYooKassaException;
 use App\Exceptions\YooKassa\FailedYooKassaResponseException;
 use App\Exceptions\YooKassa\InvalidYooKassaStatusException;
@@ -21,7 +20,6 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class YooKassaGatewayService implements PaymentGatewayInterface
 {
@@ -37,20 +35,16 @@ class YooKassaGatewayService implements PaymentGatewayInterface
     /**
      * Создает платеж в ЮKassa для заказа и возвращает ссылку на оплату.
      *
-     * @param OrderPaymentDataDto $orderData DTO с данными заказа для создания платежа.
-     *
-     * @return string Ссылка на оплату оформленного заказа.
-     * @throws PaymentNotCreateException Если не удалось создать платеж.
      * @throws MissingYooKassaConfigValueException Если не задан один или несколько параметров конфигурации.
+     * @throws InitiatePaymentFailedException
      */
-    public function createPaymentForOrder(OrderPaymentDataDto $orderData): string
+    public function initiatePayment(MinifiedPaymentDataDto $dto): InitiatePaymentDto
     {
         $config = $this->getYooKassaConfigData();
-        $idempotenceKey = (string)Str::uuid();
 
         $postData = [
             'amount' => [
-                'value' => number_format($orderData->amount, 2, '.', ''),
+                'value' => number_format($dto->amount, 2, '.', ''),
                 'currency' => 'RUB',
             ],
             'confirmation' => [
@@ -63,8 +57,7 @@ class YooKassaGatewayService implements PaymentGatewayInterface
                 'type' => 'bank_card',
             ],
             'metadata' => [
-                'order_id' => (string)$orderData->id,
-                'user_id' => (string)$orderData->user_id,
+                'order_id' => (string)$dto->order_id,
             ],
         ];
 
@@ -72,36 +65,44 @@ class YooKassaGatewayService implements PaymentGatewayInterface
             $response = $this->sendYooKassaRequest(
                 $config['api_url'] . '/payments',
                 'post',
-                ['Idempotence-Key' => $idempotenceKey],
+                ['Idempotence-Key' => $dto->idempotence_key],
                 $postData,
             );
         } catch (YooKassaConnectionException|FailedYooKassaResponseException $e) {
             Log::error('Не удалось создать платеж для заказа при запросе в ЮKassa', [
-                'order_data' => $orderData,
+                'payment_data' => $dto,
                 'error_message' => $e->getMessage(),
                 'method' => __METHOD__,
             ]);
 
-            throw new PaymentNotCreateException();
+            throw new InitiatePaymentFailedException();
         }
 
-        $validated = $this->validatePaymentCreationResponse($response->json(), $orderData);
+        $data = $response->json();
 
-        $this->paymentRepository->createPayment(
-            new CreatePaymentDto(
-                order_id: $orderData->id,
-                user_id: $orderData->user_id,
-                gateway_payment_id: $validated->gateway_payment_id,
-                status: PaymentStatusEnum::WAITING_CAPTURE,
-                gateway: PaymentGatewayEnum::YOOKASSA,
-                amount: $orderData->amount,
-                idempotence_key: $idempotenceKey,
-                metadata: $validated->metadata,
-                raw_response: $validated->raw,
-            )
+        $responseErrors = $this->validateRequiredKeysAndValues(
+            $data,
+            ['id', 'confirmation.confirmation_url', 'metadata.order_id'],
+            ['metadata.order_id' => $dto->order_id],
         );
 
-        return $validated->confirmation_url;
+        if (!empty($responseErrors)) {
+            Log::error('Ошибки в данных ответа от ЮKassa при создании платежа', [
+                'errors' => $responseErrors,
+                'response' => $data,
+                'order_id' => $dto->order_id,
+                'method' => __METHOD__,
+            ]);
+            throw new InitiatePaymentFailedException();
+        }
+
+        return new InitiatePaymentDto(
+            gateway_payment_id: $data['id'],
+            confirmation_url: $data['confirmation']['confirmation_url'],
+            metadata: $data['metadata'],
+            raw: $data,
+            gateway: PaymentGatewayEnum::YOOKASSA,
+        );
     }
 
     public function getPayment(string $gatewayPaymentId): PaymentDto
@@ -195,44 +196,6 @@ class YooKassaGatewayService implements PaymentGatewayInterface
         }
 
         return $response;
-    }
-
-    /**
-     * Валидирует данные ответа ЮKassa на запрос создания платежа.
-     *
-     * @param array $data Данные ответа ЮKassa.
-     * @param OrderPaymentDataDto $orderData Данные заказа, для которого создается платеж.
-     *
-     * @return CreatePaymentResponseDto Валидированные данные.
-     * @throws PaymentNotCreateException Если в ответе содержится критическая ошибка.
-     */
-    private function validatePaymentCreationResponse(
-        array $data,
-        OrderPaymentDataDto $orderData
-    ): CreatePaymentResponseDto {
-        $responseErrors = $this->validateRequiredKeysAndValues(
-            $data,
-            ['id', 'confirmation.confirmation_url', 'metadata.order_id'],
-            ['metadata.order_id' => $orderData->id],
-        );
-
-        if (!empty($responseErrors)) {
-            Log::error('Ошибки в данных ответа от ЮKassa при создании платежа', [
-                'errors' => $responseErrors,
-                'response' => $data,
-                'order_id' => $orderData->id,
-                'user_id' => $orderData->user_id,
-                'method' => __METHOD__,
-            ]);
-            throw new PaymentNotCreateException();
-        }
-
-        return new CreatePaymentResponseDto(
-            gateway_payment_id: $data['id'],
-            confirmation_url: $data['confirmation']['confirmation_url'],
-            metadata: $data['metadata'],
-            raw: $data,
-        );
     }
 
     /**

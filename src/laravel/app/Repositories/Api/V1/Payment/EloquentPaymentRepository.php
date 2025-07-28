@@ -3,25 +3,35 @@
 namespace App\Repositories\Api\V1\Payment;
 
 use App\DTO\Api\V1\Payment\CreatePaymentDto;
+use App\DTO\Api\V1\Payment\InitiatePaymentDto;
+use App\DTO\Api\V1\Payment\MinifiedPaymentDataDto;
+use App\Enums\Order\OrderStatusEnum;
 use App\Enums\Payment\PaymentStatusEnum;
 use App\Exceptions\Payment\FailedCreatePaymentException;
 use App\Exceptions\Payment\OrderNotFoundWhenCreatingPaymentException;
 use App\Exceptions\Payment\PaymentNotFoundException;
+use App\Exceptions\Payment\PaymentNotUpdatedException;
 use App\Exceptions\Payment\PaymentStatusNotUpdatedException;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Repositories\Api\V1\Order\OrderRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class EloquentPaymentRepository implements PaymentRepositoryInterface
 {
-    public function createPayment(CreatePaymentDto $dto): void
+    public function __construct(private readonly OrderRepositoryInterface $orderRepository)
+    {
+    }
+
+    public function createPayment(CreatePaymentDto $dto): MinifiedPaymentDataDto
     {
         if (!Order::where('id', $dto->order_id)->where('user_id', $dto->user_id)->exists()) {
-            Log::error('Не найден заказ при попытке записи данных платежа в БД', [
+            Log::error('Не найден заказ при попытке создания его платежа', [
                 'order_id' => $dto->order_id,
-                'user_id' => $dto->user_id,
-                'payment_id' => $dto->payment_id,
+                'amount' => $dto->amount,
+                'idempotence_key' => $dto->idempotence_key,
                 'method' => __METHOD__,
             ]);
 
@@ -31,17 +41,64 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
         }
 
         try {
-            Payment::create($dto->toInsertArray());
+            return DB::transaction(function () use ($dto) {
+                $payment = Payment::create($dto->toInsertArray());
+
+                $this->orderRepository->updateStatus($dto->order_id, OrderStatusEnum::WAITING_PAYMENT);
+
+                return new MinifiedPaymentDataDto(
+                    payment_id: $payment->id,
+                    order_id: $payment->order_id,
+                    status: $payment->status,
+                    amount: $payment->amount,
+                    idempotence_key: $payment->idempotence_key
+                );
+            });
         } catch (\Throwable $e) {
             Log::error('Ошибка при создании платежа в БД', [
                 'order_id' => $dto->order_id,
                 'user_id' => $dto->user_id,
-                'payment_id' => $dto->payment_id,
                 'error_message' => $e->getMessage(),
                 'method' => __METHOD__,
             ]);
 
             throw new FailedCreatePaymentException('Непредвиденная ошибка при записи платежа в БД.');
+        }
+    }
+
+    /**
+     * @throws PaymentNotFoundException
+     * @throws PaymentNotUpdatedException
+     */
+    public function applyGatewayResponse(int $paymentId, InitiatePaymentDto $dto, PaymentStatusEnum $status): void
+    {
+        $payment = Payment::where('id', $paymentId)->first();
+
+        if (!$payment) {
+            Log::error('Не найден платеж при попытке обновить его данные после инициализации платежа', [
+                'payment_id' => $paymentId,
+                'method' => __METHOD__,
+            ]);
+
+            throw new PaymentNotFoundException();
+        }
+
+        try {
+            $payment->update([
+                'gateway_payment_id' => $dto->gateway_payment_id,
+                'status' => $status,
+                'gateway' => $dto->gateway,
+                'metadata' => $dto->metadata,
+                'raw_response' => $dto->raw,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Ошибка при обновлении платежа в БД', [
+                'payment_id' => $paymentId,
+                'error_message' => $e->getMessage(),
+                'method' => __METHOD__,
+            ]);
+
+            throw new PaymentNotUpdatedException();
         }
     }
 
