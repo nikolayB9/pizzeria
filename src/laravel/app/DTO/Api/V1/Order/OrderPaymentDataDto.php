@@ -6,7 +6,8 @@ class OrderPaymentDataDto
 {
     public function __construct(
         public int   $id,
-        public float $total,
+        public int   $user_id,
+        public float $amount,
     )
     {
     }

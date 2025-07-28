@@ -5,6 +5,7 @@ namespace App\Repositories\Api\V1\Order;
 use App\DTO\Api\V1\Order\CreateOrderDto;
 use App\DTO\Api\V1\Order\OrderDto;
 use App\DTO\Api\V1\Order\OrderPaymentDataDto;
+use App\DTO\Api\V1\Order\OrderWithPaymentDto;
 use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Enums\Order\OrderStatusEnum;
 use App\Exceptions\Order\OrderNotCreateException;
@@ -49,7 +50,6 @@ interface OrderRepositoryInterface
     /**
      * Изменяет статус заказа пользователя.
      *
-     * @param int $userId
      * @param int $orderId
      * @param OrderStatusEnum $newStatus
      *
@@ -57,5 +57,16 @@ interface OrderRepositoryInterface
      * @throws OrderNotFoundException
      * @throws OrderStatusNotUpdatedException
      */
-    public function changeOrderStatus(int $userId, int $orderId, OrderStatusEnum $newStatus): void;
+    public function changeOrderStatus(int $orderId, OrderStatusEnum $newStatus): void;
+
+    /**
+     * Проверяет существование заказа с заданными параметрами.
+     *
+     * @param array<string, mixed> $searchFields
+     *
+     * @return bool
+     */
+    public function exists(array $searchFields): bool;
+
+    public function getOrderWithPayment(int $orderId): OrderWithPaymentDto;
 }

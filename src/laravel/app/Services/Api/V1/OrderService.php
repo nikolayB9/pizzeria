@@ -21,7 +21,7 @@ use App\Exceptions\User\OrdersPerPageNotSetInConfigException;
 use App\Repositories\Api\V1\Cart\CartRepositoryInterface;
 use App\Repositories\Api\V1\Order\OrderRepositoryInterface;
 use App\Repositories\Api\V1\Profile\ProfileRepositoryInterface;
-use App\Services\Api\V1\Payment\PaymentInterface;
+use App\Services\Api\V1\Gateway\PaymentGatewayInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\Log;
@@ -35,7 +35,7 @@ class OrderService
                                 private readonly CartRepositoryInterface    $cartRepository,
                                 private readonly CartService                $cartService,
                                 private readonly CheckoutService            $checkoutService,
-                                private readonly PaymentInterface           $payment)
+                                private readonly PaymentGatewayInterface    $paymentGateway)
     {
     }
 
@@ -111,17 +111,16 @@ class OrderService
             cart: $cart,
         );
 
-        $orderData = $this->orderRepository->createOrder($userId, $orderData);
+        $order = $this->orderRepository->createOrder($userId, $orderData);
 
         try {
             $this->orderRepository->changeOrderStatus(
-                $userId,
-                $orderData->id,
+                $order->id,
                 OrderStatusEnum::WAITING_PAYMENT,
             );
         } catch (OrderNotFoundException|OrderStatusNotUpdatedException $e) {
             Log::error('Ошибка при изменении статуса созданного заказа', [
-                'order_id' => $orderData->id,
+                'order_id' => $order->id,
                 'user_id' => $userId,
                 'new_status' => OrderStatusEnum::WAITING_PAYMENT,
                 'method' => __METHOD__,
@@ -131,31 +130,7 @@ class OrderService
             throw new OrderNotReadyForPaymentException();
         }
 
-        return $this->payment->createPaymentForOrder($orderData);
-    }
-
-    /**
-     * Возвращает минимальный набор данных о позициях корзины или выбрасывает исключение, если корзина пуста.
-     *
-     * @param int $userId ID пользователя, оформляющего заказ.
-     *
-     * @return CartRawItemDto[] Массив DTO с данными товаров в корзине.
-     * @throws CartIsEmptyException Если корзина пуста.
-     */
-    protected function getRawCartItemsOrThrowIfEmpty(int $userId): array
-    {
-        $cartItems = $this->cartRepository->getRawCartItemsByIdentifier('user_id', $userId);
-
-        if ($cartItems === []) {
-            Log::warning('Не найдены продукты в корзине при попытке создания заказа', [
-                'user_id' => $userId,
-                'method' => __METHOD__,
-            ]);
-
-            throw new CartIsEmptyException('Корзина пуста, невозможно создать заказ.');
-        }
-
-        return $cartItems;
+        return $this->paymentGateway->createPaymentForOrder($order);
     }
 
     /**
@@ -196,5 +171,29 @@ class OrderService
         }
 
         return DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $candidate->format('Y-m-d H:i:s'));
+    }
+
+    /**
+     * Возвращает минимальный набор данных о позициях корзины или выбрасывает исключение, если корзина пуста.
+     *
+     * @param int $userId ID пользователя, оформляющего заказ.
+     *
+     * @return CartRawItemDto[] Массив DTO с данными товаров в корзине.
+     * @throws CartIsEmptyException Если корзина пуста.
+     */
+    protected function getRawCartItemsOrThrowIfEmpty(int $userId): array
+    {
+        $cartItems = $this->cartRepository->getRawCartItemsByIdentifier('user_id', $userId);
+
+        if ($cartItems === []) {
+            Log::warning('Не найдены продукты в корзине при попытке создания заказа', [
+                'user_id' => $userId,
+                'method' => __METHOD__,
+            ]);
+
+            throw new CartIsEmptyException('Корзина пуста, невозможно создать заказ.');
+        }
+
+        return $cartItems;
     }
 }

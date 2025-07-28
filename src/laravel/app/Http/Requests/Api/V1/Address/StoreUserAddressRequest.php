@@ -6,7 +6,7 @@ use App\DTO\Api\V1\Address\CreateAddressDto;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreUserAddressRequest extends FormRequest
+class   StoreUserAddressRequest extends FormRequest
 {
     /**
      * Определяет, авторизован ли пользователь для выполнения этого запроса.

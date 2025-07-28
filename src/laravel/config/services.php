@@ -40,6 +40,23 @@ return [
         'secret_key' => env('YOOKASSA_SECRET_KEY'),
         'api_url' => env('YOOKASSA_API_URL'),
         'return_url' => env('YOOKASSA_RETURN_URL'),
+        'webhook_url' => env('YOOKASSA_WEBHOOK_URL'),
+        'allowed_ips' => [
+            '172.19.0.1', // временно для локалки
+            '185.71.76.0/27',
+            '185.71.77.0/27',
+            '77.75.153.0/25',
+            '77.75.156.11',
+            '77.75.156.35',
+            '77.75.154.128/25',
+            '2a02:5180::/32',
+        ],
+        'statuses' => [
+            'pending',
+            'waiting_for_capture',
+            'succeeded',
+            'canceled',
+        ],
     ],
 
 ];

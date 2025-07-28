@@ -14,12 +14,14 @@ use App\Repositories\Api\V1\City\CityRepositoryInterface;
 use App\Repositories\Api\V1\City\EloquentCityRepository;
 use App\Repositories\Api\V1\Order\EloquentOrderRepository;
 use App\Repositories\Api\V1\Order\OrderRepositoryInterface;
+use App\Repositories\Api\V1\Payment\EloquentPaymentRepository;
+use App\Repositories\Api\V1\Payment\PaymentRepositoryInterface;
 use App\Repositories\Api\V1\Product\EloquentProductRepository;
 use App\Repositories\Api\V1\Product\ProductRepositoryInterface;
 use App\Repositories\Api\V1\Profile\EloquentProfileRepository;
 use App\Repositories\Api\V1\Profile\ProfileRepositoryInterface;
-use App\Services\Api\V1\Payment\PaymentInterface;
-use App\Services\Api\V1\Payment\YooKassaService;
+use App\Services\Api\V1\Gateway\PaymentGatewayInterface;
+use App\Services\Api\V1\Gateway\YooKassaGatewayService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -36,10 +38,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AddressRepositoryInterface::class, EloquentAddressRepository::class);
         $this->app->bind(CityRepositoryInterface::class, EloquentCityRepository::class);
         $this->app->bind(OrderRepositoryInterface::class, EloquentOrderRepository::class);
+        $this->app->bind(PaymentRepositoryInterface::class, EloquentPaymentRepository::class);
 
         $this->app->bind(AdminOrderRepositoryInterface::class, EloquentAdminOrderRepository::class);
 
-        $this->app->bind(PaymentInterface::class, YooKassaService::class);
+        $this->app->bind(PaymentGatewayInterface::class, YooKassaGatewayService::class);
     }
 
     /**

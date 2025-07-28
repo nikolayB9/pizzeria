@@ -6,6 +6,7 @@ use App\DTO\Api\V1\Cart\CartRawItemDto;
 use App\DTO\Api\V1\Order\CreateOrderDto;
 use App\DTO\Api\V1\Order\OrderDto;
 use App\DTO\Api\V1\Order\OrderPaymentDataDto;
+use App\DTO\Api\V1\Order\OrderWithPaymentDto;
 use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Enums\Order\OrderStatusEnum;
 use App\Exceptions\Order\OrderNotCreateException;
@@ -107,7 +108,8 @@ class EloquentOrderRepository implements OrderRepositoryInterface
 
                 return new OrderPaymentDataDto(
                     id: $order->id,
-                    total: $order->total,
+                    user_id: $userId,
+                    amount: $order->total,
                 );
             });
         } catch (\Throwable $e) {
@@ -125,7 +127,6 @@ class EloquentOrderRepository implements OrderRepositoryInterface
     /**
      * Изменяет статус заказа пользователя.
      *
-     * @param int $userId ID пользователя, которым сделан заказ.
      * @param int $orderId ID заказа.
      * @param OrderStatusEnum $newStatus Новый статус заказа.
      *
@@ -133,11 +134,10 @@ class EloquentOrderRepository implements OrderRepositoryInterface
      * @throws OrderNotFoundException Если заказ не найден или он не принадлежит пользователю.
      * @throws OrderStatusNotUpdatedException Если произошла ошибка при изменении статуса.
      */
-    public function changeOrderStatus(int $userId, int $orderId, OrderStatusEnum $newStatus): void
+    public function changeOrderStatus(int $orderId, OrderStatusEnum $newStatus): void
     {
         try {
             $order = Order::where('id', $orderId)
-                ->where('user_id', $userId)
                 ->firstOrFail();
 
             $order->update([
@@ -145,7 +145,6 @@ class EloquentOrderRepository implements OrderRepositoryInterface
             ]);
         } catch (ModelNotFoundException $e) {
             Log::error('Не найден заказ при попытке изменить его статус', [
-                'user_id' => $userId,
                 'order_id' => $orderId,
                 'new_status' => $newStatus,
                 'error_message' => $e->getMessage(),
@@ -155,7 +154,6 @@ class EloquentOrderRepository implements OrderRepositoryInterface
             throw new OrderNotFoundException();
         } catch (\Throwable $e) {
             Log::error('Не удалось изменить статус заказа', [
-                'user_id' => $userId,
                 'order_id' => $orderId,
                 'new_status' => $newStatus,
                 'error_message' => $e->getMessage(),
@@ -164,5 +162,27 @@ class EloquentOrderRepository implements OrderRepositoryInterface
 
             throw new OrderStatusNotUpdatedException('Непредвиденная ошибка при изменении статуса заказа.');
         }
+    }
+
+    /**
+     * Проверяет существование заказа с заданными параметрами.
+     *
+     * @param array<string, mixed> $searchFields Массив с полями и их значениями для поиска (например ['id' => 123]).
+     *
+     * @return bool True, если заказ существует, иначе - false.
+     */
+    public function exists(array $searchFields): bool
+    {
+        return Order::where($searchFields)->exists();
+    }
+
+    public function getOrderWithPayment(int $orderId): OrderWithPaymentDto
+    {
+        return OrderWithPaymentDto::fromModel(
+            Order::where('id', $orderId)
+                ->select('id', 'status', 'total')
+                ->with('payment')
+                ->first()
+        );
     }
 }

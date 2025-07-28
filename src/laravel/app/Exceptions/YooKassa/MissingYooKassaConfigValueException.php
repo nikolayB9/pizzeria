@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exceptions\Payment;
+namespace App\Exceptions\YooKassa;
 
 class MissingYooKassaConfigValueException extends \RuntimeException
 {

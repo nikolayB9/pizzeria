@@ -2,9 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\Category\CategoryTypeEnum;
-use App\Models\Product;
-use App\Models\ProductVariant;
 use Illuminate\Console\Command;
 
 class develop extends Command
@@ -28,17 +25,8 @@ class develop extends Command
      */
     public function handle()
     {
-        $productVariant = ProductVariant::where('id', 1)
-            ->select('id', 'price', 'product_id')
-            ->first();
 
-        $category = $productVariant->product
-            ->categories()
-            ->where('type', CategoryTypeEnum::ProductType->value)
-            ->select('id', 'slug')
-            ->firstOrFail();
-dd(config('cart'));
-
-        dump($category);
     }
+
+
 }
