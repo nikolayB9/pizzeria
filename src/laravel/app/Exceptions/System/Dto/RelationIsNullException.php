@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exceptions\Dto;
+namespace App\Exceptions\System\Dto;
 
 class RelationIsNullException extends \RuntimeException
 {

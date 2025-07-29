@@ -4,9 +4,9 @@ namespace App\DTO\Admin\Order;
 
 use App\DTO\Traits\RequiresPreload;
 use App\Enums\Order\OrderStatusEnum;
-use App\Exceptions\Dto\RelationIsNullException;
-use App\Exceptions\Dto\RequiredRelationMissingException;
-use App\Exceptions\Order\MissingRequiredParameterInConfigException;
+use App\Exceptions\System\Dto\RelationIsNullException;
+use App\Exceptions\System\Dto\RequiredRelationMissingException;
+use App\Exceptions\System\Order\MissingRequiredParameterInConfigException;
 use App\Models\Order;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -16,14 +16,13 @@ class OrderListItemDto
     use RequiresPreload;
 
     public function __construct(
-        public int             $id,
-        public string          $created_at,
-        public string          $delivery,
-        public float           $total,
-        public string          $user,
+        public int $id,
+        public string $created_at,
+        public string $delivery,
+        public float $total,
+        public string $user,
         public OrderStatusEnum $status,
-    )
-    {
+    ) {
     }
 
     /**

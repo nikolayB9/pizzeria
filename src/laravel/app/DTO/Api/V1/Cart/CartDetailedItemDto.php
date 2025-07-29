@@ -3,9 +3,9 @@
 namespace App\DTO\Api\V1\Cart;
 
 use App\DTO\Traits\RequiresPreload;
-use App\Exceptions\Dto\RelationIsNullException;
-use App\Exceptions\Dto\RequiredRelationMissingException;
 use App\Exceptions\Product\MissingProductCategoryException;
+use App\Exceptions\System\Dto\RelationIsNullException;
+use App\Exceptions\System\Dto\RequiredRelationMissingException;
 use App\Models\Cart;
 use Illuminate\Support\Collection;
 
@@ -15,14 +15,13 @@ class CartDetailedItemDto
 
     public function __construct(
         public string $name,
-        public int    $variant_id,
+        public int $variant_id,
         public string $variant_name,
-        public float  $price,
-        public int    $qty,
+        public float $price,
+        public int $qty,
         public string $preview_image_url,
-        public int    $category_id,
-    )
-    {
+        public int $category_id,
+    ) {
     }
 
     /**

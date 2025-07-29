@@ -4,7 +4,7 @@ namespace App\Repositories\Admin;
 
 use App\DTO\Admin\Order\PaginatedOrderListDto;
 use App\Exceptions\Order\OrderNotFoundException;
-use App\Exceptions\Order\OrderStatusNotUpdatedException;
+use App\Exceptions\System\Order\OrderStatusNotUpdatedException;
 use App\Models\Order;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;

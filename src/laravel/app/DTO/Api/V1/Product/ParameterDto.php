@@ -4,8 +4,8 @@ namespace App\DTO\Api\V1\Product;
 
 use App\DTO\Traits\RequiresPreload;
 use App\Enums\Parameter\ParameterGroupEnum;
-use App\Exceptions\Dto\PivotAttributeMissingException;
-use App\Exceptions\Dto\PivotMissingException;
+use App\Exceptions\System\Dto\PivotAttributeMissingException;
+use App\Exceptions\System\Dto\PivotMissingException;
 use App\Models\Parameter;
 use Illuminate\Support\Collection;
 
@@ -14,20 +14,20 @@ class ParameterDto
     use RequiresPreload;
 
     public function __construct(
-        public int                    $id,
-        public string                 $name,
-        public string                 $value,
-        public ?string                $unit,
-        public int|bool               $is_shared,
+        public int $id,
+        public string $name,
+        public string $value,
+        public ?string $unit,
+        public int|bool $is_shared,
         public int|ParameterGroupEnum $group,
-    )
-    {
+    ) {
     }
 
     /**
      * Создаёт DTO из модели Parameter.
      *
      * @param Parameter $parameter Экземпляр модели с данными pivot таблицы: pivot_value, pivot_is_shared.
+     *
      * @return self
      * @throws PivotMissingException Если отсутствует объект pivot.
      * @throws PivotAttributeMissingException Если value или is_shared отсутствуют в pivot.
@@ -52,6 +52,7 @@ class ParameterDto
      * Преобразует коллекцию моделей в массив DTO.
      *
      * @param Collection $parameters Коллекция моделей Parameter.
+     *
      * @return ParameterDto[] Массив DTO.
      */
     public static function collection(Collection $parameters): array

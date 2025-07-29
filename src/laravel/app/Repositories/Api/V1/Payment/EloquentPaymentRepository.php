@@ -7,10 +7,9 @@ use App\DTO\Api\V1\Payment\InitiatePaymentDto;
 use App\DTO\Api\V1\Payment\MinifiedPaymentDataDto;
 use App\Enums\Order\OrderStatusEnum;
 use App\Enums\Payment\PaymentStatusEnum;
-use App\Exceptions\Payment\FailedCreatePaymentException;
-use App\Exceptions\Payment\OrderNotFoundWhenCreatingPaymentException;
+use App\Exceptions\Domain\Payment\PaymentCreationFailedException;
+use App\Exceptions\Domain\Payment\PaymentGatewayResponseApplyFailedException;
 use App\Exceptions\Payment\PaymentNotFoundException;
-use App\Exceptions\Payment\PaymentNotUpdatedException;
 use App\Exceptions\Payment\PaymentStatusNotUpdatedException;
 use App\Models\Order;
 use App\Models\Payment;
@@ -25,9 +24,12 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
     {
     }
 
+    /**
+     * @throws PaymentCreationFailedException
+     */
     public function createPayment(CreatePaymentDto $dto): MinifiedPaymentDataDto
     {
-        if (!Order::where('id', $dto->order_id)->where('user_id', $dto->user_id)->exists()) {
+        if (!Order::where('id', $dto->order_id)->exists()) {
             Log::error('Не найден заказ при попытке создания его платежа', [
                 'order_id' => $dto->order_id,
                 'amount' => $dto->amount,
@@ -35,9 +37,7 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
                 'method' => __METHOD__,
             ]);
 
-            throw new OrderNotFoundWhenCreatingPaymentException(
-                'Не найден заказ при попытке записи данных платежа в БД.'
-            );
+            throw new PaymentCreationFailedException();
         }
 
         try {
@@ -55,20 +55,20 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
                 );
             });
         } catch (\Throwable $e) {
-            Log::error('Ошибка при создании платежа в БД', [
+            Log::error('Ошибка при создании платежа в БД или обновлении статуса заказа', [
                 'order_id' => $dto->order_id,
-                'user_id' => $dto->user_id,
-                'error_message' => $e->getMessage(),
+                'amount' => $dto->amount,
+                'idempotence_key' => $dto->idempotence_key,
+                'exception' => $e->getMessage(),
                 'method' => __METHOD__,
             ]);
 
-            throw new FailedCreatePaymentException('Непредвиденная ошибка при записи платежа в БД.');
+            throw new PaymentCreationFailedException();
         }
     }
 
     /**
-     * @throws PaymentNotFoundException
-     * @throws PaymentNotUpdatedException
+     * @throws PaymentGatewayResponseApplyFailedException
      */
     public function applyGatewayResponse(int $paymentId, InitiatePaymentDto $dto, PaymentStatusEnum $status): void
     {
@@ -80,7 +80,7 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
                 'method' => __METHOD__,
             ]);
 
-            throw new PaymentNotFoundException();
+            throw new PaymentGatewayResponseApplyFailedException();
         }
 
         try {
@@ -94,11 +94,11 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
         } catch (\Throwable $e) {
             Log::error('Ошибка при обновлении платежа в БД', [
                 'payment_id' => $paymentId,
-                'error_message' => $e->getMessage(),
+                'exception' => $e->getMessage(),
                 'method' => __METHOD__,
             ]);
 
-            throw new PaymentNotUpdatedException();
+            throw new PaymentGatewayResponseApplyFailedException();
         }
     }
 

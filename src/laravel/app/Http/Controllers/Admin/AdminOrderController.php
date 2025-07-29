@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\Order\OrderStatusEnum;
 use App\Exceptions\Order\OrderNotFoundException;
-use App\Exceptions\Order\OrderStatusNotUpdatedException;
+use App\Exceptions\System\Order\OrderStatusNotUpdatedException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Order\IndexOrderRequest;
 use App\Http\Requests\Admin\Order\UpdateStatusRequest;

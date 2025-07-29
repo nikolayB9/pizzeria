@@ -3,8 +3,8 @@
 namespace App\DTO\Api\V1\Order;
 
 use App\DTO\Traits\RequiresPreload;
-use App\Exceptions\Dto\RelationIsNullException;
-use App\Exceptions\Dto\RequiredRelationMissingException;
+use App\Exceptions\System\Dto\RelationIsNullException;
+use App\Exceptions\System\Dto\RequiredRelationMissingException;
 use App\Models\ProductVariant;
 use Illuminate\Support\Collection;
 
@@ -14,8 +14,7 @@ class OrderProductPreviewDto
 
     public function __construct(
         public string $url,
-    )
-    {
+    ) {
     }
 
 

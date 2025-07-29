@@ -10,14 +10,14 @@ use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\DTO\Api\V1\Payment\CreatePaymentDto;
 use App\Enums\Order\OrderStatusEnum;
 use App\Enums\Payment\PaymentStatusEnum;
+use App\Exceptions\Domain\ExternalPayment\ExternalPaymentCreationFailedException;
 use App\Exceptions\Domain\Order\OrderCreationFailedException;
-use App\Exceptions\Order\InvalidDeliveryTimeException;
-use App\Exceptions\Order\MinDeliveryLeadTimeNotSetInConfigException;
+use App\Exceptions\Domain\Payment\PaymentCreationFailedException;
+use App\Exceptions\Domain\Payment\PaymentGatewayResponseApplyFailedException;
 use App\Exceptions\Order\OrderNotFoundException;
-use App\Exceptions\Order\OrderNotReadyForPaymentException;
 use App\Exceptions\Payment\PaymentNotCreateException;
-use App\Exceptions\Payment\PaymentNotFoundException;
-use App\Exceptions\Payment\PaymentNotUpdatedException;
+use App\Exceptions\System\Order\InvalidDeliveryTimeException;
+use App\Exceptions\System\Order\MinDeliveryLeadTimeNotSetInConfigException;
 use App\Exceptions\User\OrdersPerPageNotSetInConfigException;
 use App\Repositories\Api\V1\Cart\CartRepositoryInterface;
 use App\Repositories\Api\V1\Order\OrderRepositoryInterface;
@@ -82,10 +82,10 @@ class OrderService
     }
 
     /**
-     * @throws PaymentNotUpdatedException
-     * @throws PaymentNotFoundException
-     * @throws PaymentNotCreateException
      * @throws OrderCreationFailedException
+     * @throws PaymentCreationFailedException
+     * @throws ExternalPaymentCreationFailedException
+     * @throws PaymentGatewayResponseApplyFailedException
      */
     public function createOrderWithPayment(CreateOrderInputDto $dto): string
     {
@@ -161,24 +161,35 @@ class OrderService
         $addressId = $this->userRepository->getDefaultAddressId($userId);
 
         if (is_null($addressId)) {
-            throw new OrderCreationFailedException('Для оформления заказа добавьте адрес доставки.', 422);
+            Log::error('Не найден дефолтный адрес доставки при создании заказа', [
+                'user_id' => $userId,
+                'method' => __METHOD__,
+            ]);
+            throw new OrderCreationFailedException('Для оформления заказа добавьте адрес доставки.');
         }
 
         try {
             $deliveryAt = $this->parseAndValidateDeliveryTime($dto->delivery_time);
         } catch (InvalidDeliveryTimeException $e) {
-            throw new OrderCreationFailedException($e->getMessage(), 422);
+            Log::warning('Время доставки не прошло валидацию при создании заказа', [
+                'delivery_time' => $dto->delivery_time,
+                'now_time' => now(),
+                'user_id' => $userId,
+                'error_message' => $e->getMessage(),
+                'method' => __METHOD__,
+            ]);
+            throw new OrderCreationFailedException($e->getMessage());
         }
 
         $cart = $this->cartRepository->getRawCartItemsByIdentifier('user_id', $userId);
 
         if (empty($cart)) {
-            Log::warning('Не найдены продукты в корзине при попытке создания заказа', [
+            Log::error('Не найдены продукты в корзине при попытке создания заказа', [
                 'user_id' => $userId,
                 'method' => __METHOD__,
             ]);
 
-            throw new OrderCreationFailedException('Корзина пуста, невозможно создать заказ.', 422);
+            throw new OrderCreationFailedException('Корзина пуста, невозможно создать заказ.');
         }
 
         $cartTotal = $this->cartService->getTotalPrice($cart);

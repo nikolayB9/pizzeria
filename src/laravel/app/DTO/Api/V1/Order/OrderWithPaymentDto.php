@@ -5,8 +5,8 @@ namespace App\DTO\Api\V1\Order;
 use App\DTO\Traits\RequiresPreload;
 use App\Enums\Order\OrderStatusEnum;
 use App\Enums\Payment\PaymentStatusEnum;
-use App\Exceptions\Dto\RelationIsNullException;
-use App\Exceptions\Dto\RequiredRelationMissingException;
+use App\Exceptions\System\Dto\RelationIsNullException;
+use App\Exceptions\System\Dto\RequiredRelationMissingException;
 use App\Models\Order;
 
 class OrderWithPaymentDto
@@ -14,15 +14,14 @@ class OrderWithPaymentDto
     use RequiresPreload;
 
     public function __construct(
-        public int               $order_id,
-        public OrderStatusEnum   $order_status,
-        public string            $order_total,
-        public int               $payment_id,
-        public string            $gateway_payment_id,
+        public int $order_id,
+        public OrderStatusEnum $order_status,
+        public string $order_total,
+        public int $payment_id,
+        public string $gateway_payment_id,
         public PaymentStatusEnum $payment_status,
-        public string            $payment_amount,
-    )
-    {
+        public string $payment_amount,
+    ) {
     }
 
     /**

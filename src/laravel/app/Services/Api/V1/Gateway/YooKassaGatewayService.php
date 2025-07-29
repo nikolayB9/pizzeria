@@ -7,8 +7,8 @@ use App\DTO\Api\V1\Payment\MinifiedPaymentDataDto;
 use App\DTO\Api\V1\Payment\PaymentDto;
 use App\Enums\Payment\PaymentGatewayEnum;
 use App\Enums\Payment\PaymentStatusEnum;
+use App\Exceptions\Domain\ExternalPayment\ExternalPaymentCreationFailedException;
 use App\Exceptions\Payment\FailedGetPaymentException;
-use App\Exceptions\Payment\InitiatePaymentFailedException;
 use App\Exceptions\YooKassa\FailedGetPaymentFromYooKassaException;
 use App\Exceptions\YooKassa\FailedYooKassaResponseException;
 use App\Exceptions\YooKassa\InvalidYooKassaStatusException;
@@ -33,10 +33,7 @@ class YooKassaGatewayService implements PaymentGatewayInterface
     }
 
     /**
-     * Создает платеж в ЮKassa для заказа и возвращает ссылку на оплату.
-     *
-     * @throws MissingYooKassaConfigValueException Если не задан один или несколько параметров конфигурации.
-     * @throws InitiatePaymentFailedException
+     * @throws ExternalPaymentCreationFailedException
      */
     public function initiatePayment(MinifiedPaymentDataDto $dto): InitiatePaymentDto
     {
@@ -75,7 +72,7 @@ class YooKassaGatewayService implements PaymentGatewayInterface
                 'method' => __METHOD__,
             ]);
 
-            throw new InitiatePaymentFailedException();
+            throw new ExternalPaymentCreationFailedException();
         }
 
         $data = $response->json();
@@ -93,7 +90,7 @@ class YooKassaGatewayService implements PaymentGatewayInterface
                 'order_id' => $dto->order_id,
                 'method' => __METHOD__,
             ]);
-            throw new InitiatePaymentFailedException();
+            throw new ExternalPaymentCreationFailedException();
         }
 
         return new InitiatePaymentDto(

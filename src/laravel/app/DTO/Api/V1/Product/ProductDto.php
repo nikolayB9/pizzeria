@@ -3,9 +3,9 @@
 namespace App\DTO\Api\V1\Product;
 
 use App\DTO\Traits\RequiresPreload;
-use App\Exceptions\Dto\RelationIsNotCollectionException;
-use App\Exceptions\Dto\RelationIsNullException;
-use App\Exceptions\Dto\RequiredRelationMissingException;
+use App\Exceptions\System\Dto\RelationIsNotCollectionException;
+use App\Exceptions\System\Dto\RelationIsNullException;
+use App\Exceptions\System\Dto\RequiredRelationMissingException;
 use App\Models\Product;
 
 class ProductDto
@@ -13,19 +13,19 @@ class ProductDto
     use RequiresPreload;
 
     public function __construct(
-        public int     $id,
-        public string  $name,
+        public int $id,
+        public string $name,
         public ?string $description,
-        public string  $detail_image_url,
-        public array   $variants,
-    )
-    {
+        public string $detail_image_url,
+        public array $variants,
+    ) {
     }
 
     /**
      * Создаёт DTO из модели Product.
      *
      * @param Product $product Экземпляр модели продукта с предзагруженными отношениями detailImage, variants.
+     *
      * @return self
      * @throws RequiredRelationMissingException Если detailImage или variants не были загружены.
      * @throws RelationIsNullException Если detailImage или variants равны null.

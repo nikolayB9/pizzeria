@@ -63,8 +63,11 @@ class EloquentCartRepository implements CartRepositoryInterface
      * @return void
      * @throws CartUpdateException Если произошла ошибка при обращении к базе данных.
      */
-    public function addProductToCartByIdentifier(AddToCartProductDto $productDto, string $field, int|string $value): void
-    {
+    public function addProductToCartByIdentifier(
+        AddToCartProductDto $productDto,
+        string $field,
+        int|string $value
+    ): void {
         $cartData = [
             $field => $value,
             'product_variant_id' => $productDto->product_variant_id,
@@ -160,8 +163,15 @@ class EloquentCartRepository implements CartRepositoryInterface
     public function clearCartByIdentifier(string $field, int|string $value): void
     {
         try {
-            Cart::where($field, $value)
-                ->delete();
+            $deleted = Cart::where($field, $value)->delete();
+
+            if ($deleted === 0) {
+                Log::warning('Ожидалась очистка корзины, но ничего не удалено', [
+                    'identifier_field' => $field,
+                    'identifier_value' => $value,
+                    'method' => __METHOD__,
+                ]);
+            }
         } catch (\Throwable $e) {
             Log::error('Ошибка при попытке очистить корзину', [
                 'identifier_field' => $field,
@@ -245,7 +255,9 @@ class EloquentCartRepository implements CartRepositoryInterface
                 'method' => __METHOD__,
             ]);
 
-            throw new CartUpdateException("Непредвиденная ошибка при попытке обновить данные корзины: {$e->getMessage()}");
+            throw new CartUpdateException(
+                "Непредвиденная ошибка при попытке обновить данные корзины: {$e->getMessage()}"
+            );
         }
     }
 

@@ -4,8 +4,8 @@ namespace App\DTO\Api\V1\Order;
 
 use App\DTO\Api\V1\Address\AddressShortDto;
 use App\DTO\Traits\RequiresPreload;
-use App\Exceptions\Dto\RelationIsNullException;
-use App\Exceptions\Dto\RequiredRelationMissingException;
+use App\Exceptions\System\Dto\RelationIsNullException;
+use App\Exceptions\System\Dto\RequiredRelationMissingException;
 use App\Models\Order;
 
 class OrderDto
@@ -14,15 +14,14 @@ class OrderDto
 
     /** @param OrderProductListItemDto[] $products */
     public function __construct(
-        public int             $id,
-        public array           $products,
-        public float           $total,
-        public float           $delivery_cost,
+        public int $id,
+        public array $products,
+        public float $total,
+        public float $delivery_cost,
         public AddressShortDto $address,
-        public string          $created_at,
-        public string          $status,
-    )
-    {
+        public string $created_at,
+        public string $status,
+    ) {
     }
 
     /**

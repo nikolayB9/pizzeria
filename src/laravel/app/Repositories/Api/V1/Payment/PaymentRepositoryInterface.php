@@ -6,21 +6,18 @@ use App\DTO\Api\V1\Payment\CreatePaymentDto;
 use App\DTO\Api\V1\Payment\InitiatePaymentDto;
 use App\DTO\Api\V1\Payment\MinifiedPaymentDataDto;
 use App\Enums\Payment\PaymentStatusEnum;
-use App\Exceptions\Payment\PaymentNotFoundException;
-use App\Exceptions\Payment\PaymentNotUpdatedException;
+use App\Exceptions\Domain\Payment\PaymentCreationFailedException;
+use App\Exceptions\Domain\Payment\PaymentGatewayResponseApplyFailedException;
 
 interface PaymentRepositoryInterface
 {
     /**
-     * @param CreatePaymentDto $dto
-     *
-     * @return MinifiedPaymentDataDto
+     * @throws PaymentCreationFailedException
      */
     public function createPayment(CreatePaymentDto $dto): MinifiedPaymentDataDto;
 
     /**
-     * @throws PaymentNotFoundException
-     * @throws PaymentNotUpdatedException
+     * @throws PaymentGatewayResponseApplyFailedException
      */
     public function applyGatewayResponse(int $paymentId, InitiatePaymentDto $dto, PaymentStatusEnum $status): void;
 

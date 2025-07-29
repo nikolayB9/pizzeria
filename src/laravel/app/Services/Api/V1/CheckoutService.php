@@ -5,8 +5,8 @@ namespace App\Services\Api\V1;
 use App\DTO\Api\V1\Cart\CartDetailedItemDto;
 use App\DTO\Api\V1\Checkout\CheckoutSummaryDto;
 use App\Exceptions\Cart\CartIsEmptyException;
-use App\Exceptions\Order\MinDeliveryLeadTimeNotSetInConfigException;
-use App\Exceptions\Order\MissingRequiredParameterInConfigException;
+use App\Exceptions\System\Order\MinDeliveryLeadTimeNotSetInConfigException;
+use App\Exceptions\System\Order\MissingRequiredParameterInConfigException;
 use App\Repositories\Api\V1\Cart\CartRepositoryInterface;
 use App\Repositories\Api\V1\Profile\ProfileRepositoryInterface;
 use App\Services\Traits\AuthenticatedUserTrait;
@@ -16,10 +16,11 @@ class CheckoutService
 {
     use AuthenticatedUserTrait;
 
-    public function __construct(private readonly ProfileRepositoryInterface $userRepository,
-                                private readonly CartRepositoryInterface    $cartRepository,
-                                private readonly CartService                $cartService)
-    {
+    public function __construct(
+        private readonly ProfileRepositoryInterface $userRepository,
+        private readonly CartRepositoryInterface $cartRepository,
+        private readonly CartService $cartService
+    ) {
     }
 
     /**

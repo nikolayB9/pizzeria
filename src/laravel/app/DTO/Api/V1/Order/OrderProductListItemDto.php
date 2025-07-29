@@ -3,10 +3,10 @@
 namespace App\DTO\Api\V1\Order;
 
 use App\DTO\Traits\RequiresPreload;
-use App\Exceptions\Dto\PivotAttributeMissingException;
-use App\Exceptions\Dto\PivotMissingException;
-use App\Exceptions\Dto\RelationIsNullException;
-use App\Exceptions\Dto\RequiredRelationMissingException;
+use App\Exceptions\System\Dto\PivotAttributeMissingException;
+use App\Exceptions\System\Dto\PivotMissingException;
+use App\Exceptions\System\Dto\RelationIsNullException;
+use App\Exceptions\System\Dto\RequiredRelationMissingException;
 use App\Models\ProductVariant;
 use Illuminate\Support\Collection;
 
@@ -17,11 +17,10 @@ class OrderProductListItemDto
     public function __construct(
         public string $name,
         public string $variant_name,
-        public float  $price,
-        public int    $qty,
+        public float $price,
+        public int $qty,
         public string $preview_image_url,
-    )
-    {
+    ) {
     }
 
     /**
@@ -49,9 +48,11 @@ class OrderProductListItemDto
             qty: $variant->pivot->qty,
             preview_image_url: url(
                 $product->previewImage->image_path
-                    ?: config('product.default_image_path'
+                    ?: config(
+                    'product.default_image_path'
                 ),
-            ));
+            )
+        );
     }
 
     /**

@@ -10,7 +10,7 @@ use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Enums\Order\OrderStatusEnum;
 use App\Exceptions\Domain\Order\OrderCreationFailedException;
 use App\Exceptions\Order\OrderNotFoundException;
-use App\Exceptions\Order\OrderStatusNotUpdatedException;
+use App\Exceptions\System\Order\OrderStatusNotUpdatedException;
 
 interface OrderRepositoryInterface
 {

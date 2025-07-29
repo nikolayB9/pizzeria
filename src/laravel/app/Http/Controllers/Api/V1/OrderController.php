@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Exceptions\Cart\CartIsEmptyException;
-use App\Exceptions\Order\InvalidDeliveryTimeException;
-use App\Exceptions\Order\OrderNotCreateException;
+use App\Exceptions\Domain\ExternalPayment\ExternalPaymentCreationFailedException;
+use App\Exceptions\Domain\Order\OrderCreationFailedException;
+use App\Exceptions\Domain\Payment\PaymentCreationFailedException;
+use App\Exceptions\Domain\Payment\PaymentGatewayResponseApplyFailedException;
 use App\Exceptions\Order\OrderNotFoundException;
-use App\Exceptions\Order\OrderNotReadyForPaymentException;
-use App\Exceptions\Payment\PaymentNotCreateException;
-use App\Exceptions\User\MissingDefaultUserAddressException;
 use App\Http\Requests\Api\V1\Order\IndexOrderRequest;
 use App\Http\Requests\Api\V1\Order\StoreOrderRequest;
 use App\Http\Responses\ApiResponse;
@@ -64,36 +62,14 @@ class OrderController
      * @param StoreOrderRequest $request Валидированные данные запроса для создания заказа.
      *
      * @return JsonResponse JSON-ответ со ссылкой на оплату.
+     * @throws OrderCreationFailedException Если заказ не был создан.
+     * @throws PaymentCreationFailedException Если платеж заказа не был создан.
+     * @throws ExternalPaymentCreationFailedException Если платеж во внешнем сервисе не был создан.
+     * @throws PaymentGatewayResponseApplyFailedException Если ответ платежного шлюза не был применен к платежу.
      */
     public function store(StoreOrderRequest $request): JsonResponse
     {
-        try {
-            $paymentUrl = $this->orderService->createOrderWithPayment($request->toDto());
-        } catch (MissingDefaultUserAddressException $e) {
-            return ApiResponse::fail(
-                message: $e->getMessage(),
-                status: 404,
-                meta: ['order_created' => false],
-            );
-        } catch (InvalidDeliveryTimeException|CartIsEmptyException $e) {
-            return ApiResponse::fail(
-                message: $e->getMessage(),
-                status: 422,
-                meta: ['order_created' => false],
-            );
-        } catch (OrderNotCreateException $e) {
-            return ApiResponse::fail(
-                message: $e->getMessage(),
-                status: 500,
-                meta: ['order_created' => false],
-            );
-        } catch (OrderNotReadyForPaymentException|PaymentNotCreateException $e) {
-            return ApiResponse::fail(
-                message: $e->getMessage(),
-                status: 500,
-                meta: ['order_created' => true],
-            );
-        }
+        $paymentUrl = $this->orderService->createOrderWithPayment($request->toDto());
 
         return ApiResponse::success(['payment_url' => $paymentUrl]);
     }

@@ -2,12 +2,12 @@
 
 namespace App\DTO\Traits;
 
-use App\Exceptions\Dto\AggregateAttributeMissingException;
-use App\Exceptions\Dto\PivotAttributeMissingException;
-use App\Exceptions\Dto\PivotMissingException;
-use App\Exceptions\Dto\RelationIsNotCollectionException;
-use App\Exceptions\Dto\RelationIsNullException;
-use App\Exceptions\Dto\RequiredRelationMissingException;
+use App\Exceptions\System\Dto\AggregateAttributeMissingException;
+use App\Exceptions\System\Dto\PivotAttributeMissingException;
+use App\Exceptions\System\Dto\PivotMissingException;
+use App\Exceptions\System\Dto\RelationIsNotCollectionException;
+use App\Exceptions\System\Dto\RelationIsNullException;
+use App\Exceptions\System\Dto\RequiredRelationMissingException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -29,7 +29,11 @@ trait RequiresPreload
 
         foreach ($relations as $relation) {
             if (!$model->relationLoaded($relation)) {
-                throw new RequiredRelationMissingException("Relation [$relation] must be preloaded on model [" . get_class($model) . "] before constructing [" . static::class . "].");
+                throw new RequiredRelationMissingException(
+                    "Relation [$relation] must be preloaded on model [" . get_class(
+                        $model
+                    ) . "] before constructing [" . static::class . "]."
+                );
             }
         }
     }
@@ -53,7 +57,11 @@ trait RequiresPreload
 
         foreach ($relations as $relation) {
             if (is_null($model->$relation)) {
-                throw new RelationIsNullException("Expected not-null relation [$relation] on model [" . get_class($model) . "] before constructing [" . static::class . "].");
+                throw new RelationIsNullException(
+                    "Expected not-null relation [$relation] on model [" . get_class(
+                        $model
+                    ) . "] before constructing [" . static::class . "]."
+                );
             }
         }
     }
@@ -172,7 +180,11 @@ trait RequiresPreload
 
         foreach ($relations as $relation) {
             if (!$model->$relation instanceof Collection) {
-                throw new RelationIsNotCollectionException("Relation [$relation] on model [" . get_class($model) . "] must be an instance of Collection before constructing [" . static::class . "].");
+                throw new RelationIsNotCollectionException(
+                    "Relation [$relation] on model [" . get_class(
+                        $model
+                    ) . "] must be an instance of Collection before constructing [" . static::class . "]."
+                );
             }
         }
     }
@@ -194,7 +206,11 @@ trait RequiresPreload
 
         foreach ($aggregates as $attribute) {
             if (!array_key_exists($attribute, $attributes)) {
-                throw new AggregateAttributeMissingException("Aggregate attribute [$attribute] must be preloaded on model [" . get_class($model) . "] before constructing [" . static::class . "].");
+                throw new AggregateAttributeMissingException(
+                    "Aggregate attribute [$attribute] must be preloaded on model [" . get_class(
+                        $model
+                    ) . "] before constructing [" . static::class . "]."
+                );
             }
         }
     }
@@ -212,7 +228,11 @@ trait RequiresPreload
     private static function checkRequirePivotAttributes(Model $model, string|array $pivots): void
     {
         if (!$model->relationLoaded('pivot') || !$model->pivot) {
-            throw new PivotMissingException("Pivot relation is missing on model [" . get_class($model) . "] while constructing [" . static::class . "].");
+            throw new PivotMissingException(
+                "Pivot relation is missing on model [" . get_class(
+                    $model
+                ) . "] while constructing [" . static::class . "]."
+            );
         }
 
         $pivots = (array)$pivots;
@@ -220,7 +240,11 @@ trait RequiresPreload
 
         foreach ($pivots as $attribute) {
             if (!array_key_exists($attribute, $pivotAttributes)) {
-                throw new PivotAttributeMissingException("Pivot attribute [$attribute] is missing on model [" . get_class($model) . "] while constructing [" . static::class . "].");
+                throw new PivotAttributeMissingException(
+                    "Pivot attribute [$attribute] is missing on model [" . get_class(
+                        $model
+                    ) . "] while constructing [" . static::class . "]."
+                );
             }
         }
     }

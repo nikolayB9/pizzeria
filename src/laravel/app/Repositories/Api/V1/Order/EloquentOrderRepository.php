@@ -11,7 +11,7 @@ use App\DTO\Api\V1\Order\PaginatedOrderListDto;
 use App\Enums\Order\OrderStatusEnum;
 use App\Exceptions\Domain\Order\OrderCreationFailedException;
 use App\Exceptions\Order\OrderNotFoundException;
-use App\Exceptions\Order\OrderStatusNotUpdatedException;
+use App\Exceptions\System\Order\OrderStatusNotUpdatedException;
 use App\Models\Order;
 use App\Repositories\Api\V1\Cart\CartRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -101,6 +101,8 @@ class EloquentOrderRepository implements OrderRepositoryInterface
                 $order = Order::create($data->toInsertArray());
 
                 $products = CartRawItemDto::toOrderProductInsertData($data->cart);
+
+                // Здесь $products гарантированно не пуст, см. buildOrderData()
                 $order->products()->attach($products);
 
                 $this->cartRepository->clearCartByIdentifier('user_id', $order->user_id);
