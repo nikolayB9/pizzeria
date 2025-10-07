@@ -36,9 +36,10 @@ class GetUserAddressByIdTest extends AbstractApiTestCase
         return 'get';
     }
 
-    protected function getResponse(mixed $addressId,
-                                   bool  $isAuth = true): TestResponse
-    {
+    protected function getResponse(
+        mixed $addressId,
+        bool $isAuth = true
+    ): TestResponse {
         if ($isAuth) {
             $this->actingAs($this->user);
         }
